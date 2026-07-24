@@ -1,0 +1,14 @@
+---
+description: Правки репозитория-шаблона 1c-project-template (не пилот конфы)
+alwaysApply: true
+---
+
+# Обслуживание шаблона
+
+Ты в репозитории **шаблона** конфигурации, не в пилоте Комбазы.
+
+1. Не клади сюда XML конкретной конфы, секреты, пути личной ИБ пилота.
+2. Не переноси сюда feature-pipeline / SDMS / analyst-planner-reviewer — это кит `1C`.
+3. Skills/rules держи обобщёнными; имена продуктов — только как нейтральные примеры.
+4. Load XML — только основная конфигурация, без `update-db-cfg`.
+5. Процесс веток/MR и Cursor workspace: `docs/TEMPLATE_MAINTENANCE.md`.

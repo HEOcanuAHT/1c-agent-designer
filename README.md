@@ -10,6 +10,13 @@
 
 **Не включает** персональный оркестратор (feature-pipeline, SDMS, analyst/planner/reviewer) — он живёт в отдельном ките.
 
+## Правки самого шаблона
+
+Отдельное окно Cursor: [`1c-project-template.code-workspace`](../1c-project-template.code-workspace)  
+(или каталог `1c-project-template`). Процесс: [docs/TEMPLATE_MAINTENANCE.md](docs/TEMPLATE_MAINTENANCE.md).
+
+Пилот конфигурации (Комбаза + кит) — **другое** workspace, не смешивать с правками шаблона.
+
 ## Репозиторий
 
 - GitLab: https://git.dns-shop.ru/Dackov.AI/1c-project-template
