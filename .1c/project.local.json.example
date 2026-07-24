@@ -1,0 +1,7 @@
+{
+  "auth": {
+    "required": true,
+    "user": "ИмяПользователяИБ",
+    "password": "пароль"
+  }
+}

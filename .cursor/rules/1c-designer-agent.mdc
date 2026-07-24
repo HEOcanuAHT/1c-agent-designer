@@ -1,0 +1,13 @@
+---
+description: Designer Agent dump/load — не обновлять конфигурацию БД
+alwaysApply: true
+---
+
+# 1C Designer Agent: загрузка XML
+
+При dump/load через skill `1c-designer-agent` / `Invoke-1cDesignerAgent.ps1`:
+
+1. **Загрузка в ИБ** (частичная `load-changed` / list-file, и любая полная загрузка из файлов) обновляет **только основную конфигурацию**.
+2. **Не вызывать** `config update-db-cfg`, `/UpdateDBCfg`, и не включать `updateDbCfgAfterLoad`.
+3. Сравнение/принятие в конфигурацию БД — **вручную** в Конфигураторе пользователем.
+4. Перед dump/load на файловой ИБ закрыть обычный Конфигуратор (параллельно AgentMode + Designer не работают).
