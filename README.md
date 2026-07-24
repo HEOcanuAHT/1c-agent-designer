@@ -27,21 +27,24 @@
 ```powershell
 git clone https://git.dns-shop.ru/Dackov.AI/1c-project-template.git my-config
 cd my-config
-# при желании сменить remote на свой проект конфигурации
+# открыть папку в Cursor и попросить агента: «настрой окружение» / bootstrap
+# либо вручную:
 Copy-Item .1c\project.json.example .1c\project.json
 Copy-Item .1c\project.local.json.example .1c\project.local.json
-# заполнить platformVersion, infobase.path, auth
+# заполнить platformVersion, infobase (file|server|ibname), auth в local
 ```
 
-Дальше: [docs/INITIAL_DUMP.md](docs/INITIAL_DUMP.md), [docs/WORKFLOW.md](docs/WORKFLOW.md).
+Агент следует skill **`1c-project-bootstrap`**: проверит Python/`paramiko`/платформу, предложит доустановить, спросит тип ИБ и запишет `.1c/project*.json`.
+
+Дальше: [docs/INITIAL_DUMP.md](docs/INITIAL_DUMP.md), [docs/WORKFLOW.md](docs/WORKFLOW.md), [AGENTS.md](AGENTS.md).
 
 ## Структура
 
 ```text
 .cursor/
   agents/implementer.md
-  rules/                 # load без БД, git/XML workflow
-  skills/                # coding-standards, std-*, 1c-designer-agent, 1c-ibcmd-pack, tech-decisions
+  rules/                 # bootstrap, load без БД, git/XML
+  skills/                # bootstrap, coding-standards, std-*, designer-agent, ibcmd-pack, …
 .1c/                     # project.json.example, secrets example
 docs/
 src/                     # XML-выгрузка конфигурации

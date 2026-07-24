@@ -16,7 +16,7 @@
 
 | Можно | Нельзя |
 |--------|--------|
-| `.cursor/skills` (std-*, designer-agent, ibcmd-pack, tech-decisions) | XML конкретной конфы в `src/` (кроме `src/README.md`) |
+| `.cursor/skills` (bootstrap, std-*, designer-agent, ibcmd-pack, tech-decisions) | XML конкретной конфы в `src/` (кроме `src/README.md`) |
 | `.cursor/agents/implementer.md` | feature-pipeline / SDMS / analyst-planner-reviewer |
 | `.cursor/rules`, каркас `.1c/*.example`, `docs/*` шаблона | Секреты, пути к личной ИБ Комбазы |
 | `.gitignore`, MR-шаблон, README шаблона | Коммиты «под пилот» без обобщения |

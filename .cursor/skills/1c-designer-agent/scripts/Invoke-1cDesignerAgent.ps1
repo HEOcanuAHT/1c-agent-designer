@@ -104,8 +104,11 @@ function Get-IbArgs($Cfg, [string]$ProjectRoot) {
     return @("/S", ([string]$Cfg.infobase.server))
   }
   if ($type -eq "ibname") {
-    if (-not $Cfg.infobase.name) { throw "infobase.name required" }
-    return @("/IBName", ([string]$Cfg.infobase.name))
+    $ibName = $null
+    if ($Cfg.infobase.name) { $ibName = [string]$Cfg.infobase.name }
+    elseif ($Cfg.infobase.path) { $ibName = [string]$Cfg.infobase.path }
+    if (-not $ibName) { throw "infobase.name required for type=ibname" }
+    return @("/IBName", $ibName)
   }
   $p = if ($env:1C_IB_PATH) { $env:1C_IB_PATH }
     elseif ($Cfg.infobase -and $Cfg.infobase.path) { [string]$Cfg.infobase.path }
@@ -484,8 +487,23 @@ function Invoke-AgentCommands {
     throw "No SSH client for agent (need Python+paramiko or plink)"
   } catch {
     $errFile = Join-Path $ProjectRoot ".1c\last-agent-error.txt"
-    $_ | Out-String | Set-Content -LiteralPath $errFile -Encoding UTF8
+    $errText = $_ | Out-String
+    $errText | Set-Content -LiteralPath $errFile -Encoding UTF8
     Write-Host "AGENT_ERROR=$($_.Exception.Message)"
+    # Storage capture lock — ASCII-safe (WinPS5 may misread Cyrillic literals in .ps1)
+    $metaRe = '(Catalog|Document|DataProcessor|Report|CommonModule|InformationRegister|Enum|ChartOfCharacteristicTypes)\.[\p{L}\w]+'
+    $lockPhrase = -join ([int[]](0x043D,0x0435,0x0020,0x0437,0x0430,0x0445,0x0432,0x0430,0x0447,0x0435,0x043D) | ForEach-Object { [char]$_ })
+    $isStorageLock = $errText.Contains($lockPhrase) -or ($errText -match 'ConfigFilesError' -and $errText -match $metaRe)
+    if ($isStorageLock) {
+      $obj = $null
+      $m = [regex]::Match($errText, $metaRe)
+      if ($m.Success) { $obj = $m.Value.TrimEnd('!','.',',') }
+      if ($obj) {
+        Write-Host "STORAGE_LOCK: object $obj is not captured in configuration storage — capture it and retry load."
+      } else {
+        Write-Host "STORAGE_LOCK: object is not captured in configuration storage — capture required objects and retry load."
+      }
+    }
     Write-Host "Details: $errFile"
     throw
   }
