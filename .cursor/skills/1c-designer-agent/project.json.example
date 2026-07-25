@@ -1,0 +1,31 @@
+{
+  "name": "example-config",
+  "platformVersion": "8.3.23.1865",
+  "designer": "",
+  "src": "src",
+  "infobase": {
+    "type": "file",
+    "path": ".1c/ib-dev"
+  },
+  "auth": {
+    "required": true,
+    "user": "",
+    "password": ""
+  },
+  "designerAgent": {
+    "host": "127.0.0.1",
+    "port": 1543,
+    "listenAddress": "127.0.0.1",
+    "baseDir": ".",
+    "visible": true,
+    "autoStart": true,
+    "keepAlive": false,
+    "startupWaitSec": 25,
+    "format": "hierarchical",
+    "sshClient": "auto",
+    "delta": {
+      "baseRef": "main",
+      "headRef": "HEAD"
+    }
+  }
+}

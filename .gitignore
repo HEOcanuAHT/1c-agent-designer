@@ -1,0 +1,65 @@
+# 1C / EDT / Designer
+*.cfe
+*.cf
+*.dt
+*.epf
+*.erf
+*.log
+*.lgf
+*.lgp
+*.lgx
+DumpFiles/
+ConfigDumpInfo.xml.bak
+
+# Local IB / pack / secrets
+.1c/ib-pack/
+.1c/ib-pack-delta/
+.1c/ib-dev/
+.1c/delta-src/
+.1c/project.local.json
+.1c/*.log
+.1c/*-out.txt
+.1c/last-agent-error.txt
+.1c/agent-dump/
+.1c/load-changed-list.txt
+.1c/agent.pid
+.1c/test-*.ps1
+logs/
+artifacts/
+agent-dump-test/
+src/*.bak-*
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE / editors
+.idea/
+*.sublime-*
+*.swp
+*~
+
+# Cursor local overrides
+.cursor/*.local.*
+
+# Designer AgentMode workdir (AgentBaseDir/<user>)
+/0/
+/agentbasedir.json
+
+# Build / temp
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+credentials*.json
+
+__pycache__/
+*.pyc
