@@ -12,20 +12,19 @@
 
 ## Правки самого шаблона
 
-Отдельное окно Cursor: [`1c-project-template.code-workspace`](../1c-project-template.code-workspace)  
-(или каталог `1c-project-template`). Процесс: [docs/TEMPLATE_MAINTENANCE.md](docs/TEMPLATE_MAINTENANCE.md).
+Отдельное окно Cursor с клоном `1c-agent-designer`. Процесс: [docs/TEMPLATE_MAINTENANCE.md](docs/TEMPLATE_MAINTENANCE.md).
 
-Пилот конфигурации (Комбаза + кит) — **другое** workspace, не смешивать с правками шаблона.
+Пилот конкретной конфигурации (+ кит) — **другое** workspace, не смешивать с правками шаблона.
 
 ## Репозиторий
 
-- GitLab: https://git.dns-shop.ru/Dackov.AI/1c-project-template
-- Clone: `https://git.dns-shop.ru/Dackov.AI/1c-project-template.git`
+- GitHub: https://github.com/HEOcanuAHT/1c-agent-designer
+- Clone: `https://github.com/HEOcanuAHT/1c-agent-designer.git`
 
 ## Быстрый старт новой конфигурации
 
 ```powershell
-git clone https://git.dns-shop.ru/Dackov.AI/1c-project-template.git my-config
+git clone https://github.com/HEOcanuAHT/1c-agent-designer.git my-config
 cd my-config
 # открыть папку в Cursor и попросить агента: «настрой окружение» / bootstrap
 # либо вручную:
