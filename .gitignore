@@ -11,14 +11,16 @@
 DumpFiles/
 ConfigDumpInfo.xml.bak
 
-# Local IB / pack / secrets
+# Local IB / pack / secrets / runtime
 .1c/ib-pack/
 .1c/ib-pack-delta/
 .1c/ib-dev/
 .1c/delta-src/
+.1c/project.json
 .1c/project.local.json
 .1c/*.log
 .1c/*-out.txt
+.1c/*-result.txt
 .1c/last-agent-error.txt
 .1c/agent-dump/
 .1c/load-changed-list.txt
@@ -27,7 +29,10 @@ ConfigDumpInfo.xml.bak
 logs/
 artifacts/
 agent-dump-test/
-src/*.bak-*
+
+# Template: src/ stays a skeleton (README only). Experimental dumps are local.
+src/**
+!src/README.md
 
 # OS
 Thumbs.db
@@ -63,3 +68,6 @@ credentials*.json
 
 __pycache__/
 *.pyc
+
+# Local Python venv (optional paramiko for agent SSH)
+.venv/
