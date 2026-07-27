@@ -34,7 +34,8 @@
 ## После изменения skills/rules
 
 1. **Подними `version`** в `.1c/template-manifest.json` (и в `project.json.example` → `template.version`).
-2. Запушить в шаблон.
+2. Если файл нужен **только в шаблоне** (например `template-maintenance.mdc`) — добавь в `projectSkipPaths`, не в allowlist проектов.
+3. Запушить в шаблон.
 3. Пилоты/новые конфиги подтягивают изменения осознанно:
    - новый проект: `git clone` шаблона;
    - уже живой репо: skill **`1c-template-sync`** / `Sync-1cTemplate.ps1` (allowlist, **без** `src/` и секретов).

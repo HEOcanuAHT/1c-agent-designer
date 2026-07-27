@@ -24,14 +24,21 @@ description: >-
 
 **Обновляется (allowlist из `.1c/template-manifest.json`):**
 
-- `.cursor/skills`, `.cursor/rules`, `.cursor/agents`
-- `docs/WORKFLOW.md`, `docs/INITIAL_DUMP.md`, `docs/TEMPLATE_MAINTENANCE.md`
+- `.cursor/skills`, `.cursor/rules` (кроме template-only), `.cursor/agents`
+- `docs/WORKFLOW.md`, `docs/INITIAL_DUMP.md`
 - `AGENTS.md`, `.1c/*.example`, `.1c/README.md`, `.1c/template-manifest.json`
 - `.gitlab/merge_request_templates`
+
+**Не копируется в проекты** (`projectSkipPaths`):  
+`.cursor/rules/template-maintenance.mdc`, `docs/TEMPLATE_MAINTENANCE.md` — только для репо шаблона. Если в проекте уже лежат — sync их **удалит**.
 
 Опционально (`-IncludeOptional`): `.gitignore`, `README.md` — **спрашивать отдельно**.
 
 Свои skills/rules проекта (имена, которых нет в шаблоне) **не удаляются**.
+
+Скрипт всегда:  
+`.cursor/skills/1c-template-sync/scripts/Sync-1cTemplate.ps1`  
+(не ищи в `tools/`). Clone шаблона во temp делай **вне sandbox** / с полными правами — иначе клон может пропасть.
 
 ## Первый sync со старого пилота (нет skill/манифеста)
 
@@ -99,7 +106,7 @@ URL по умолчанию: `https://github.com/HEOcanuAHT/1c-agent-designer.gi
 ```json
 "template": {
   "name": "1c-agent-designer",
-  "version": "2026.07.27",
+  "version": "2026.07.27.1",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main"
 }

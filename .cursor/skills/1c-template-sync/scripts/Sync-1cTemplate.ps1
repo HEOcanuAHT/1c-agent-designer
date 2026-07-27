@@ -80,14 +80,49 @@ function Get-ChildSkillDirs([string]$SkillsRoot) {
   return @(Get-ChildItem -LiteralPath $SkillsRoot -Directory | Select-Object -ExpandProperty Name)
 }
 
+function Normalize-Rel([string]$Rel) {
+  return (($Rel -replace "\\", "/").Trim().TrimStart("/"))
+}
+
+function Test-ProjectSkip([string]$Rel, [string[]]$Skip) {
+  $r = Normalize-Rel $Rel
+  foreach ($s in @($Skip)) {
+    $sn = Normalize-Rel $s
+    if (-not $sn) { continue }
+    if ($r -eq $sn) { return $true }
+  }
+  return $false
+}
+
+function Remove-SkippedFromProject {
+  param([string]$DstRoot, [string[]]$Skip, [switch]$DryRun)
+  foreach ($s in @($Skip)) {
+    $rel = Normalize-Rel $s
+    if (-not $rel) { continue }
+    $path = Join-Path $DstRoot ($rel -replace "/", "\")
+    if (-not (Test-Path -LiteralPath $path)) { continue }
+    if ($DryRun) {
+      Write-Host "DRYRUN remove-skip $rel"
+      continue
+    }
+    Write-Host "REMOVE (template-only) $rel"
+    Remove-Item -LiteralPath $path -Force -Recurse -ErrorAction SilentlyContinue
+  }
+}
+
 function Copy-TemplatePath {
   param(
     [string]$SrcRoot,
     [string]$DstRoot,
     [string]$Rel,
+    [string[]]$SkipPaths,
     [switch]$DryRun
   )
   $relNorm = Assert-SafeRel $Rel
+  if (Test-ProjectSkip $relNorm $SkipPaths) {
+    Write-Host "SKIP (template-only) $relNorm"
+    return
+  }
   $src = Join-Path $SrcRoot ($relNorm -replace "/", "\")
   $dst = Join-Path $DstRoot ($relNorm -replace "/", "\")
 
@@ -102,13 +137,18 @@ function Copy-TemplatePath {
   if ($leaf -eq "skills" -and $parent -eq ".cursor") {
     New-Item -ItemType Directory -Force -Path $dst | Out-Null
     foreach ($name in (Get-ChildSkillDirs $src)) {
+      $childRel = "$relNorm/$name"
+      if (Test-ProjectSkip $childRel $SkipPaths) {
+        Write-Host "SKIP (template-only) $childRel"
+        continue
+      }
       $from = Join-Path $src $name
       $to = Join-Path $dst $name
       if ($DryRun) {
-        Write-Host "DRYRUN mirror $relNorm/$name"
+        Write-Host "DRYRUN mirror $childRel"
         continue
       }
-      Write-Host "SYNC $relNorm/$name"
+      Write-Host "SYNC $childRel"
       if (Test-Path -LiteralPath $to) { Remove-Item -LiteralPath $to -Recurse -Force }
       Copy-Item -LiteralPath $from -Destination $to -Recurse -Force
     }
@@ -118,12 +158,17 @@ function Copy-TemplatePath {
     New-Item -ItemType Directory -Force -Path $dst | Out-Null
     $files = @(Get-ChildItem -LiteralPath $src -File -Force)
     foreach ($f in $files) {
-      $to = Join-Path $dst $f.Name
-      if ($DryRun) {
-        Write-Host "DRYRUN file $relNorm/$($f.Name)"
+      $childRel = "$relNorm/$($f.Name)"
+      if (Test-ProjectSkip $childRel $SkipPaths) {
+        Write-Host "SKIP (template-only) $childRel"
         continue
       }
-      Write-Host "SYNC $relNorm/$($f.Name)"
+      $to = Join-Path $dst $f.Name
+      if ($DryRun) {
+        Write-Host "DRYRUN file $childRel"
+        continue
+      }
+      Write-Host "SYNC $childRel"
       Copy-Item -LiteralPath $f.FullName -Destination $to -Force
     }
     return
@@ -260,8 +305,16 @@ try {
     if ($IncludeOptional -and $remote.optionalPaths) {
       $paths += @($remote.optionalPaths)
     }
+    $skip = @()
+    if ($remote.projectSkipPaths) { $skip = @($remote.projectSkipPaths | ForEach-Object { [string]$_ }) }
+    Write-Host "script=$PSCommandPath"
     foreach ($p in $paths) {
-      Copy-TemplatePath -SrcRoot $src.Root -DstRoot $ProjectRoot -Rel ([string]$p) -DryRun:$DryRun
+      Copy-TemplatePath -SrcRoot $src.Root -DstRoot $ProjectRoot -Rel ([string]$p) -SkipPaths $skip -DryRun:$DryRun
+    }
+    # Do not strip template-only files when syncing the template repo onto itself.
+    $sameRoot = ((Resolve-Path -LiteralPath $src.Root).Path -eq $ProjectRoot)
+    if (-not $sameRoot) {
+      Remove-SkippedFromProject -DstRoot $ProjectRoot -Skip $skip -DryRun:$DryRun
     }
     if (-not $DryRun) {
       # Ensure manifest landed; rewrite project.json template block if present.
@@ -270,6 +323,8 @@ try {
     } else {
       Write-Host "OK dry-run version=$($remote.version)"
     }
+    Write-Host "SUMMARY version=$($remote.version) src=untouched secrets=untouched template-only=skipped"
+    Write-Host "NEXT: review git status; commit tooling in the config project if desired"
     exit 0
   }
 }
