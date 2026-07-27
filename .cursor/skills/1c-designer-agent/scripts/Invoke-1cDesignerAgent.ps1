@@ -87,13 +87,20 @@ function Resolve-Plink {
 }
 
 function Get-AgentAuth($Cfg) {
+  $required = $true
+  if ($Cfg.auth -and $null -ne $Cfg.auth.required) { $required = [bool]$Cfg.auth.required }
   $user = $env:1C_IB_USER
   $pwd = $env:1C_IB_PASSWORD
-  if ($Cfg.auth -and $Cfg.auth.user) { $user = [string]$Cfg.auth.user }
+  if ($Cfg.auth -and $null -ne $Cfg.auth.user -and [string]$Cfg.auth.user -ne "") {
+    $user = [string]$Cfg.auth.user
+  }
   if ($Cfg.auth -and $null -ne $Cfg.auth.password) { $pwd = [string]$Cfg.auth.password }
-  if (-not $user) { throw "Need auth.user in project.local.json or 1C_IB_USER." }
+  if ($null -eq $user) { $user = "" }
   if ($null -eq $pwd) { $pwd = "" }
-  return @{ User = $user; Password = $pwd }
+  if ($required -and -not $user) {
+    throw "Need auth.user in project.local.json or 1C_IB_USER (or set auth.required=false for empty IB)."
+  }
+  return @{ User = $user; Password = $pwd; Required = $required }
 }
 
 function Get-IbArgs($Cfg, [string]$ProjectRoot) {
@@ -277,9 +284,13 @@ function Invoke-AgentViaPlink {
 
   # One SSH client only - do not prime host key in a second session.
 
+  # Empty IB (no users): AgentMode accepts empty login; plink needs explicit -l "".
+  $sshUser = if ($Auth.User -ne "") { $Auth.User } else { '""' }
+  $sshPwd = if ($null -ne $Auth.Password) { $Auth.Password } else { "" }
+
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = $PlinkPath
-  $psi.Arguments = "-ssh -P $Port -l $($Auth.User) -pw $($Auth.Password) -batch $HostName"
+  $psi.Arguments = "-ssh -P $Port -l $sshUser -pw `"$sshPwd`" -batch $HostName"
   $psi.UseShellExecute = $false
   $psi.RedirectStandardInput = $true
   $psi.RedirectStandardOutput = $true
@@ -385,21 +396,36 @@ function Invoke-AgentViaPlink {
 }
 
 function Resolve-Python {
-  $candidates = @(
-    "$env:LOCALAPPDATA\Programs\Python\Python39\python.exe",
+  $candidates = @()
+  $venvPy = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
+  if (Test-Path -LiteralPath $venvPy) { $candidates += $venvPy }
+  $candidates += @(
     "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe",
     "$env:LOCALAPPDATA\Programs\Python\Python311\python.exe",
-    "$env:LOCALAPPDATA\Programs\Python\Python310\python.exe"
+    "$env:LOCALAPPDATA\Programs\Python\Python310\python.exe",
+    "$env:LOCALAPPDATA\Programs\Python\Python39\python.exe"
   )
+  $uvRoot = Join-Path $env:APPDATA "uv\python"
+  if (Test-Path -LiteralPath $uvRoot) {
+    Get-ChildItem -LiteralPath $uvRoot -Directory -EA SilentlyContinue |
+      Sort-Object Name -Descending |
+      ForEach-Object {
+        $exe = Join-Path $_.FullName "python.exe"
+        if (Test-Path -LiteralPath $exe) { $candidates += $exe }
+      }
+  }
   foreach ($c in $candidates) {
-    if (Test-Path -LiteralPath $c) { return @{ Exe = $c; Prefix = @() } }
+    if (-not (Test-Path -LiteralPath $c)) { continue }
+    & $c --version 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) { return @{ Exe = $c; Prefix = @() } }
   }
   $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
   if ($pyLauncher) { return @{ Exe = $pyLauncher.Source; Prefix = @("-3") } }
   foreach ($name in @("python", "python3")) {
     $cmd = Get-Command $name -ErrorAction SilentlyContinue
     if ($cmd -and $cmd.Source -notmatch 'WindowsApps') {
-      return @{ Exe = $cmd.Source; Prefix = @() }
+      & $cmd.Source --version 2>$null | Out-Null
+      if ($LASTEXITCODE -eq 0) { return @{ Exe = $cmd.Source; Prefix = @() } }
     }
   }
   return $null
@@ -417,44 +443,54 @@ function Invoke-AgentViaPython {
   $utf8NoBom = New-Object System.Text.UTF8Encoding $false
   [System.IO.File]::WriteAllLines($cmdFile, $Commands, $utf8NoBom)
 
-  $argv = @()
-  $argv += $py.Prefix
-  $argv += @(
-    $helper,
-    "--host", $HostName,
-    "--port", "$Port",
-    "--user", $Auth.User,
-    "--password", $Auth.Password,
-    "--commands-file", $cmdFile
+  # Start-Process -ArgumentList rejects empty-string entries (empty IB login/password).
+  function Quote-Arg([string]$Value) {
+    if ($null -eq $Value) { $Value = "" }
+    return '"' + ($Value -replace '"', '\"') + '"'
+  }
+  $argParts = @()
+  if ($py.Prefix -and $py.Prefix.Count) { $argParts += $py.Prefix }
+  $argParts += @(
+    (Quote-Arg $helper),
+    "--host", (Quote-Arg $HostName),
+    "--port", (Quote-Arg "$Port"),
+    "--user", (Quote-Arg ([string]$Auth.User)),
+    "--password", (Quote-Arg ([string]$Auth.Password)),
+    "--commands-file", (Quote-Arg $cmdFile)
   )
   if ($SuccessMarkerFile) {
-    $argv += @("--marker-file", $SuccessMarkerFile)
+    $argParts += @("--marker-file", (Quote-Arg $SuccessMarkerFile))
   }
+  $argLine = ($argParts -join " ")
 
   Write-Host "PYTHON_SSH helper=$helper user=$($Auth.User) cmds=$($Commands.Count)"
   $env:PYTHONIOENCODING = "utf-8"
-  $outFile = Join-Path $env:TEMP ("1c-agent-out-" + [guid]::NewGuid().ToString("N") + ".txt")
-  $errFile = Join-Path $env:TEMP ("1c-agent-err-" + [guid]::NewGuid().ToString("N") + ".txt")
 
   try {
-    # Avoid NativeCommandError swallowing Python traceback under ErrorActionPreference=Stop.
-    $p = Start-Process -FilePath $py.Exe -ArgumentList $argv -NoNewWindow -Wait -PassThru `
-      -RedirectStandardOutput $outFile -RedirectStandardError $errFile
-    $text = ""
-    if (Test-Path -LiteralPath $outFile) { $text += [System.IO.File]::ReadAllText($outFile) }
-    if (Test-Path -LiteralPath $errFile) {
-      $errText = [System.IO.File]::ReadAllText($errFile)
-      if ($errText) { $text += "`n" + $errText }
-    }
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $py.Exe
+    $psi.Arguments = $argLine
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.CreateNoWindow = $true
+    $psi.WorkingDirectory = $ProjectRoot
+    $proc = New-Object System.Diagnostics.Process
+    $proc.StartInfo = $psi
+    if (-not $proc.Start()) { throw "Failed to start python SSH helper" }
+    $outTask = $proc.StandardOutput.ReadToEndAsync()
+    $errTask = $proc.StandardError.ReadToEndAsync()
+    $proc.WaitForExit()
+    $text = [string]$outTask.Result
+    $errText = [string]$errTask.Result
+    if ($errText) { $text += "`n" + $errText }
     if ($text.Trim()) { Write-Host $text.TrimEnd() }
-    if ($p.ExitCode -ne 0) {
+    if ($proc.ExitCode -ne 0) {
       $snip = if ($text.Length -gt 4000) { $text.Substring($text.Length - 4000) } else { $text }
-      throw ("designer_agent_ssh.py exit=" + $p.ExitCode + "`n" + $snip)
+      throw ("designer_agent_ssh.py exit=" + $proc.ExitCode + "`n" + $snip)
     }
   } finally {
     Remove-Item -LiteralPath $cmdFile -Force -ErrorAction SilentlyContinue
-    Remove-Item -LiteralPath $outFile -Force -ErrorAction SilentlyContinue
-    Remove-Item -LiteralPath $errFile -Force -ErrorAction SilentlyContinue
   }
   return $true
 }
