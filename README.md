@@ -7,6 +7,7 @@
 - dump/load через `1c-designer-agent`
 - внешние обработки через `1c-external-epf` (`src/_extDataProcessors`)
 - упаковка через `1c-ibcmd-pack` (по запросу)
+- обновление шаблона в живых проектах: `1c-template-sync` (без `src/`)
 - субагент `/implementer`
 
 **Не включает** персональный оркестратор (feature-pipeline, SDMS, analyst/planner/reviewer) — он живёт в отдельном ките.
@@ -44,8 +45,8 @@ Copy-Item .1c\project.local.json.example .1c\project.local.json
 .cursor/
   agents/implementer.md
   rules/                 # bootstrap, load без БД, git/XML
-  skills/                # bootstrap, coding-standards, std-*, designer-agent, external-epf, ibcmd-pack, …
-.1c/                     # project.json.example, secrets example
+  skills/                # bootstrap, template-sync, coding-standards, std-*, designer-agent, …
+.1c/                     # project.json.example, template-manifest.json, secrets example
 docs/
 src/                     # XML-выгрузка конфигурации + _extDataProcessors (внешки)
 .gitlab/merge_request_templates/

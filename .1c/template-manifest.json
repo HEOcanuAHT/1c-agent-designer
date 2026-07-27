@@ -1,0 +1,32 @@
+{
+  "name": "1c-agent-designer",
+  "version": "2026.07.27",
+  "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
+  "ref": "main",
+  "paths": [
+    ".cursor/skills",
+    ".cursor/rules",
+    ".cursor/agents",
+    "docs/WORKFLOW.md",
+    "docs/INITIAL_DUMP.md",
+    "docs/TEMPLATE_MAINTENANCE.md",
+    "AGENTS.md",
+    ".1c/project.json.example",
+    ".1c/project.local.json.example",
+    ".1c/README.md",
+    ".1c/template-manifest.json",
+    ".gitlab/merge_request_templates"
+  ],
+  "optionalPaths": [
+    ".gitignore",
+    "README.md"
+  ],
+  "neverTouch": [
+    "src",
+    ".1c/project.json",
+    ".1c/project.local.json",
+    ".1c/ib-dev",
+    ".1c/agent.pid",
+    "artifacts"
+  ]
+}

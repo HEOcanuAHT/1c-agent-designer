@@ -2,9 +2,12 @@
 
 Рабочий файл: скопировать `project.json.example` → `project.json`.  
 Секреты: `project.local.json` (не в git).  
-Первичная настройка агентом: skill `1c-project-bootstrap`.
+Первичная настройка агентом: skill `1c-project-bootstrap`.  
+Обновление tooling из шаблона: skill `1c-template-sync` (манифест `.1c/template-manifest.json`).
 
 Опционально `ext.dir` / `ext.artifacts` — каталоги внешних обработок (skill `1c-external-epf`; дефолты `src/_extDataProcessors` и `artifacts/ext`).
+
+Блок `template` — откуда тянуть обновления skills/rules (`url` / `version` / `ref`). Sync его обновляет; `src/` и секреты не трогает.
 
 | type | Поля | Designer |
 |------|------|----------|

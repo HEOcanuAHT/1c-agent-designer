@@ -33,11 +33,20 @@
 
 ## После изменения skills/rules
 
-1. Запушить в шаблон.
-2. Пилоты/новые конфиги подтягивают изменения осознанно:
+1. **Подними `version`** в `.1c/template-manifest.json` (и в `project.json.example` → `template.version`).
+2. Запушить в шаблон.
+3. Пилоты/новые конфиги подтягивают изменения осознанно:
    - новый проект: `git clone` шаблона;
-   - уже живой репо: скопировать нужные пути из шаблона (или subtree/cherry-pick) — **не** автомержить всё подряд.
-3. Кит `1C` пока держит копии skills; синхронизация кит ↔ шаблон — отдельная задача (не обязательно в каждом PR).
+   - уже живой репо: skill **`1c-template-sync`** / `Sync-1cTemplate.ps1` (allowlist, **без** `src/` и секретов).
+4. Кит `1C` пока держит копии skills; синхронизация кит ↔ шаблон — отдельная задача (не обязательно в каждом PR).
+
+Пример:
+
+```powershell
+# в корне проекта конфигурации
+.\.cursor\skills\1c-template-sync\scripts\Sync-1cTemplate.ps1 -Action check -ProjectRoot .
+.\.cursor\skills\1c-template-sync\scripts\Sync-1cTemplate.ps1 -Action sync -ProjectRoot .
+```
 
 ## Чеклист перед PR в шаблон
 
@@ -45,3 +54,4 @@
 - [ ] Load по-прежнему без `update-db-cfg` (правило `1c-designer-agent`)
 - [ ] Примеры в `.1c/*.example`, не `project.local.json`
 - [ ] README/docs обновлены, если менялся процесс
+- [ ] При изменении tooling поднят `version` в `template-manifest.json` (+ example)

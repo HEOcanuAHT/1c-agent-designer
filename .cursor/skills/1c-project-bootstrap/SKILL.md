@@ -70,6 +70,7 @@ description: >-
 1. Если нет `.1c/project.json` — копируй `.1c/project.json.example`.
 2. Если нет `.1c/project.local.json` — копируй `.1c/project.local.json.example`.
 3. Запиши ответы пользователя.
+4. Сохрани блок `template` из example (url/version/ref) — нужен для skill `1c-template-sync`.
 
 ### Примеры `infobase`
 
@@ -116,3 +117,4 @@ description: >-
 3. Предлагай установку зависимостей явно; не «чини окружение» без согласия.
 4. Dump/load — skill `1c-designer-agent`; load без `update-db-cfg`.
 5. Не смешивай bootstrap с feature-pipeline / SDMS (их нет в этом шаблоне).
+6. Позже обновление skills/rules — skill `1c-template-sync` (не перезаписывать `src/`).

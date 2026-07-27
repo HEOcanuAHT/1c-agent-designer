@@ -3,6 +3,12 @@
   "platformVersion": "8.3.23.1865",
   "designer": "",
   "src": "src",
+  "template": {
+    "name": "1c-agent-designer",
+    "version": "2026.07.27",
+    "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
+    "ref": "main"
+  },
   "infobase": {
     "type": "file",
     "path": ".1c/ib-dev"
