@@ -12,6 +12,10 @@
     "user": "",
     "password": ""
   },
+  "ext": {
+    "dir": "src/_extDataProcessors",
+    "artifacts": "artifacts/ext"
+  },
   "designerAgent": {
     "host": "127.0.0.1",
     "port": 1543,

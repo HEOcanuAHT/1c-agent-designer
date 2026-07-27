@@ -67,11 +67,13 @@ AgentMode всегда работает из `AgentBaseDir\<userDir>` (част�
 ### Когда операция закончена
 
 Агент отдаёт JSON `"type":"success"` — это основной отбойник (в логе `SUCCESS+MARKER` / `SUCCESS (no marker)`).  
-Для dump с `--marker-file` success принимается вместе с обновлением `Configuration.xml`.  
-Запасной путь — стабильность `ConfigDumpInfo.xml` (~5 с).  
+Для dump с `--marker-file` маркер — `ConfigDumpInfo.xml` (обновляется и при инкременте, когда `Configuration.xml` не меняется).  
+Запасной путь — стабильность `ConfigDumpInfo.xml` (~5 с) после success, даже если mtime маркера ещё не сдвинулся.  
 После операции агент гасится по `.1c/agent.pid` (вторая SSH-сессия shutdown больше не используется).
 
 `load-changed -ListFile <path>` — явный список путей относительно `src/` (удобно для незакоммиченных файлов).
+
+Пути под `src/_extDataProcessors/` (внешние обработки) **исключаются** из list-file — это не метаданные конфигурации (skill `1c-external-epf`).
 
 ## Параллель с открытым Конфигуратором (файловая ИБ)
 

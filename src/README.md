@@ -9,4 +9,6 @@
 3. После выгрузки здесь появятся `Configuration.xml`, каталоги объектов и `ConfigDumpInfo.xml`.
 4. Закоммитьте в `main` или ветку `sync/…` → MR.
 
+Отдельно: `src/_extDataProcessors/` — XML внешних обработок (не часть выгрузки конфы). См. README в этой папке и skill `1c-external-epf`.
+
 #КонецОбласти

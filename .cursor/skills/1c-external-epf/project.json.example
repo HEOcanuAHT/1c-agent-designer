@@ -1,0 +1,19 @@
+{
+  "name": "example-config",
+  "platformVersion": "8.3.23.1865",
+  "designer": "",
+  "src": "src",
+  "infobase": {
+    "type": "file",
+    "path": ".1c/ib-dev"
+  },
+  "auth": {
+    "required": true,
+    "user": "",
+    "password": ""
+  },
+  "ext": {
+    "dir": "src/_extDataProcessors",
+    "artifacts": "artifacts/ext"
+  }
+}

@@ -75,6 +75,33 @@ def _marker_updated(marker: Path, marker_before: float | None) -> bool:
     return marker.stat().st_mtime > marker_before
 
 
+def _resolve_cdi(marker: Path | None) -> Path | None:
+    if marker is None:
+        return None
+    if marker.name.lower() == "configdumpinfo.xml":
+        return marker
+    return marker.parent / "ConfigDumpInfo.xml"
+
+
+def _check_cdi_stable(
+    cdi: Path,
+    last_cdi_size: int,
+    cdi_stable_since: float | None,
+    stable_sec: float,
+) -> tuple[bool, int, float | None]:
+    if not cdi.exists():
+        return False, last_cdi_size, cdi_stable_since
+    size = cdi.stat().st_size
+    now = time.time()
+    if size > 0 and size == last_cdi_size:
+        if cdi_stable_since is None:
+            return False, size, now
+        if (now - cdi_stable_since) >= stable_sec:
+            return True, size, cdi_stable_since
+        return False, size, cdi_stable_since
+    return False, size, None
+
+
 def wait_success_or_marker(
     channel,
     marker: Path | None,
@@ -93,6 +120,22 @@ def wait_success_or_marker(
     last_data = time.time()
     last_cdi_size = -1
     cdi_stable_since: float | None = None
+    saw_success = False
+    cdi = _resolve_cdi(marker)
+    cdi_before: float | None = None
+    if long_op and cdi is not None and cdi.exists():
+        cdi_before = cdi.stat().st_mtime
+
+    def _finish_cdi_stable() -> str:
+        time.sleep(0.5)
+        if channel.recv_ready():
+            extra = channel.recv(65535).decode("utf-8", errors="replace")
+            buf.append(extra)
+            sys.stdout.write(extra)
+            sys.stdout.flush()
+        size = cdi.stat().st_size if cdi and cdi.exists() else 0
+        print(f"\nMARKER_STABLE {cdi} ({size} bytes, {stable_sec}s)", flush=True)
+        return "".join(buf)
 
     while True:
         if channel.recv_ready():
@@ -111,15 +154,23 @@ def wait_success_or_marker(
                 if ERROR_RE.search(joined) and not eof_ok:
                     raise SystemExit(f"Agent error:\n{joined}")
                 if SUCCESS_RE.search(joined):
-                    # Long dump/load: if marker given, wait until it updates; else success is enough.
                     if not long_op:
                         return joined
                     if marker is None:
                         print("\nSUCCESS (no marker)", flush=True)
                         return joined
+                    saw_success = True
                     if _marker_updated(marker, marker_before):
                         print(f"\nSUCCESS+MARKER {marker}", flush=True)
                         return joined
+                    if cdi and _marker_updated(cdi, cdi_before):
+                        print(f"\nSUCCESS+CDI {cdi}", flush=True)
+                        return joined
+                    stable, last_cdi_size, cdi_stable_since = _check_cdi_stable(
+                        cdi, last_cdi_size, cdi_stable_since, stable_sec
+                    )
+                    if stable and cdi is not None:
+                        return _finish_cdi_stable()
 
         # Agent dropped the session (typical after common shutdown).
         if eof_ok and (
@@ -132,26 +183,16 @@ def wait_success_or_marker(
             return "".join(buf)
 
         joined = "".join(buf)
-        if long_op and marker is not None and _marker_updated(marker, marker_before):
-            cdi = marker.parent / "ConfigDumpInfo.xml"
-            if cdi.exists():
-                size = cdi.stat().st_size
-                now = time.time()
-                if size > 0 and size == last_cdi_size:
-                    if cdi_stable_since is None:
-                        cdi_stable_since = now
-                    elif (now - cdi_stable_since) >= stable_sec:
-                        time.sleep(0.5)
-                        if channel.recv_ready():
-                            extra = channel.recv(65535).decode("utf-8", errors="replace")
-                            buf.append(extra)
-                            sys.stdout.write(extra)
-                            sys.stdout.flush()
-                        print(f"\nMARKER_STABLE {cdi} ({size} bytes, {stable_sec}s)", flush=True)
-                        return "".join(buf)
-                else:
-                    last_cdi_size = size
-                    cdi_stable_since = None
+        if long_op and cdi is not None:
+            marker_or_cdi_updated = (
+                marker is not None and _marker_updated(marker, marker_before)
+            ) or _marker_updated(cdi, cdi_before)
+            if marker_or_cdi_updated or saw_success:
+                stable, last_cdi_size, cdi_stable_since = _check_cdi_stable(
+                    cdi, last_cdi_size, cdi_stable_since, stable_sec
+                )
+                if stable:
+                    return _finish_cdi_stable()
 
         if channel.exit_status_ready():
             if eof_ok:
@@ -220,6 +261,7 @@ def run(
         for cmd in all_cmds:
             print(f"\n>>> {cmd}", flush=True)
             marker_before = None
+            cdi_before = None
             long_op = bool(
                 re.search(
                     r"dump-config-to-files|load-config-from-files|update-db-cfg",
@@ -228,8 +270,12 @@ def run(
             )
             if long_op and marker is not None and marker.exists():
                 marker_before = marker.stat().st_mtime
+                cdi = _resolve_cdi(marker)
+                if cdi is not None and cdi.exists():
+                    cdi_before = cdi.stat().st_mtime
             else:
                 marker_before = None
+                cdi_before = None
 
             # Drain leftovers from previous command before sending.
             time.sleep(0.15)
@@ -258,9 +304,16 @@ def run(
             if long_op and marker is not None:
                 if not marker.exists():
                     raise SystemExit(f"Dump reported success but marker missing: {marker}")
-                if marker_before is not None and marker.stat().st_mtime <= marker_before:
+                cdi = _resolve_cdi(marker)
+                marker_ok = marker_before is None or _marker_updated(marker, marker_before)
+                cdi_ok = (
+                    cdi is not None
+                    and cdi.exists()
+                    and (cdi_before is None or _marker_updated(cdi, cdi_before))
+                )
+                if not marker_ok and not cdi_ok:
                     raise SystemExit(
-                        f"Dump reported success but marker mtime unchanged: {marker}"
+                        f"Dump reported success but marker/CDI mtime unchanged: {marker}"
                     )
     finally:
         try:

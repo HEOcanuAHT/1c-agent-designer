@@ -322,10 +322,13 @@ function Invoke-AgentViaPlink {
         while ((Get-Date) -lt $endAt) {
           Start-Sleep -Seconds 2
           if ($proc.HasExited) { throw "plink exited during: $cmd" }
-          if (Test-Path -LiteralPath $SuccessMarkerFile) {
-            $mt = (Get-Item -LiteralPath $SuccessMarkerFile).LastWriteTimeUtc
-            if ($null -eq $markerBefore -or $mt -gt $markerBefore) {
-              $cdi = Join-Path (Split-Path $SuccessMarkerFile) "ConfigDumpInfo.xml"
+          $markerPath = $SuccessMarkerFile
+          if (Test-Path -LiteralPath $markerPath) {
+            $mt = (Get-Item -LiteralPath $markerPath).LastWriteTimeUtc
+            $markerUpdated = ($null -eq $markerBefore) -or ($mt -gt $markerBefore)
+            if ($markerUpdated) {
+              $cdi = if ($markerPath -match 'ConfigDumpInfo\.xml$') { $markerPath }
+                else { Join-Path (Split-Path $markerPath) "ConfigDumpInfo.xml" }
               if (Test-Path -LiteralPath $cdi) {
                 $a = (Get-Item $cdi).Length
                 Start-Sleep -Seconds 3
@@ -338,8 +341,7 @@ function Invoke-AgentViaPlink {
                   break
                 }
               } elseif (((Get-Date).ToUniversalTime() - $mt).TotalSeconds -gt 5) {
-                # Configuration.xml appeared; wait a bit more for CDI
-                Write-Host "Configuration.xml updated, waiting ConfigDumpInfo..."
+                Write-Host "Marker updated, waiting ConfigDumpInfo stability..."
               }
             }
           }
@@ -528,23 +530,38 @@ function Invoke-DesignerBatch {
   if ($p.ExitCode -ne 0) { throw "Designer batch exit $($p.ExitCode)" }
 }
 
+function Test-IsExtDataProcessorRel([string]$RelPath) {
+  $r = ($RelPath -replace "\\", "/").TrimStart("/")
+  return $r.StartsWith("_extDataProcessors/", [System.StringComparison]::OrdinalIgnoreCase) -or
+    $r.Equals("_extDataProcessors", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
 function Build-LoadListFromGit {
   param([string]$ProjectRoot, [string]$SrcRel, [string]$Base, [string]$Head, [string]$ListPath)
   $gitExe = Resolve-Git
   $diffLines = & $gitExe -C $ProjectRoot diff --name-only --diff-filter=ACMR $Base $Head
   if ($LASTEXITCODE -ne 0) { throw "git diff failed" }
   $files = @()
+  $skipped = 0
   $prefix = "$SrcRel/"
   foreach ($line in @($diffLines)) {
     if (-not $line) { continue }
     $fn = ($line.ToString().Trim() -replace "\\", "/")
     if ($fn.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
       $rel = $fn.Substring($prefix.Length)
-      if ($rel) { $files += $rel }
+      if (-not $rel) { continue }
+      if (Test-IsExtDataProcessorRel $rel) {
+        $skipped++
+        continue
+      }
+      $files += $rel
     }
   }
   $files = @($files | Select-Object -Unique)
-  if ($files.Count -eq 0) { throw "no changed files under $SrcRel" }
+  if ($skipped -gt 0) {
+    Write-Host "Skipped $skipped path(s) under _extDataProcessors (external epf sources)"
+  }
+  if ($files.Count -eq 0) { throw "no changed files under $SrcRel (excluding _extDataProcessors)" }
   $utf8NoBom = New-Object System.Text.UTF8Encoding $false
   [System.IO.File]::WriteAllLines($ListPath, $files, $utf8NoBom)
   Write-Host "LIST_FILE=$ListPath ($($files.Count))"
@@ -553,8 +570,22 @@ function Build-LoadListFromGit {
 
 function Write-LoadListFile {
   param([string]$ListPath, [string[]]$RelPaths)
-  $files = @($RelPaths | ForEach-Object { ($_ -replace "\\", "/").Trim() } | Where-Object { $_ } | Select-Object -Unique)
-  if ($files.Count -eq 0) { throw "empty load list" }
+  $skipped = 0
+  $files = @()
+  foreach ($raw in @($RelPaths)) {
+    $rel = ($raw -replace "\\", "/").Trim()
+    if (-not $rel) { continue }
+    if (Test-IsExtDataProcessorRel $rel) {
+      $skipped++
+      continue
+    }
+    $files += $rel
+  }
+  $files = @($files | Select-Object -Unique)
+  if ($skipped -gt 0) {
+    Write-Host "Skipped $skipped path(s) under _extDataProcessors (external epf sources)"
+  }
+  if ($files.Count -eq 0) { throw "empty load list (after excluding _extDataProcessors)" }
   $utf8NoBom = New-Object System.Text.UTF8Encoding $false
   [System.IO.File]::WriteAllLines($ListPath, $files, $utf8NoBom)
   Write-Host "LIST_FILE=$ListPath ($($files.Count))"
@@ -626,7 +657,8 @@ switch ($Action) {
     if ($env:1C_AGENT_DUMP_DIR) { $dumpRel = $env:1C_AGENT_DUMP_DIR }
     $srcAbs = Join-Path $ProjectRoot ($dumpRel -replace "/", "\")
     New-Item -ItemType Directory -Force -Path $srcAbs | Out-Null
-    $marker = Join-Path $srcAbs "Configuration.xml"
+    $marker = Join-Path $srcAbs "ConfigDumpInfo.xml"
+    $cfgXml = Join-Path $srcAbs "Configuration.xml"
 
     if ($transport -eq "agent") {
       try {
@@ -646,6 +678,7 @@ switch ($Action) {
         "/DumpConfigToFiles", $srcAbs
       )
     }
+    if (-not (Test-Path -LiteralPath $cfgXml)) { throw "dump-full: missing $cfgXml" }
     if (-not (Test-Path -LiteralPath $marker)) { throw "dump-full: missing $marker" }
     Write-Host "DUMP_DIR=$srcAbs"
     Write-Host "DUMP_MTIME=$((Get-Item $marker).LastWriteTime)"
@@ -654,7 +687,7 @@ switch ($Action) {
     $srcAbs = Join-Path $ProjectRoot $srcRel
     $cdi = Join-Path $srcAbs "ConfigDumpInfo.xml"
     if (-not (Test-Path -LiteralPath $cdi)) { throw "need ConfigDumpInfo.xml - run dump-full first" }
-    $marker = Join-Path $srcAbs "Configuration.xml"
+    $marker = $cdi
     if ($transport -eq "agent") {
       try {
         Ensure-AgentReady $cfg $designerPath $ProjectRoot

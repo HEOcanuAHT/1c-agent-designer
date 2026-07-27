@@ -1,0 +1,13 @@
+---
+description: Внешние обработки — src/_extDataProcessors, skill 1c-external-epf
+alwaysApply: true
+---
+
+# Внешние обработки (.epf)
+
+При работе с внешними обработками / `.epf` / выносом обработки из конфы:
+
+1. Следуй skill **`1c-external-epf`** (`Invoke-1cExternalEpf.ps1`).
+2. Исходники только в `src/_extDataProcessors/` — не в `DataProcessors/` без явной просьбы.
+3. Сборка → `artifacts/ext/*.epf`; бинарники не коммитить.
+4. `load-changed` конфигурации не должен включать `_extDataProcessors` (фильтр в designer-agent).

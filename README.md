@@ -5,6 +5,7 @@
 - иерархическая выгрузка в `src/`
 - skills стандартов ИТС (`coding-standards`, `std-*`)
 - dump/load через `1c-designer-agent`
+- внешние обработки через `1c-external-epf` (`src/_extDataProcessors`)
 - упаковка через `1c-ibcmd-pack` (по запросу)
 - субагент `/implementer`
 
@@ -44,10 +45,10 @@ Copy-Item .1c\project.local.json.example .1c\project.local.json
 .cursor/
   agents/implementer.md
   rules/                 # bootstrap, load без БД, git/XML
-  skills/                # bootstrap, coding-standards, std-*, designer-agent, ibcmd-pack, …
+  skills/                # bootstrap, coding-standards, std-*, designer-agent, external-epf, ibcmd-pack, …
 .1c/                     # project.json.example, secrets example
 docs/
-src/                     # XML-выгрузка конфигурации
+src/                     # XML-выгрузка конфигурации + _extDataProcessors (внешки)
 .gitlab/merge_request_templates/
 ```
 
