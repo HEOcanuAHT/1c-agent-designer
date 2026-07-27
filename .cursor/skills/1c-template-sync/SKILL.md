@@ -106,7 +106,7 @@ URL по умолчанию: `https://github.com/HEOcanuAHT/1c-agent-designer.gi
 ```json
 "template": {
   "name": "1c-agent-designer",
-  "version": "2026.07.27.1",
+  "version": "2026.07.27.2",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main"
 }

@@ -2,6 +2,7 @@
   "auth": {
     "required": true,
     "user": "ИмяПользователяИБ",
-    "password": "пароль"
+    "password": "пароль",
+    "uc": ""
   }
 }

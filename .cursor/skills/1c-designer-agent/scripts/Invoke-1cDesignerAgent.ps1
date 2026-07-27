@@ -159,6 +159,20 @@ function Clear-AgentPort([int]$Port) {
   Start-Sleep -Seconds 2
 }
 
+function Quote-1cArg([string]$Value) {
+  # 1cv8 parses ProcessStartInfo.Arguments itself: escape " by doubling, not \".
+  if ($null -eq $Value) { $Value = "" }
+  return '"' + ($Value -replace '"', '""') + '"'
+}
+
+function Get-UnlockCode($Cfg) {
+  if ($env:1C_IB_UC) { return [string]$env:1C_IB_UC }
+  if ($Cfg.auth -and $null -ne $Cfg.auth.uc -and [string]$Cfg.auth.uc -ne "") {
+    return [string]$Cfg.auth.uc
+  }
+  return ""
+}
+
 function Start-DesignerAgent($Cfg, [string]$DesignerPath, [string]$ProjectRoot) {
   $da = $Cfg.designerAgent
   $hostName = if ($da.host) { [string]$da.host } else { "127.0.0.1" }
@@ -175,20 +189,25 @@ function Start-DesignerAgent($Cfg, [string]$DesignerPath, [string]$ProjectRoot) 
   $baseDir = (Resolve-Path -LiteralPath $baseDir).Path
 
   $ibArgs = Get-IbArgs $Cfg $ProjectRoot
-  # Single argument string; quote only paths. Avoid Start-Process -ArgumentList array bugs.
-  $ibPart = ""
-  for ($i = 0; $i -lt $ibArgs.Count; $i += 2) {
-    $key = $ibArgs[$i]
-    $val = $ibArgs[$i + 1]
-    $ibPart += " $key `"$val`""
+  $ibKey = [string]$ibArgs[0]
+  $ibVal = [string]$ibArgs[1]
+  # /F path: forward slashes OK. /S (host\base) and /IBName: keep \, escape " via Quote-1cArg.
+  if ($ibKey -eq "/F") {
+    $ibVal = ($ibVal -replace '\\', '/')
   }
+
+  $auth = Get-AgentAuth $Cfg
+  $authPart = " /N$(Quote-1cArg $auth.User) /P$(Quote-1cArg $auth.Password)"
+  $uc = Get-UnlockCode $Cfg
+  if ($uc) { $authPart += " /UC$(Quote-1cArg $uc)" }
+
   $visiblePart = ""
   if ($da.visible -ne $false) { $visiblePart = " /Visible" }
 
   $baseDirArg = ($baseDir -replace '\\', '/')
-  $ibPath = ($ibArgs[1] -replace '\\', '/')
-  $argString = "DESIGNER $($ibArgs[0]) `"$ibPath`" /AgentMode /AgentPort $port /AgentListenAddress $listen /AgentSSHHostKeyAuto /AgentBaseDir $baseDirArg$visiblePart"
-  Write-Host ">> $DesignerPath $argString"
+  $argString = "DESIGNER $ibKey $(Quote-1cArg $ibVal)$authPart /AgentMode /AgentPort $port /AgentListenAddress $listen /AgentSSHHostKeyAuto /AgentBaseDir $(Quote-1cArg $baseDirArg)$visiblePart"
+  $argStringLog = "DESIGNER $ibKey $(Quote-1cArg $ibVal) /N$(Quote-1cArg $auth.User) /P***$(if ($uc) { ' /UC***' } else { '' }) /AgentMode /AgentPort $port /AgentListenAddress $listen /AgentSSHHostKeyAuto /AgentBaseDir $(Quote-1cArg $baseDirArg)$visiblePart"
+  Write-Host ">> $DesignerPath $argStringLog"
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = $DesignerPath
   $psi.Arguments = $argString
@@ -209,7 +228,7 @@ function Start-DesignerAgent($Cfg, [string]$DesignerPath, [string]$ProjectRoot) 
       return
     }
     if ($proc.HasExited) {
-      throw "Designer agent process exited early code=$($proc.ExitCode) (IB locked by another Designer?)"
+      throw "Designer agent process exited early code=$($proc.ExitCode) (IB locked by another Designer? wrong /IBName quotes? missing /N/P?)"
     }
     Start-Sleep -Milliseconds 400
   }
