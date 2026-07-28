@@ -1,114 +1,138 @@
 ---
 name: 1c-ibcmd-pack
 description: >-
-  Собирает .cf из XML-выгрузки (src) через ibcmd: пустая/служебная ИБ,
-  import XML → apply → save .cf. Параметры платформы и пути — из .1c/project.json
-  проекта. Use when user asks to pack config to cf, ibcmd, XML→.cf, выгрузить cf,
-  перегнать выгрузку в cf.
+  ibcmd: pack XML→.cf; быстрый dump/export и partial import XML в основную
+  конфигурацию (без apply/КБД). Use when user asks ibcmd, pack cf, dump/export,
+  load-changed via ibcmd, сравнить с designer-agent.
 disable-model-invocation: true
 ---
 
-# 1C ibcmd pack (XML → .cf)
+# 1C ibcmd (pack + dump + load)
 
-## Цель
+## Сценарии
 
-Пакетно получить `.cf` из иерархической XML-выгрузки **без EDT** и без UI Конфигуратора.
-Служебная база может быть **пустой файловой** и **без пользователя** — тогда логин/пароль **не спрашивать и не передавать**.
+| Сценарий | Скрипт | ИБ |
+|----------|--------|-----|
+| XML → `.cf` | `Invoke-1cIbcmdPack.ps1` | служебная **файловая** |
+| dump / partial load XML | `Invoke-1cIbcmdDump.ps1` | `--db-path` **или** DBMS |
 
-Это **не** помещение в хранилище и не замена форм/метаданных в Cursor.
+На пилоте (client-server, `adm-sand-theta` / MSSQL `theta-msdb-sd`/`com_dackov`, 8.3.23, ~8801 XML ≈174 МБ):
 
-## Конфиг проекта (обязателен)
+| Операция | agent | ibcmd |
+|----------|------:|------:|
+| полная выгрузка | ~68 с | ~14 с |
+| инкремент (`dump-update` / `--sync`) | ~28 с | ~9 с |
+| partial load (3 файла РС) | ~36 с | ~7 с |
 
-В корне репозитория конфигурации:
+И dump, и load — только **основная** (КБД не трогали; подтверждено в UI).
 
-- `.1c/project.json` — в git (без секретов)
-- `.1c/project.local.json` — опционально, в `.gitignore` (локальные пути/секреты)
+## Критические правила CLI (проверено 8.3.23)
 
-Минимальный пример — `project.json.example` рядом с этим skill.
+1. **Всегда** `ibcmd infobase config …`, не голый `ibcmd config …`.  
+   Иначе при пользователях в ИБ — запрос auth на stdin → агент «зависает».
+2. **Нет** `/IBName` и cluster `Srvr=…;Ref=…`. Только файл или СУБД.
+3. **MSSQL / доменная учётка**: без `--db-user` / `--db-pwd`.
+4. **Пользователь 1С**: `--user` / `--password` (`project.local.json` / env).
+5. `--data=<dir>` (обычно `.1c/ibcmd-data/`, в `.gitignore`).
+6. Автоматизация: **stdin закрыт** (`< NUL`) — скрипты это делают.
+7. **`export` / `export --sync` и `import` / `import files` → только основная конфигурация.**  
+   **Не** вызывать `config apply` (= обновление КБД / `update-db-cfg`). Принятие в КБД — вручную в Конфигураторе.  
+   Пилот: после `import files` обновилась **только основная**, КБД без изменений (подтверждено в UI).
+8. `config save` без `--db` — основная; `save --db` — КБД.  
+   `export`/`--sync` также видит правки **основной** без прожатия бочки (совпало с designer `dump-update`).
 
-### Поля
+## Dump / export
 
-| Поле | Назначение |
-|------|------------|
-| `platformVersion` | например `8.3.23.1865` → поиск `ibcmd.exe` |
-| `ibcmd` | явный путь к ibcmd (если задан — важнее автопоиска) |
-| `src` | каталог XML (обычно `src`) |
-| `artifacts` | куда класть `.cf` |
-| `infobase.type` | пока только `file` |
-| `infobase.path` | каталог файловой ИБ (можно `.1c/ib-pack` внутри репо) |
-| `infobase.createIfMissing` | создать ИБ, если нет |
-| `auth.required` | `false` → **никогда** не просить user/password |
-| `auth.user` / `auth.password` | только если `required: true` (лучше в `project.local.json` или env) |
-| `pack.cfName` | имя выходного `.cf` |
-| `pack.force` | передать `--force` ibcmd при предупреждениях |
-| `pack.apply` | после import вызвать apply конфигурации БД |
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1" `
+  -Action dump-full -ProjectRoot "<repo>"
+```
 
-Env-оверрайды (опционально): `1C_IBCMD`, `1C_IB_PATH`, `1C_IB_USER`, `1C_IB_PASSWORD`.
+| Action | ibcmd | Аналог designer-agent |
+|--------|-------|------------------------|
+| `dump-full` | `export <dir>` | `dump-full` |
+| `dump-update` | `export --sync` | `dump-update` |
+| `load-files` | `import files` (+ list) | `load-changed` |
+| `ping` | `export info` | проверка связи |
 
-## Когда спрашивать пользователя
+`-OutDir` — каталог XML (дефолт `src`). Бенчи: `-OutDir .1c/dump-test/ibcmd`.
 
-- Нет `.1c/project.json` и не передан путь к конфигу → создать по example, спросить только `platformVersion` и путь ИБ (или оставить `.1c/ib-pack`).
-- `auth.required: true` и нет user/password в local/env → спросить **один раз** или предложить записать в `project.local.json`.
-- `auth.required: false` (дефолт для пустой перегонки) → **не спрашивать** учётку.
+## Load / import (только основная)
 
-## Команды агента
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1" `
+  -Action load-files -ProjectRoot "<repo>" -ListFile ".1c/load-list.txt"
+```
 
-Из корня репо конфигурации (или с `-ProjectRoot`):
+`-ListFile` — пути **относительно** каталога XML (`src` / `-OutDir`), по одному на строку.  
+Скрипт: `infobase config import files --base-dir=…` и **никогда** не делает `apply`.
+
+Вручную:
+
+```text
+ibcmd infobase config import files ^
+  --dbms=MSSQLServer --db-server=<sql> --db-name=<db> ^
+  --data=.1c/ibcmd-data --user=<1c> --password=<…> ^
+  --base-dir=<src> <file1> <file2> …
+```
+
+### Конфиг (client-server)
+
+```json
+"infobase": {
+  "type": "ibname",
+  "name": "…имя из списка…",
+  "dbms": {
+    "kind": "MSSQLServer",
+    "server": "sql-host",
+    "name": "db_name",
+    "windowsAuth": true
+  }
+}
+```
+
+`type`/`name` — designer-agent; `dbms` — ibcmd.  
+Опционально `ibcmd.dataDir` (дефолт `.1c/ibcmd-data`).
+
+Dump вручную:
+
+```text
+ibcmd infobase config export ^
+  --dbms=MSSQLServer --db-server=<sql> --db-name=<db> ^
+  --data=.1c/ibcmd-data --user=<1c> --password=<…> ^
+  <outDir>
+```
+
+Инкремент: `--sync` (нужен `ConfigDumpInfo.xml` в `<outDir>`).
+
+## Pack (XML → .cf)
+
+Пакетно получить `.cf` из hierarchical XML **без EDT**.  
+Служебная ИБ может быть пустой файловой без пользователя — тогда auth **не** спрашивать.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdPack.ps1" -Action pack
 ```
 
-Действия:
+| Action | Что |
+|--------|-----|
+| `pack` | ensure IB → import → apply (если включено) → save `.cf` |
+| `pack-delta` | git diff → урезанный XML → import → save |
+| `ensure-ib` / `import` / `save-cf` | по шагам |
 
-| Action | Что делает |
-|--------|------------|
-| `pack` | ensure IB → import XML → apply (если включено) → save `.cf` |
-| `pack-delta` | построить обрезанную XML-папку по `git diff` → import в отдельную служебную ИБ → save `.cf` |
-| `ensure-ib` | создать пустую файловую ИБ при необходимости |
-| `import` | только import XML в ИБ |
-| `save-cf` | только save текущей конфигурации в `.cf` |
+`pack.apply: true` здесь допустим — это **служебная** ИБ для сборки cf, не продуктовый dump/load.
 
-Скрипт сам читает `.1c/project.json` (+ local), резолвит `ibcmd`, не передаёт `-u`/`-P`, если auth не required.
-
-### pack-delta: диапазон дифа
-
-Для `pack-delta` скрипт запускает `git diff --name-only <BaseRef> <HeadRef>` и копирует в временный delta-src только затронутые объекты (плюс `Configuration.xml` и `ConfigDumpInfo.xml`).
-
-Вызов:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdPack.ps1" `
-  -Action pack-delta `
-  -ProjectRoot "<repoRoot>" `
-  -BaseRef "<baseRef>" `
-  -HeadRef "<headRef>"
-```
-
-Если `-BaseRef/-HeadRef` не переданы, скрипт возьмёт их из `.1c/project.json` -> `delta.baseRef/delta.headRef` или возьмёт дефолты `HEAD~1` и `HEAD`.
-
-Эквивалент ibcmd (справочно, файловая ИБ без пользователя):
-
-```text
-ibcmd infobase create --db-path=<ib> --import=<src> --apply --force
-ibcmd config save --db-path=<ib> <artifacts>/<name>.cf
-```
-
-или на существующей ИБ:
-
-```text
-ibcmd config import files --db-path=<ib> --base-dir=<src> [--force]
-ibcmd config apply --db-path=<ib> --force
-ibcmd config save --db-path=<ib> <out.cf>
-```
+Env: `1C_IBCMD`, `1C_IB_PATH`, `1C_IB_USER`, `1C_IB_PASSWORD`, `1C_DB_USER`, `1C_DB_PASSWORD`.
 
 ## Жёсткие правила
 
-1. Не трогать продуктовое хранилище и не предлагать авто-помещение.
-2. Не коммитить `.cf`, каталог служебной ИБ (`.1c/ib-pack`), `project.local.json`.
-3. Версия `ibcmd` должна соответствовать `platformVersion` проекта (разные репо — разные версии через свой `project.json`).
-4. При ошибке ibcmd — показать stderr и код выхода, не выдумывать успех.
+1. Не трогать хранилище / авто-помещение.
+2. Не коммитить `.cf`, `.1c/ib-pack*`, `.1c/ibcmd-data`, `project.local.json`, dump-test.
+3. Версия `ibcmd` = `platformVersion`.
+4. Ошибка — stderr + exit code.
+5. **Dump/load-скрипт не вызывает `config apply`.**
 
 ## Результат пользователю
 
-Кратко: путь к `.cf`, использованные `ibcmd` и `db-path`, было ли создание ИБ, были ли credentials (да/нет — без печати пароля).
+Dump/load: каталог, list/файлы, `ELAPSED_SEC`, тип подключения (без паролей), явно «без apply / КБД».  
+Pack: путь к `.cf`, credentials да/нет.

@@ -28,6 +28,13 @@ ConfigDumpInfo.xml.bak
 .1c/incoming/
 .1c/ext-*.log
 .1c/test-*.ps1
+# Сравнения dump: agent vs ibcmd (содержимое локально; README — в git)
+.1c/dump-test/**
+!.1c/dump-test/README.md
+.1c/ibcmd-data/
+.1c/bench-*.log
+.1c/bench-*.out.txt
+.1c/bench-*.err.txt
 logs/
 artifacts/
 agent-dump-test/
@@ -75,3 +82,7 @@ __pycache__/
 
 # Local Python venv (optional paramiko for agent SSH)
 .venv/
+
+.1c/_ibcmd-help-config.txt
+.1c/load-bench-*.txt
+.1c/bench-incr-files.txt

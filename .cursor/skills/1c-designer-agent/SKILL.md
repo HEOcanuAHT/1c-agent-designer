@@ -20,6 +20,10 @@ disable-model-invocation: true
 Транспорт по умолчанию: **batch** (`/DumpConfigToFiles`, `/LoadConfigFromFiles`).  
 AgentMode+SSH — experimental (`designerAgent.transport: agent` или `-UseAgent`).
 
+Быстрый dump/load через **ibcmd** (часто в разы быстрее agent): skill `1c-ibcmd-pack` → `Invoke-1cIbcmdDump.ps1`  
+(`dump-full` / `dump-update` / `load-files`). Нужен `infobase.dbms` или файловая ИБ; `/IBName` ibcmd не умеет.  
+**И dump, и import** — только **основная** конфигурация; `config apply` / КБД не трогать (как и этот skill без `update-db-cfg`). Пилот: `import files` обновил только основную.
+
 ## Два «только отличия»
 
 | Режим | Сравнивает |

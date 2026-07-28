@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.07.27.2",
+  "version": "2026.07.28.2",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -30,6 +30,8 @@
     ".1c/project.local.json",
     ".1c/ib-dev",
     ".1c/agent.pid",
+    ".1c/dump-test",
+    ".1c/ibcmd-data",
     "artifacts"
   ]
 }

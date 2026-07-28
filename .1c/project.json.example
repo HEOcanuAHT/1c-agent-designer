@@ -5,13 +5,22 @@
   "src": "src",
   "template": {
     "name": "1c-agent-designer",
-    "version": "2026.07.27.2",
+    "version": "2026.07.28.2",
     "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
     "ref": "main"
   },
   "infobase": {
     "type": "file",
-    "path": ".1c/ib-dev"
+    "path": ".1c/ib-dev",
+    "dbms": {
+      "kind": "MSSQLServer",
+      "server": "sql-host",
+      "name": "db_name",
+      "windowsAuth": true
+    }
+  },
+  "ibcmd": {
+    "dataDir": ".1c/ibcmd-data"
   },
   "auth": {
     "required": true,

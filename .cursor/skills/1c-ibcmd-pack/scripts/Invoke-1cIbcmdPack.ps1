@@ -95,10 +95,32 @@ function Test-FileIbExists([string]$DbPath) {
 }
 
 function Invoke-Ibcmd([string]$IbcmdPath, [string[]]$IbcmdArgs) {
-  Write-Host ">> $IbcmdPath $($IbcmdArgs -join ' ')"
-  & $IbcmdPath @IbcmdArgs
-  if ($LASTEXITCODE -ne 0) {
-    throw "ibcmd exited with code $LASTEXITCODE"
+  # Never print secrets; close stdin so auth prompts cannot hang automation.
+  $safe = ($IbcmdArgs | ForEach-Object {
+    if ($_ -match '^--password=' -or $_ -match '^--db-pwd=' -or $_ -match '^-P') {
+      if ($_ -match '^-P$') { '-P***' } else { ($_ -replace '=.*$', '=***') }
+    } else { $_ }
+  }) -join ' '
+  Write-Host ">> $IbcmdPath $safe"
+  $argStr = ($IbcmdArgs | ForEach-Object {
+    if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
+  }) -join ' '
+  $cmdLine = "`"$IbcmdPath`" $argStr < NUL"
+  $outFile = [IO.Path]::GetTempFileName()
+  $errFile = [IO.Path]::GetTempFileName()
+  try {
+    $p = Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", $cmdLine) `
+      -NoNewWindow -PassThru -Wait `
+      -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+    foreach ($f in @($outFile, $errFile)) {
+      $t = Get-Content -LiteralPath $f -Raw -EA SilentlyContinue
+      if ($t) { Write-Host $t.TrimEnd() }
+    }
+    if ($p.ExitCode -ne 0) {
+      throw "ibcmd exited with code $($p.ExitCode)"
+    }
+  } finally {
+    Remove-Item -LiteralPath $outFile, $errFile -Force -EA SilentlyContinue
   }
 }
 
@@ -199,16 +221,16 @@ function Import-Xml {
   if (-not (Test-Path -LiteralPath (Join-Path $src "Configuration.xml"))) {
     throw "Missing $src\Configuration.xml"
   }
-  Invoke-Ibcmd $ibcmdPath (@("config", "import", "files") + $commonDb + @("--base-dir=$src") + $forceArgs)
+  Invoke-Ibcmd $ibcmdPath (@("infobase", "config", "import", "files") + $commonDb + @("--base-dir=$src") + $forceArgs)
   if ($apply) {
-    Invoke-Ibcmd $ibcmdPath (@("config", "apply") + $commonDb + $forceArgs + @("--dynamic=disable", "--session-terminate=force"))
+    Invoke-Ibcmd $ibcmdPath (@("infobase", "config", "apply") + $commonDb + $forceArgs + @("--dynamic=disable", "--session-terminate=force"))
   }
 }
 
 function Save-Cf {
   New-Item -ItemType Directory -Force -Path $artifacts | Out-Null
   $outCf = Join-Path $artifacts $cfName
-  Invoke-Ibcmd $ibcmdPath (@("config", "save") + $commonDb + @($outCf))
+  Invoke-Ibcmd $ibcmdPath (@("infobase", "config", "save") + $commonDb + @($outCf))
   Write-Host "CF_OUT=$outCf"
 }
 

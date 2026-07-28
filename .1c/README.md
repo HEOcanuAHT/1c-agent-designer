@@ -7,6 +7,10 @@
 
 Опционально `ext.dir` / `ext.artifacts` — каталоги внешних обработок (skill `1c-external-epf`; дефолты `src/_extDataProcessors` и `artifacts/ext`).
 
+Локальные сравнения выгрузок (не в git): `.1c/dump-test/agent/` и `.1c/dump-test/ibcmd/` — см. README в `dump-test/`.
+
+Для **ibcmd dump** на client-server ИБ добавь `infobase.dbms` (`kind` / `server` / `name`, обычно `windowsAuth: true`) — `/IBName` ibcmd не умеет. Рабочий каталог: `ibcmd.dataDir` или `.1c/ibcmd-data/`. Скрипт: `1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1`. Всегда `infobase config …`, не голый `config` (иначе hang на stdin).
+
 Блок `template` — откуда тянуть обновления skills/rules (`url` / `version` / `ref`). Sync его обновляет; `src/` и секреты не трогает.
 
 В `project.local.json` опционально `auth.uc` — код разблокировки ИБ (`/UC` при старте AgentMode). Env: `1C_IB_UC`.

@@ -6,7 +6,7 @@
 - skills стандартов ИТС (`coding-standards`, `std-*`)
 - dump/load через `1c-designer-agent`
 - внешние обработки через `1c-external-epf` (`src/_extDataProcessors`)
-- упаковка через `1c-ibcmd-pack` (по запросу)
+- упаковка `.cf` и быстрый dump XML через `1c-ibcmd-pack` (по запросу)
 - обновление шаблона в живых проектах: `1c-template-sync` (без `src/`)
 - субагент `/implementer`
 

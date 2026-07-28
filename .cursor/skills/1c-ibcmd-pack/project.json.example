@@ -7,7 +7,13 @@
   "infobase": {
     "type": "file",
     "path": ".1c/ib-pack",
-    "createIfMissing": true
+    "createIfMissing": true,
+    "dbms": {
+      "kind": "MSSQLServer",
+      "server": "sql-host",
+      "name": "db_name",
+      "windowsAuth": true
+    }
   },
   "auth": {
     "required": false
