@@ -21,7 +21,10 @@ param(
   [string]$OutDir = "",
 
   # For load-files: paths relative to OutDir/src, one per line (UTF-8)
-  [string]$ListFile = ""
+  [string]$ListFile = "",
+
+  # Export/sync directly into OutDir (bench dirs). Default: staging when README/_ext present.
+  [switch]$NoStaging
 )
 
 $ErrorActionPreference = "Stop"
@@ -76,13 +79,45 @@ function Get-IbAuthArgs($Cfg, [string]$ProjectRoot = "") {
   return $a
 }
 
-function Get-ConnectionArgs($Cfg, [string]$ProjectRoot) {
-  # Prefer explicit DBMS block for client-server (ibcmd cannot use /IBName).
-  $dbms = $null
-  if ($Cfg.infobase -and $Cfg.infobase.dbms) { $dbms = $Cfg.infobase.dbms }
-  elseif ($Cfg.ibcmd -and $Cfg.ibcmd.dbms) { $dbms = $Cfg.ibcmd.dbms }
+function Get-InfobaseType($Cfg) {
+  if ($Cfg.infobase -and $Cfg.infobase.type) { return [string]$Cfg.infobase.type }
+  return "file"
+}
 
-  if ($dbms) {
+function Get-InfobaseDbms($Cfg) {
+  if ($Cfg.infobase -and $Cfg.infobase.dbms) { return $Cfg.infobase.dbms }
+  if ($Cfg.ibcmd -and $Cfg.ibcmd.dbms) {
+    Write-Warning "ibcmd.dbms is deprecated; move dbms into infobase (one IB description for all tools)."
+    return $Cfg.ibcmd.dbms
+  }
+  return $null
+}
+
+function Get-InfobaseFilePath($Cfg, [string]$ProjectRoot) {
+  $p = $null
+  if ($env:1C_IB_PATH) { $p = $env:1C_IB_PATH }
+  elseif ($Cfg.infobase -and $Cfg.infobase.path) { $p = [string]$Cfg.infobase.path }
+  else { $p = ".1c/ib-dev" }
+  if ([System.IO.Path]::IsPathRooted($p)) { return $p }
+  return Join-Path $ProjectRoot $p
+}
+
+function Get-ConnectionArgs($Cfg, [string]$ProjectRoot) {
+  $type = Get-InfobaseType $Cfg
+
+  if ($type -eq "file") {
+    $dbPath = Get-InfobaseFilePath $Cfg $ProjectRoot
+    return @{ Mode = "file"; Args = @("--db-path=$dbPath"); Label = "file:$dbPath" }
+  }
+
+  if ($type -eq "ibname" -or $type -eq "server") {
+    $dbms = Get-InfobaseDbms $Cfg
+    if (-not $dbms) {
+      throw @"
+infobase.type=$type but infobase.dbms is missing (ibcmd needs direct SQL).
+Fill infobase.dbms { kind, server, name } or use designer-agent (tools.preferredDump=agent).
+"@
+    }
     $kind = [string]$dbms.kind
     if (-not $kind -and $dbms.PSObject.Properties["type"]) { $kind = [string]$dbms.type }
     if (-not $kind) { $kind = "MSSQLServer" }
@@ -91,7 +126,7 @@ function Get-ConnectionArgs($Cfg, [string]$ProjectRoot) {
     $name = [string]$dbms.name
     if (-not $name -and $dbms.PSObject.Properties["dbName"]) { $name = [string]$dbms.dbName }
     if (-not $server -or -not $name) {
-      throw "infobase.dbms.server and infobase.dbms.name are required for DBMS connection."
+      throw "infobase.dbms.server and infobase.dbms.name are required for client-server IB."
     }
     $args = @("--dbms=$kind", "--db-server=$server", "--db-name=$name")
 
@@ -102,24 +137,14 @@ function Get-ConnectionArgs($Cfg, [string]$ProjectRoot) {
       $dbPwd = $env:1C_DB_PASSWORD
       if ($dbms.user) { $dbUser = [string]$dbms.user }
       if ($dbms.password) { $dbPwd = [string]$dbms.password }
-      if (-not $dbUser) { throw "dbms.windowsAuth=false but db user missing (dbms.user / 1C_DB_USER)." }
+      if (-not $dbUser) { throw "infobase.dbms.windowsAuth=false but db user missing (dbms.user / 1C_DB_USER)." }
       $args += "--db-user=$dbUser"
       if ($null -ne $dbPwd -and $dbPwd -ne "") { $args += "--db-pwd=$dbPwd" }
     }
     return @{ Mode = "dbms"; Args = $args; Label = "$kind/$server/$name (windowsAuth=$winAuth)" }
   }
 
-  $type = "file"
-  if ($Cfg.infobase -and $Cfg.infobase.type) { $type = [string]$Cfg.infobase.type }
-  if ($type -eq "ibname" -or $type -eq "server") {
-    throw "ibcmd dump needs file IB (--db-path) or infobase.dbms {kind,server,name}. type=$type (/IBName and cluster Srvr are not supported by ibcmd)."
-  }
-
-  $p = if ($env:1C_IB_PATH) { $env:1C_IB_PATH }
-    elseif ($Cfg.infobase -and $Cfg.infobase.path) { [string]$Cfg.infobase.path }
-    else { ".1c/ib-dev" }
-  $dbPath = if ([System.IO.Path]::IsPathRooted($p)) { $p } else { Join-Path $ProjectRoot $p }
-  return @{ Mode = "file"; Args = @("--db-path=$dbPath"); Label = "file:$dbPath" }
+  throw "infobase.type must be file, ibname, or server (got '$type')."
 }
 
 function Get-DataDir($Cfg, [string]$ProjectRoot) {
@@ -128,6 +153,91 @@ function Get-DataDir($Cfg, [string]$ProjectRoot) {
   $path = if ([System.IO.Path]::IsPathRooted($rel)) { $rel } else { Join-Path $ProjectRoot $rel }
   New-Item -ItemType Directory -Force -Path $path | Out-Null
   return $path
+}
+
+function Get-StagingDir($Cfg, [string]$ProjectRoot) {
+  $rel = ".1c/ibcmd-dump-staging"
+  if ($Cfg.ibcmd -and $Cfg.ibcmd.stagingDir) { $rel = [string]$Cfg.ibcmd.stagingDir }
+  if ([System.IO.Path]::IsPathRooted($rel)) { return $rel }
+  return Join-Path $ProjectRoot $rel
+}
+
+function Get-PreserveRels($Cfg, [string]$DumpRel) {
+  $rels = [System.Collections.Generic.List[string]]::new()
+  [void]$rels.Add("README.md")
+  $extDir = "src/_extDataProcessors"
+  if ($Cfg.ext -and $Cfg.ext.dir) { $extDir = ([string]$Cfg.ext.dir -replace "\\", "/").TrimEnd("/") }
+  $dumpNorm = ($DumpRel -replace "\\", "/").TrimEnd("/")
+  if ($extDir.StartsWith("$dumpNorm/", [System.StringComparison]::OrdinalIgnoreCase)) {
+    [void]$rels.Add($extDir.Substring($dumpNorm.Length + 1))
+  } elseif ($extDir -notmatch "/") {
+    [void]$rels.Add($extDir)
+  } else {
+    $leaf = [IO.Path]::GetFileName($extDir)
+    if ($leaf) { [void]$rels.Add($leaf) }
+  }
+  if ($Cfg.ibcmd -and $Cfg.ibcmd.preservePaths) {
+    foreach ($p in @($Cfg.ibcmd.preservePaths)) {
+      $norm = ([string]$p -replace "\\", "/").TrimStart("./")
+      if ($norm) { [void]$rels.Add($norm) }
+    }
+  }
+  return @($rels | Select-Object -Unique)
+}
+
+function Test-PathIsPreserved([string]$Name, [string[]]$PreserveRels) {
+  foreach ($p in $PreserveRels) {
+    $top = ($p -replace "\\", "/").Split("/")[0]
+    if ($Name.Equals($top, [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
+  }
+  return $false
+}
+
+function Test-NeedsDumpStaging([string]$DumpAbs, [string[]]$PreserveRels, [string]$Action) {
+  $items = @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)
+  if ($items.Count -eq 0) { return $false }
+  if ($Action -eq "dump-full") { return $true }
+  foreach ($item in $items) {
+    if (Test-PathIsPreserved $item.Name $PreserveRels) { return $true }
+  }
+  return $false
+}
+
+function Reset-StagingDir([string]$Staging) {
+  if (Test-Path -LiteralPath $Staging) {
+    Remove-Item -LiteralPath $Staging -Recurse -Force
+  }
+  New-Item -ItemType Directory -Force -Path $Staging | Out-Null
+}
+
+function Clear-DumpDirExceptPreserve([string]$DumpAbs, [string[]]$PreserveRels) {
+  foreach ($item in @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)) {
+    if (-not (Test-PathIsPreserved $item.Name $PreserveRels)) {
+      Remove-Item -LiteralPath $item.FullName -Recurse -Force
+    }
+  }
+}
+
+function Copy-DumpTree([string]$From, [string]$To) {
+  New-Item -ItemType Directory -Force -Path $To | Out-Null
+  foreach ($item in @(Get-ChildItem -LiteralPath $From -Force -ErrorAction SilentlyContinue)) {
+    Copy-Item -LiteralPath $item.FullName -Destination $To -Recurse -Force
+  }
+}
+
+function Copy-ConfigDumpToStaging([string]$DumpAbs, [string]$Staging, [string[]]$PreserveRels) {
+  Reset-StagingDir $Staging
+  foreach ($item in @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)) {
+    if (-not (Test-PathIsPreserved $item.Name $PreserveRels)) {
+      Copy-Item -LiteralPath $item.FullName -Destination $Staging -Recurse -Force
+    }
+  }
+}
+
+function Merge-DumpStaging([string]$Staging, [string]$DumpAbs, [string[]]$PreserveRels) {
+  New-Item -ItemType Directory -Force -Path $DumpAbs | Out-Null
+  Clear-DumpDirExceptPreserve $DumpAbs $PreserveRels
+  Copy-DumpTree $Staging $DumpAbs
 }
 
 function Test-IbcmdAuthPrompt([string]$Text) {
@@ -161,6 +271,7 @@ function Throw-IbcmdFailure([string]$Combined, [int]$ExitCode) {
     '\u041f\u0430\u0440\u043e\u043b\u044c \u0434\u043b\u044f\s+.'
   )
   $reFull = '\u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044e \u043f\u043e\u043b\u043d\u043e\u0441\u0442\u044c\u044e|export.*full'
+  $reNotEmpty = '\u043a\u0430\u0442\u0430\u043b\u043e\u0433 .+ \u043d\u0435 \u043f\u0443\u0441\u0442|directory .+ is not empty|not empty'
   if ([regex]::IsMatch($Combined, $reLock)) {
     throw "ibcmd: exclusive lock on file IB - Configurator (or another process) holds this base. Close Designer on this IB and retry. exit=$ExitCode"
   }
@@ -169,6 +280,9 @@ function Throw-IbcmdFailure([string]$Combined, [int]$ExitCode) {
   }
   if ([regex]::IsMatch($Combined, $reFull)) {
     throw "ibcmd: ConfigDumpInfo does not match this IB - run dump-full into this folder first, then dump-update. exit=$ExitCode"
+  }
+  if ([regex]::IsMatch($Combined, $reNotEmpty)) {
+    throw "ibcmd: export target must be empty (README/_extDataProcessors break full export). Use Invoke-1cIbcmdDump without -NoStaging. exit=$ExitCode"
   }
   throw "ibcmd exited with code $ExitCode"
 }
@@ -254,11 +368,17 @@ $authArgs = Get-IbAuthArgs $cfg $ProjectRoot
 
 $srcRel = if ($cfg.src) { ([string]$cfg.src -replace "\\", "/").TrimEnd("/") } else { "src" }
 if ($OutDir) {
+  $outRel = ($OutDir -replace "\\", "/").TrimEnd("/")
   $dumpAbs = if ([System.IO.Path]::IsPathRooted($OutDir)) { $OutDir } else { Join-Path $ProjectRoot $OutDir }
 } else {
+  $outRel = $srcRel
   $dumpAbs = Join-Path $ProjectRoot ($srcRel -replace "/", "\")
 }
 New-Item -ItemType Directory -Force -Path $dumpAbs | Out-Null
+$preserveRels = Get-PreserveRels $cfg $outRel
+$stagingDir = Get-StagingDir $cfg $ProjectRoot
+$useStaging = (-not $NoStaging) -and (($Action -eq "dump-full") -or ($Action -eq "dump-update")) `
+  -and (Test-NeedsDumpStaging $dumpAbs $preserveRels $Action)
 
 $log = Join-Path $ProjectRoot ".1c\ibcmd-dump.log"
 $common = @("infobase", "config") + $conn.Args + @("--data=$dataDir") + $authArgs
@@ -269,6 +389,8 @@ Write-Host "connection=$($conn.Label)"
 Write-Host "data=$dataDir"
 Write-Host "xmlDir=$dumpAbs"
 Write-Host "action=$Action"
+if ($preserveRels.Count -gt 0) { Write-Host "preserve=$($preserveRels -join ', ')" }
+if ($useStaging) { Write-Host "staging=$stagingDir" }
 Write-Host "update-db-cfg/apply: never (main config only)"
 
 $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -281,14 +403,30 @@ switch ($Action) {
     Write-Host "OK ping (export info)"
   }
   "dump-full" {
-    Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", $dumpAbs)) $log
+    if ($useStaging) {
+      Reset-StagingDir $stagingDir
+      Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", $stagingDir)) $log
+      Merge-DumpStaging $stagingDir $dumpAbs $preserveRels
+    } else {
+      Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", $dumpAbs)) $log
+    }
   }
   "dump-update" {
     $cdi = Join-Path $dumpAbs "ConfigDumpInfo.xml"
     if (-not (Test-Path -LiteralPath $cdi)) {
       throw "need ConfigDumpInfo.xml in $dumpAbs - run dump-full first"
     }
-    Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $dumpAbs)) $log
+    if ($useStaging) {
+      Copy-ConfigDumpToStaging $dumpAbs $stagingDir $preserveRels
+      $cdiStage = Join-Path $stagingDir "ConfigDumpInfo.xml"
+      if (-not (Test-Path -LiteralPath $cdiStage)) {
+        throw "staging copy missing ConfigDumpInfo.xml - run dump-full first"
+      }
+      Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $stagingDir)) $log
+      Merge-DumpStaging $stagingDir $dumpAbs $preserveRels
+    } else {
+      Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $dumpAbs)) $log
+    }
   }
   "load-files" {
     if (-not $ListFile) { throw "load-files requires -ListFile (paths relative to xml dir)" }

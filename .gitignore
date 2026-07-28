@@ -34,6 +34,7 @@ ConfigDumpInfo.xml.bak
 .1c/dump-test/**
 !.1c/dump-test/README.md
 .1c/ibcmd-data/
+.1c/ibcmd-dump-staging/
 .1c/bench-*.log
 .1c/bench-*.out.txt
 .1c/bench-*.err.txt

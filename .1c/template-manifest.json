@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.07.28.4",
+  "version": "2026.07.28.5",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -9,6 +9,7 @@
     ".cursor/agents",
     "docs/WORKFLOW.md",
     "docs/INITIAL_DUMP.md",
+    "docs/TEMPLATE_UPGRADE.md",
     "AGENTS.md",
     ".1c/project.json.example",
     ".1c/project.local.json.example",
@@ -33,5 +34,23 @@
     ".1c/dump-test",
     ".1c/ibcmd-data",
     "artifacts"
+  ],
+  "upgradeNotes": [
+    {
+      "since": "2026.07.28.1",
+      "summary": "Добавить tools.preferredDump (ibcmd|agent) в project.json при отсутствии."
+    },
+    {
+      "since": "2026.07.28.2",
+      "summary": "Перенести auth.password из project.local.json в Credential Manager (Migrate-1cAuthToCredMgr.ps1)."
+    },
+    {
+      "since": "2026.07.28.3",
+      "summary": "ibcmd dump-full: staging для непустого src/ (README, _extDataProcessors) — скрипт делает сам."
+    },
+    {
+      "since": "2026.07.28.4",
+      "summary": "Единый infobase: dbms в infobase (не ibcmd); type=file→path, ibname/server→name/server+dbms. См. docs/TEMPLATE_UPGRADE.md."
+    }
   ]
 }

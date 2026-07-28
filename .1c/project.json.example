@@ -5,7 +5,7 @@
   "src": "src",
   "template": {
     "name": "1c-agent-designer",
-    "version": "2026.07.28.4",
+    "version": "2026.07.28.5",
     "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
     "ref": "main"
   },
@@ -13,8 +13,8 @@
     "preferredDump": "ibcmd"
   },
   "infobase": {
-    "type": "file",
-    "path": ".1c/ib-dev",
+    "type": "ibname",
+    "name": "My Base (from 1C list)",
     "dbms": {
       "kind": "MSSQLServer",
       "server": "sql-host",
@@ -23,7 +23,9 @@
     }
   },
   "ibcmd": {
-    "dataDir": ".1c/ibcmd-data"
+    "dataDir": ".1c/ibcmd-data",
+    "stagingDir": ".1c/ibcmd-dump-staging",
+    "preservePaths": []
   },
   "auth": {
     "required": true,

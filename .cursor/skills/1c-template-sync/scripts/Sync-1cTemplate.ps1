@@ -84,6 +84,54 @@ function Normalize-Rel([string]$Rel) {
   return (($Rel -replace "\\", "/").Trim().TrimStart("/"))
 }
 
+function Compare-TemplateVersion([string]$Left, [string]$Right) {
+  if (-not $Left -and $Right) { return -1 }
+  if ($Left -and -not $Right) { return 1 }
+  if (-not $Left -and -not $Right) { return 0 }
+  $pa = @($Left -split '\.' | ForEach-Object { [int]$_ })
+  $pb = @($Right -split '\.' | ForEach-Object { [int]$_ })
+  $n = [Math]::Max($pa.Count, $pb.Count)
+  for ($i = 0; $i -lt $n; $i++) {
+    $va = if ($i -lt $pa.Count) { $pa[$i] } else { 0 }
+    $vb = if ($i -lt $pb.Count) { $pb[$i] } else { 0 }
+    if ($va -lt $vb) { return -1 }
+    if ($va -gt $vb) { return 1 }
+  }
+  return 0
+}
+
+function Write-UpgradeNotes {
+  param(
+    [string]$FromVersion,
+    [string]$ToVersion,
+    [object]$Manifest,
+    [string]$ProjectRoot
+  )
+  if (-not $FromVersion) {
+    Write-Host "UPGRADE first-sync: read docs/TEMPLATE_UPGRADE.md and align .1c/project.json with .1c/project.json.example"
+    return
+  }
+  if ((Compare-TemplateVersion $FromVersion $ToVersion) -ge 0) { return }
+
+  Write-Host "UPGRADE from=$FromVersion to=$ToVersion"
+  $notes = @()
+  if ($Manifest.upgradeNotes) { $notes = @($Manifest.upgradeNotes) }
+  foreach ($note in $notes) {
+    $since = [string]$note.since
+    if (-not $since) { continue }
+    if ((Compare-TemplateVersion $FromVersion $since) -lt 0 -and (Compare-TemplateVersion $since $ToVersion) -le 0) {
+      Write-Host "UPGRADE [$since] $($note.summary)"
+    }
+  }
+  $doc = Join-Path $ProjectRoot "docs\TEMPLATE_UPGRADE.md"
+  if (Test-Path -LiteralPath $doc) {
+    Write-Host "UPGRADE details: docs/TEMPLATE_UPGRADE.md"
+  } else {
+    Write-Host "UPGRADE details: will appear after sync (docs/TEMPLATE_UPGRADE.md)"
+  }
+  Write-Host "UPGRADE project.json is manual — sync does not rewrite infobase/auth"
+}
+
 function Test-ProjectSkip([string]$Rel, [string[]]$Skip) {
   $r = Normalize-Rel $Rel
   foreach ($s in @($Skip)) {
@@ -301,6 +349,7 @@ try {
   }
 
   if ($Action -eq "sync") {
+    $fromVersion = $localVersion
     $paths = @($remote.paths)
     if ($IncludeOptional -and $remote.optionalPaths) {
       $paths += @($remote.optionalPaths)
@@ -320,8 +369,10 @@ try {
       # Ensure manifest landed; rewrite project.json template block if present.
       Update-ProjectTemplateMeta -ProjectRoot $ProjectRoot -Manifest $remote
       Write-Host "OK sync version=$($remote.version)"
+      Write-UpgradeNotes -FromVersion $fromVersion -ToVersion ([string]$remote.version) -Manifest $remote -ProjectRoot $ProjectRoot
     } else {
       Write-Host "OK dry-run version=$($remote.version)"
+      Write-UpgradeNotes -FromVersion $fromVersion -ToVersion ([string]$remote.version) -Manifest $remote -ProjectRoot $ProjectRoot
     }
     Write-Host "SUMMARY version=$($remote.version) src=untouched secrets=untouched template-only=skipped"
     Write-Host "NEXT: review git status; commit tooling in the config project if desired"

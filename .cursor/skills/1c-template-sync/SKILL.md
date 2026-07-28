@@ -25,7 +25,7 @@ description: >-
 **Обновляется (allowlist из `.1c/template-manifest.json`):**
 
 - `.cursor/skills`, `.cursor/rules` (кроме template-only), `.cursor/agents`
-- `docs/WORKFLOW.md`, `docs/INITIAL_DUMP.md`
+- `docs/WORKFLOW.md`, `docs/INITIAL_DUMP.md`, `docs/TEMPLATE_UPGRADE.md`
 - `AGENTS.md`, `.1c/*.example`, `.1c/README.md`, `.1c/template-manifest.json`
 - `.gitlab/merge_request_templates`
 
@@ -150,11 +150,25 @@ Sync **не** трогает `.1c/project.local.json`, но в старых пи
 | id | content |
 |----|---------|
 | `sync-done` | sync skills/rules |
+| `sync-upgrade` | прочитать вывод `UPGRADE …` и `docs/TEMPLATE_UPGRADE.md`; вручную поправить `.1c/project.json` |
 | `sync-secrets` | проверить local на plaintext password |
 | `sync-credmgr` | по согласию Migrate / Set-1cIbCredential |
 | `sync-ping` | по согласию ping dump-инструментом |
 
 `sync-credmgr` → `cancelled`, если пароля в файле нет.
+
+### После sync: upgrade notes (не как в 1С)
+
+Полноценные цепочки «обработчиков обновления» для `project.json` **не делаем** — конфиг у каждого проекта свой, sync его не перезаписывает.
+
+Вместо этого:
+
+1. В `.1c/template-manifest.json` → `upgradeNotes[]` (`since`, `summary`) — краткие шаги по версиям.
+2. `docs/TEMPLATE_UPGRADE.md` — подробные инструкции для агента/человека.
+3. После `sync` скрипт печатает `UPGRADE [версия] …` для всех `since`, попавших между старой и новой версией.
+4. Агент **вручную** правит `project.json` / `project.local.json` по чеклисту (согласие пользователя на каждое изменение конфига).
+
+Автоматически только безопасное: CredMgr, копирование allowlist, `template.version` в `project.json`.
 
 ## Версии
 

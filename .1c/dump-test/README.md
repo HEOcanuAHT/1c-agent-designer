@@ -9,4 +9,4 @@
 
 Сюда — только эксперименты. Рабочая выгрузка проекта — `src/`.
 
-См. skill `1c-ibcmd-pack` (секция dump): всегда `infobase config`, для SQL — `infobase.dbms`, Windows auth без `--db-user`.
+См. `.1c/README.md`: один `infobase`, инструменты берут свои поля.

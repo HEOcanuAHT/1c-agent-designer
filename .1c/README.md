@@ -1,43 +1,52 @@
-# `.1c/project.json` — варианты `infobase`
+# `.1c/project.json` — описание информационной базы
 
-Рабочий файл: скопировать `project.json.example` → `project.json`.  
-Секреты: `project.local.json` (не в git). После обновления шаблона — предпочтительно **Credential Manager** (`credentialTarget`), см. `Migrate-1cAuthToCredMgr.ps1`.  
-Первичная настройка агентом: skill `1c-project-bootstrap` (чеклист + вопросы; `tools.preferredDump`: `ibcmd` | `agent`).  
-Обновление tooling из шаблона: skill `1c-template-sync` (манифест `.1c/template-manifest.json`).
+Рабочий файл: `project.json.example` → `project.json`. Секреты: `project.local.json` (не в git).  
+Bootstrap: skill `1c-project-bootstrap`. Sync tooling: skill `1c-template-sync`.
 
-Опционально `ext.dir` / `ext.artifacts` — каталоги внешних обработок (skill `1c-external-epf`; дефолты `src/_extDataProcessors` и `artifacts/ext`).
+## `infobase` — одна база, разные инструменты
 
-Локальные сравнения выгрузок (не в git): `.1c/dump-test/agent/` и `.1c/dump-test/ibcmd/` — см. README в `dump-test/`.  
-Локальные пробы/бенчи: `.1c/scratch/` (gitignore).
+Блок описывает **саму ИБ**. Скрипты берут из него своё:
 
-`tools.preferredDump`: **`ibcmd`** (быстрее) или **`agent`**. Для ibcmd на client-server нужен `infobase.dbms` (`kind` / `server` / `name`, обычно `windowsAuth: true`) — `/IBName` ibcmd не умеет. Файловая — только `path`. Рабочий каталог: `ibcmd.dataDir` или `.1c/ibcmd-data/`. Скрипт: `1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1`. Всегда `infobase config …`, не голый `config` (иначе hang на stdin).
+| `type` | Поля | designer-agent | ibcmd |
+|--------|------|----------------|-------|
+| `file` | `path` | `/F` | `--db-path` |
+| `ibname` | `name` + **`dbms`** | `/IBName` | `dbms` → SQL (быстрее) |
+| `server` | `server` + **`dbms`** | `/S` | `dbms` → SQL |
 
-Блок `template` — откуда тянуть обновления skills/rules (`url` / `version` / `ref`). Sync его обновляет; `src/` и секреты не трогает.
+`dbms` нужен только для **серверной** ИБ и только если используешь **ibcmd** (прямой доступ к СУБД).  
+Без доступа к SQL — `tools.preferredDump: agent`, `dbms` можно не заполнять.
 
-В `project.local.json` / `project.json` для auth предпочтительно:
+### Файловая
 
 ```json
-"auth": { "required": true, "credentialTarget": "1c-ib/my-config" }
+"infobase": { "type": "file", "path": "C:/Users/.../InfoBase8" },
+"ibcmd": { "dataDir": ".1c/ibcmd-data" }
 ```
 
-Пароль сохранить интерактивно:
+### Серверная (типичный пилот)
 
-```powershell
-.\.cursor\skills\1c-project-bootstrap\scripts\Set-1cIbCredential.ps1 -ProjectRoot .
+```json
+"infobase": {
+  "type": "ibname",
+  "name": "My Base",
+  "dbms": {
+    "kind": "MSSQLServer",
+    "server": "sql-host",
+    "name": "db_name",
+    "windowsAuth": true
+  }
+},
+"tools": { "preferredDump": "ibcmd" }
 ```
 
-Приоритет чтения: env → Credential Manager → `auth.user`/`password` в JSON.  
-Опционально `auth.uc` — код разблокировки (`/UC`). Env: `1C_IB_UC`.
+ibcmd через SQL обычно **заметно быстрее** agent; для этого попроси доступ к СУБД у админов.
 
-Для `ibname` имя из списка баз может содержать кавычки — скрипт экранирует их как `""` (не `\"`).
+### Прочее
 
-| type | Поля | Designer |
-|------|------|----------|
-| `file` | `path` — каталог ИБ (`C:/…` или `.1c/ib-dev`) | `/F` |
-| `server` | `server` — строка кластера как для `/S` | `/S` |
-| `ibname` | `name` — имя из списка информационных баз | `/IBName` |
-
-Проверка окружения:
+- `ibcmd` — только настройки **инструмента**: `dataDir`, `stagingDir`, `preservePaths` (не подключение к ИБ).
+- `tools.preferredDump`: `ibcmd` | `agent`.
+- `ext.dir` — внешние обработки (skill `1c-external-epf`).
+- Auth пользователя **1С** (не SQL): `auth.credentialTarget` + `Set-1cIbCredential.ps1`.
 
 ```powershell
 .\.cursor\skills\1c-project-bootstrap\scripts\Check-1cDevEnv.ps1 -ProjectRoot .

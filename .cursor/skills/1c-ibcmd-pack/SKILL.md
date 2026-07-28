@@ -60,7 +60,10 @@ description: >-
 3. `Требуется экспортировать конфигурацию полностью` (при `--sync`)  
    → `ConfigDumpInfo.xml` не от этой ИБ (другая база / битый маркер). Сделай `dump-full` в этот каталог, потом снова `--sync`.
 
-4. Голый `ibcmd config …` (без `infobase`) при пользователях → интерактивный auth на stdin → «завис». Всегда `ibcmd infobase config …` + закрытый stdin.  
+4. `Каталог … не пуст` (при полном `export`)  
+   → ibcmd требует **пустой** каталог. В `src/` обычно лежат `README.md` и `_extDataProcessors/` — скрипт `Invoke-1cIbcmdDump.ps1` **сам** выгружает во staging (`.1c/ibcmd-dump-staging/`) и мержит в целевой каталог, сохраняя preserve-пути. Для бенч-каталогов: `-NoStaging` только если каталог пустой.
+
+5. Голый `ibcmd config …` (без `infobase`) при пользователях → интерактивный auth на stdin → «завис». Всегда `ibcmd infobase config …` + закрытый stdin.  
    Скрипты `Invoke-1cIbcmdDump` / `Pack` дополнительно **poll** stdout/stderr: при `Имя пользователя:` / `Пароль для` / `требуется аутентификация` процесс убивается сразу (не ждать ~1 мин).
 
 ## Критические правила CLI (проверено 8.3.23)
@@ -94,6 +97,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibc
 
 `-OutDir` — каталог XML (дефолт `src`). Бенчи: `-OutDir .1c/dump-test/ibcmd`.
 
+### Staging (`src/` + README / `_extDataProcessors`)
+
+Проверено 8.3.23: полный `ibcmd export` требует **пустой** каталог; `export --sync` ломается, если рядом с XML есть посторонние файлы.
+
+`Invoke-1cIbcmdDump.ps1` по умолчанию:
+
+| Action | Когда staging | Что делает |
+|--------|---------------|------------|
+| `dump-full` | целевой каталог не пуст | export → `.1c/ibcmd-dump-staging/` → merge в `OutDir` |
+| `dump-update` | в каталоге есть preserve-пути | копия только XML → staging → `--sync` → merge |
+
+**Сохраняются** (не удаляются при merge): `README.md`, `ext.dir` (обычно `_extDataProcessors/`), опционально `ibcmd.preservePaths` в `project.json`.
+
+Пустой бенч-каталог: `-NoStaging`. Designer-agent staging **не** нужен — дампит прямо в `src/`.
+
 ## Load / import (только основная)
 
 ```powershell
@@ -115,6 +133,8 @@ ibcmd infobase config import files ^
 
 ### Конфиг (client-server)
 
+Один блок `infobase` — agent читает `name`, ibcmd — `dbms`:
+
 ```json
 "infobase": {
   "type": "ibname",
@@ -125,11 +145,11 @@ ibcmd infobase config import files ^
     "name": "db_name",
     "windowsAuth": true
   }
-}
+},
+"ibcmd": { "dataDir": ".1c/ibcmd-data" }
 ```
 
-`type`/`name` — designer-agent; `dbms` — ibcmd.  
-Опционально `ibcmd.dataDir` (дефолт `.1c/ibcmd-data`).
+Файловая: `type: file` + `path` — оба инструмента из одного поля.
 
 Dump вручную:
 

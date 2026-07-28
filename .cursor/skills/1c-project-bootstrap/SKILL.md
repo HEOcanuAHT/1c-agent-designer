@@ -116,7 +116,7 @@ Fallback: env `1C_IB_*` или legacy `auth.user`/`password` в local.
 | Ситуация | Рекомендация |
 |----------|----------------|
 | Файловая + есть `ibcmd` | **ibcmd** (быстрее; Конфигуратор на этой ИБ закрыть) |
-| C/S + доступ к СУБД (SQL) | **ibcmd** + блок `infobase.dbms` |
+| C/S + доступ к СУБД (SQL) | **ibcmd** + `infobase.dbms` в том же блоке, что `name`/`server` |
 | C/S **без** доступа к SQL / только `/IBName` | **designer-agent** (ibcmd не умеет `/IBName`) |
 | ibcmd нет в платформе | **designer-agent** |
 
@@ -128,17 +128,16 @@ Fallback: env `1C_IB_*` или legacy `auth.user`/`password` в local.
 
 ### Q5. Доступ к СУБД для ibcmd? (`boot-dbms`) — только если type ≠ file и выбрали ibcmd/оба
 
-Отдельно от Q3. Здесь только подключение **ibcmd → SQL**, не пользователи 1С.
+В **`infobase`** же, рядом с `name` / `server`. Только для ibcmd (прямой SQL); agent использует `name` или `server`.
 
-1. **Да, есть** → спросить `kind` / `server` / `name` (БД), затем:
+1. **Да, есть** → `infobase.dbms`: `kind` / `server` / `name` (БД). Кратко: ibcmd через SQL **быстрее** agent.
 
-   - **Windows / доменная auth к SQL?** (типичный случай) → `windowsAuth: true`  
-     **CredMgr и SQL-пароль не нужны** — ibcmd без `--db-user`/`--db-pwd`.
-   - SQL-логин/пароль → `windowsAuth: false` + user/pwd в env (`1C_DB_*`) или local (не CredMgr ИБ).
+   - **Windows auth к SQL** → `windowsAuth: true` (без SQL-пароля).
+   - SQL-логин → `windowsAuth: false` + user/pwd в env (`1C_DB_*`).
 
-2. **Нет доступа к SQL** → `preferredDump: agent`; Python+paramiko при необходимости.
+2. **Нет доступа к SQL** → `preferredDump: agent`; `dbms` не заполнять.
 
-Файловой ИБ блок `dbms` **не** нужен — только `--db-path`.
+Файловой ИБ `dbms` не нужен — только `path`.
 ### Q6. AgentMode как запасной? (если preferred = ibcmd и ещё не «оба»)
 
 Коротко: «Настроить designer-agent на случай недоступности ibcmd?»  
@@ -167,13 +166,13 @@ Fallback: env `1C_IB_*` или legacy `auth.user`/`password` в local.
 "auth": { "required": false }
 ```
 
-**C/S + ibcmd + доменный SQL (как типичный пилот):**
+**C/S — одна `infobase`, agent + ibcmd:**
 
 ```json
 "tools": { "preferredDump": "ibcmd" },
 "infobase": {
   "type": "ibname",
-  "name": "MyBase",
+  "name": "My Base",
   "dbms": {
     "kind": "MSSQLServer",
     "server": "sql-host",
@@ -181,10 +180,11 @@ Fallback: env `1C_IB_*` или legacy `auth.user`/`password` в local.
     "windowsAuth": true
   }
 },
+"ibcmd": { "dataDir": ".1c/ibcmd-data" },
 "auth": { "required": true, "credentialTarget": "1c-ib/my-base" }
 ```
 
-(`windowsAuth: true` — без SQL-пароля. `credentialTarget` — только если в ИБ есть пользователи **1С**; если пользователей 1С нет → `"required": false` и CredMgr не вызывать.)
+(`dbms` — для ibcmd; agent берёт `name`. SQL-пароль не нужен при `windowsAuth: true`.)
 **Только agent:**
 
 ```json
@@ -212,6 +212,6 @@ Fallback: env `1C_IB_*` или legacy `auth.user`/`password` в local.
 При любых dump/load в этом репо:
 
 1. Смотри `tools.preferredDump` в `project.json`.
-2. `ibcmd` → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` (нужен file path или `infobase.dbms`).
+2. `ibcmd` → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` (`infobase.path` или `infobase.dbms`).
 3. `agent` или ibcmd недоступен → skill **`1c-designer-agent`**.
 4. Пользователь явно сказал «через агент» / «через ibcmd» — слушай запрос, не только конфиг.
