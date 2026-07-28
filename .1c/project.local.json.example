@@ -1,8 +1,7 @@
 {
   "auth": {
     "required": true,
-    "user": "ИмяПользователяИБ",
-    "password": "пароль",
+    "credentialTarget": "1c-ib/example-config",
     "uc": ""
   }
 }

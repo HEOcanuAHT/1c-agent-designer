@@ -20,8 +20,9 @@ disable-model-invocation: true
 Транспорт по умолчанию: **batch** (`/DumpConfigToFiles`, `/LoadConfigFromFiles`).  
 AgentMode+SSH — experimental (`designerAgent.transport: agent` или `-UseAgent`).
 
-Быстрый dump/load через **ibcmd** (часто в разы быстрее agent): skill `1c-ibcmd-pack` → `Invoke-1cIbcmdDump.ps1`  
+Быстрый dump/load через **ibcmd** (часто в разы быстрее agent): skill `1c-ibcmd-pack` → `Invoke-1cIbcmdDump.ps1`
 (`dump-full` / `dump-update` / `load-files`). Нужен `infobase.dbms` или файловая ИБ; `/IBName` ibcmd не умеет.  
+Если в проекте `tools.preferredDump: "ibcmd"` — по умолчанию используй ibcmd, не agent.
 **И dump, и import** — только **основная** конфигурация; `config apply` / КБД не трогать (как и этот skill без `update-db-cfg`). Пилот: `import files` обновил только основную.
 
 ## Два «только отличия»
@@ -67,10 +68,18 @@ AgentMode всегда работает из `AgentBaseDir\<userDir>` (част�
 4. После `dump-*` / `load-changed` / `ping` агент гасится (kill по `.1c/agent.pid`), если не `designerAgent.keepAlive: true`. `start` оставляет процесс жить; `stop` — ручная остановка.
 5. **Загрузка (частичная и полная) — только в основную конфигурацию.** Не вызывать `update-db-cfg` / `/UpdateDBCfg`. Принятие в конфигурацию БД — вручную в Конфигураторе.
 6. **Ошибка захвата в хранилище** при load (`не захвачен в хранилище`, `ConfigFilesError`): коротко скажи пользователю, что объект **не захвачен в хранилище**, и назови объект (например `Catalog.Номенклатура`). Не разворачивай полный traceback. Дальше — захватить объект в Конфигураторе и повторить load.
+7. **Auth / пользователи ИБ** (проверено, в т.ч. файловая):
+   - ИБ **с пользователями** + верные `auth.user`/`password` → dump/load-changed **OK** (в т.ч. инкремент). Логин SSH к AgentMode = учётка ИБ.
+   - ИБ **без пользователей** → `auth.required: false` (без `/N` `/P`, SSH с пустым логином).
+   - Пользователи **есть**, `auth.required: false` / без `/N` `/P` → SSH `Authentication failed` (~несколько секунд). Конфу без учётки не выгрузить.
+   - Неверный пользователь/пароль → тот же `Authentication failed` (иногда `transport shut down or saw EOF`).  
+     **Сказать:** проверь логин/пароль ИБ в `project.local.json`; если пользователей нет — `auth.required: false`. Не разворачивай traceback paramiko.
+8. **ibcmd** при тех же auth-проблемах: см. skill `1c-ibcmd-pack` (`Идентификация пользователя не выполнена`, `Требуется экспортировать конфигурацию полностью`).
 
 ### AgentMode: `/IBName`, auth
 
-При старте агента скрипт передаёт `/N` `/P` (и `/UC` из `auth.uc` / `1C_IB_UC` при необходимости).  
+При старте агента скрипт передаёт `/N` `/P` (и `/UC` из `auth.uc` / `1C_IB_UC` при необходимости), **только если** `auth.required=true` или задан `auth.user`.  
+Для ИБ **без пользователей** — `auth.required: false`: ключи `/N` `/P` не передаются.  
 Кавычки в имени ИБ экранируются удвоением `""` (не `\"`). Для `/S` и `/IBName` обратный слэш не заменяется на `/`.
 
 ### Когда операция закончена
@@ -91,3 +100,5 @@ AgentMode всегда работает из `AgentBaseDir\<userDir>` (част�
 `Authentication failed: transport shut down or saw EOF`
 
 Дамп при открытом Designer на той же файловой ИБ **не работает**. Нужно закрыть пользовательский конфигуратор.
+
+То же для **ibcmd** на файловой ИБ: `Ошибка исключительной блокировки информационной базы` → закрыть Конфигуратор (skill `1c-ibcmd-pack`).

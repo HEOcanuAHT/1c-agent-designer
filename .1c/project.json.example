@@ -5,9 +5,12 @@
   "src": "src",
   "template": {
     "name": "1c-agent-designer",
-    "version": "2026.07.28.2",
+    "version": "2026.07.28.4",
     "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
     "ref": "main"
+  },
+  "tools": {
+    "preferredDump": "ibcmd"
   },
   "infobase": {
     "type": "file",
@@ -24,8 +27,7 @@
   },
   "auth": {
     "required": true,
-    "user": "",
-    "password": ""
+    "credentialTarget": "1c-ib/example-config"
   },
   "ext": {
     "dir": "src/_extDataProcessors",

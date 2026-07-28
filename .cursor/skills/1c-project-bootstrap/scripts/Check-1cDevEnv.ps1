@@ -157,7 +157,8 @@ if (-not $report.git) {
   $report.hints += "Install Git for load-changed by diff."
 }
 if (-not $ibcmd) {
-  $report.hints += "Optional: install ibcmd (same platform build) for pack XML→.cf and faster export/import."
+  $report.missing += "ibcmd"
+  $report.hints += "Preferred dump tool: ibcmd (same platform build as Designer). Without it use designer-agent fallback."
 }
 if (-not $report.hasProjectJson) {
   $report.missing += "project.json"
@@ -176,7 +177,7 @@ if ($Json) {
 Write-Host "=== 1C project env check ==="
 Write-Host "root: $($report.projectRoot)"
 Write-Host ("platform: " + $(if ($report.latestPlatform) { "$($report.latestPlatform) ($($report.designer))" } else { "MISSING" }))
-Write-Host ("ibcmd:    " + $(if ($report.ibcmd) { $report.ibcmd } else { "(optional, for pack)" }))
+Write-Host ("ibcmd:    " + $(if ($report.ibcmd) { $report.ibcmd } else { "MISSING (preferred dump)" }))
 Write-Host ("python:   " + $(if ($report.python) { $report.python } else { "MISSING" }))
 Write-Host ("paramiko: " + $(if ($report.paramiko) { "OK" } else { "MISSING" }))
 Write-Host ("plink:    " + $(if ($report.plink) { $report.plink } else { "(optional)" }))
@@ -184,11 +185,15 @@ Write-Host ("git:      " + $(if ($report.git) { "OK" } else { "MISSING" }))
 Write-Host ("project.json:      " + $(if ($report.hasProjectJson) { "OK" } else { "MISSING" }))
 Write-Host ("project.local.json:" + $(if ($report.hasProjectLocal) { "OK" } else { "MISSING" }))
 Write-Host ("agent SSH ready:   " + $(if ($report.readyForAgentSsh) { "YES" } else { "NO" }))
-Write-Host ("ibcmd pack ready:  " + $(if ($report.readyForIbcmdPack) { "YES" } else { "NO" }))
+Write-Host ("ibcmd dump ready:  " + $(if ($report.readyForIbcmdPack) { "YES" } else { "NO" }))
 if ($report.missing.Count) {
   Write-Host "MISSING: $($report.missing -join ', ')"
   foreach ($h in $report.hints) { Write-Host " - $h" }
-  exit 1
+  # Soft-fail only on hard blockers for any dump path
+  $hard = @($report.missing | Where-Object { $_ -in @('1c-platform', 'project.json', 'project.local.json', 'git') })
+  if ($hard.Count) { exit 1 }
+  Write-Host "OK: can continue bootstrap (ibcmd and/or agent may still need setup)"
+  exit 0
 }
-Write-Host "OK: environment looks ready for designer-agent"
+Write-Host "OK: environment looks ready (prefer ibcmd dump when configured)"
 exit 0

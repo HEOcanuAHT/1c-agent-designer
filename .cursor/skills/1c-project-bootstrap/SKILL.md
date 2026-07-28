@@ -2,119 +2,216 @@
 name: 1c-project-bootstrap
 description: >-
   Первичная настройка репозитория конфигурации 1С после clone/копии шаблона:
-  зависимости (Python, paramiko, платформа 1С), .1c/project.json и
-  project.local.json, тип ИБ (file/server/ibname). Use when user clones
-  template, asks setup/инициализация/настройка окружения, or .1c/project.json
-  is missing.
+  интерактивный чеклист (короткие вопросы), предпочтение ibcmd, fallback
+  designer-agent, зависимости, .1c/project.json и project.local.json, тип ИБ.
+  Use when user clones template, asks setup/инициализация/настройка окружения,
+  or .1c/project.json is missing.
 ---
 
 # Bootstrap проекта конфигурации 1С
 
 ## Когда запускать
 
-- Клон/копия `1c-project-template` (или конфиг на его базе) без рабочего `.1c/project.json`
-- Пользователь просит: настройка окружения, инициализация, bootstrap, «подключи ИБ»
-- Правило `1c-project-bootstrap` предложило setup — согласие пользователя
+- Клон/копия шаблона без рабочего `.1c/project.json`
+- Пользователь: настройка окружения / инициализация / bootstrap / «подключи ИБ»
+- Правило `1c-project-bootstrap` предложило setup — только после согласия
 
-Не запускать повторно, если `.1c/project.json` уже заполнен и пользователь не просит перенастроить. Секреты не трогать без явной просьбы.
+Не запускать повторно, если `.1c/project.json` уже заполнен и пользователь не просит перенастроить.
 
 ## Цель
 
-1. Проверить зависимости dump/load (`1c-designer-agent`).
-2. Создать `.1c/project.json` и `.1c/project.local.json` из example.
-3. Спросить тип ИБ и заполнить поля.
-4. Опционально: `ping` / подсказать первый `dump-full` ([docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md)).
+1. Интерактивный мини-опрос (один короткий вопрос за раз) + Todo-чеклист.
+2. Записать `.1c/project.json` / `project.local.json`.
+3. **Предпочтительный dump/load = ibcmd**; designer-agent — запасной путь.
+4. Опционально ping / первый dump ([docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md)).
 
-## Шаг 0 — корень проекта
+## Поведение агента (обязательно)
 
-Корень = каталог с `.cursor/skills` и `.1c/` (или куда копировали шаблон). Все пути относительно него.
+1. После согласия на setup — **сразу** создай TodoWrite-чеклист (см. ниже) и веди отметки по ходу.
+2. Вопросы — **короткие**, один за раз; варианты нумерованным списком (1/2/3) или AskQuestion, если доступен.
+3. Не пиши конфиги молча до ответов. Не ставь софт без согласия.  
+   Пароли ИБ: **Windows Credential Manager** (`Set-1cIbCredential.ps1`), не в чат и не в git. В JSON — только `credentialTarget`.
+4. Dump/load: load **без** `update-db-cfg`. Не смешивать с SDMS / feature-pipeline.
 
-## Шаг 1 — зависимости
+### Todo-чеклист (создать в начале)
 
-Запусти проверку:
+| id | content |
+|----|---------|
+| `boot-env` | Проверка окружения (платформа / ibcmd / Python) |
+| `boot-ib-type` | Тип ИБ (file / server / ibname) |
+| `boot-ib-conn` | Параметры подключения ИБ |
+| `boot-auth` | Пользователи ИБ и auth |
+| `boot-tool` | Выбор dump-инструмента (ibcmd / agent) |
+| `boot-dbms` | СУБД для ibcmd (если client-server) |
+| `boot-write` | Запись project.json + project.local.json |
+| `boot-ping` | Проверка связи (по согласию) |
+
+Пункты `boot-dbms` / `boot-ping` можно `cancelled`, если не нужны по ответам.
+
+---
+
+## Шаг 0 — корень
+
+Каталог с `.cursor/skills` и `.1c/`. Пути относительно него.
+
+## Шаг 1 — окружение (`boot-env`)
 
 ```powershell
 …\.cursor\skills\1c-project-bootstrap\scripts\Check-1cDevEnv.ps1 -ProjectRoot "<repo>"
 ```
 
-| Компонент | Зачем | Если нет |
-|-----------|--------|----------|
-| Платформа 1С (`1cv8.exe`) | Designer dump/load | Спросить `platformVersion` / путь установки |
-| Python 3 | SSH к AgentMode (`designer_agent_ssh.py`) | Предложить установить Python 3.10+ и добавить в PATH |
-| `paramiko` | то же | `pip install paramiko` (с согласия пользователя) |
-| `plink` (опционально) | запасной SSH-клиент | Не обязателен, если есть Python+paramiko |
-| Git | `load-changed` по diff | Обычно уже есть в среде Cursor |
+| Компонент | Зачем |
+|-----------|--------|
+| `1cv8.exe` + **`ibcmd.exe`** | Предпочтительный dump/load + pack |
+| Python + `paramiko` (или plink) | Только если нужен AgentMode (fallback) |
+| Git | `load-changed` по diff |
 
-**Не ставь** софт молча. Кратко покажи, чего не хватает → предложи команды → выполни только после согласия.
+Кратко покажи missing → предложи установку → выполняй только с согласия.  
+Для **только ibcmd** (файловая или C/S + SQL) Python не обязателен.
 
-Транспорт по умолчанию в шаблоне: `designerAgent.transport: agent` (нужен Python+paramiko **или** plink). Batch без SSH — fallback (`transport: batch`).
+## Шаг 2 — вопросы (мини-чат)
 
-## Шаг 2 — тип информационной базы
+### Q1. Тип ИБ? (`boot-ib-type`)
 
-Спроси **одним** выбором (AskQuestion / аналог UI, иначе нумерованный список в чате):
+1. Файловая → `infobase.type=file`
+2. Серверная (кластер `/S`) → `server`
+3. По имени в списке баз → `ibname`
 
-| Вариант | `infobase.type` | Что спросить дальше | Поля JSON |
-|---------|-----------------|---------------------|-----------|
-| Файловая | `file` | путь к каталогу ИБ (слэши `C:/…` или относительный `.1c/ib-dev`) | `path` |
-| Серверная | `server` | строка кластера `host\base` как для `/S` | `server` |
-| По имени в списке ИБ | `ibname` | имя из окна запуска 1С (как в списке баз) | `name` |
+### Q2. Параметры подключения (`boot-ib-conn`)
 
-Дополнительно (коротко):
+Только нужное поле:
 
-- `platformVersion` (например `8.3.23.1865`) — можно взять из вывода Check-скрипта
-- пользователь/пароль ИБ → **только** в `project.local.json` (не в git)
-- `designerAgent.baseDir` — абсолютный путь репо со слэшами `C:/Users/.../repo` (удобно для AgentMode)
+| type | Спросить | JSON |
+|------|----------|------|
+| file | путь каталога ИБ (`C:/…` или `.1c/ib-dev`) | `path` |
+| server | строка как для `/S` | `server` |
+| ibname | имя из списка 1С | `name` |
 
-## Шаг 3 — файлы конфига
+Также: `platformVersion` (можно из Check).
 
-1. Если нет `.1c/project.json` — копируй `.1c/project.json.example`.
-2. Если нет `.1c/project.local.json` — копируй `.1c/project.local.json.example`.
-3. Запиши ответы пользователя.
-4. Сохрани блок `template` из example (url/version/ref) — нужен для skill `1c-template-sync`.
+### Q3. Пользователи **1С** в ИБ есть? (`boot-auth`)
 
-### Примеры `infobase`
+Это учётка **конфигуратора/ИБ** (`--user` / `/N`), не SQL.
 
-**file:**
+1. **Нет** → `auth.required: false` (CredMgr не нужен)
+2. **Да** → `auth.required: true` + **Windows Credential Manager** для логина 1С
 
-```json
-"infobase": { "type": "file", "path": "C:/Users/.../InfoBase8" }
-```
+При «Да»:
 
-**server:**
-
-```json
-"infobase": { "type": "server", "server": "tcp://app-server/MyBase" }
-```
-
-(формат строки — как ожидает `/S` у вашей площадки; уточни у пользователя, если сомневаешься.)
-
-**ibname:**
-
-```json
-"infobase": { "type": "ibname", "name": "--== dev ==-- МояБаза" }
-```
-
-`auth` в `project.json` можно оставить `"required": true` с пустыми user/password; реальные значения — в local.
-
-Не коммить `project.local.json`. Не писать пароль в лог/чат целиком.
-
-## Шаг 4 — проверка связи
-
-С согласия пользователя:
+1. Target: `auth.credentialTarget` или `1c-ib/<имя-проекта>`.
+2. В терминале (пароль не в чат):
 
 ```powershell
-…\1c-designer-agent\scripts\Invoke-1cDesignerAgent.ps1 -Action ping -ProjectRoot "<repo>"
+…\1c-project-bootstrap\scripts\Set-1cIbCredential.ps1 -ProjectRoot "<repo>"
 ```
 
-Перед ping: обычный Конфигуратор на этой ИБ закрыт (особенно файловая).
+3. В JSON только `"credentialTarget"` — без пароля.
 
-Успех → предложи следующий шаг: `dump-full` по [docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md) (если `src/` ещё пустой каркас).
+Fallback: env `1C_IB_*` или legacy `auth.user`/`password` в local.
 
-## Правила поведения агента
+### Q4. Чем выгружать / загружать XML? (`boot-tool`)
 
-1. Один вопрос за раз по смыслу; тип ИБ — всегда через выбор из трёх вариантов.
-2. После выбора типа спрашивай **только** нужное поле (`path` / `server` / `name`).
-3. Предлагай установку зависимостей явно; не «чини окружение» без согласия.
-4. Dump/load — skill `1c-designer-agent`; load без `update-db-cfg`.
-5. Не смешивай bootstrap с feature-pipeline / SDMS (их нет в этом шаблоне).
-6. Позже обновление skills/rules — skill `1c-template-sync` (не перезаписывать `src/`).
+Сначала **рекомендация**, потом выбор:
+
+| Ситуация | Рекомендация |
+|----------|----------------|
+| Файловая + есть `ibcmd` | **ibcmd** (быстрее; Конфигуратор на этой ИБ закрыть) |
+| C/S + доступ к СУБД (SQL) | **ibcmd** + блок `infobase.dbms` |
+| C/S **без** доступа к SQL / только `/IBName` | **designer-agent** (ibcmd не умеет `/IBName`) |
+| ibcmd нет в платформе | **designer-agent** |
+
+Варианты ответа пользователя:
+
+1. **ibcmd** (предпочтительно) → `tools.preferredDump: "ibcmd"`
+2. **designer-agent** → `tools.preferredDump: "agent"`
+3. **оба** (ibcmd основной, agent запасной) → `preferredDump: "ibcmd"`, настроить и agent
+
+### Q5. Доступ к СУБД для ibcmd? (`boot-dbms`) — только если type ≠ file и выбрали ibcmd/оба
+
+Отдельно от Q3. Здесь только подключение **ibcmd → SQL**, не пользователи 1С.
+
+1. **Да, есть** → спросить `kind` / `server` / `name` (БД), затем:
+
+   - **Windows / доменная auth к SQL?** (типичный случай) → `windowsAuth: true`  
+     **CredMgr и SQL-пароль не нужны** — ibcmd без `--db-user`/`--db-pwd`.
+   - SQL-логин/пароль → `windowsAuth: false` + user/pwd в env (`1C_DB_*`) или local (не CredMgr ИБ).
+
+2. **Нет доступа к SQL** → `preferredDump: agent`; Python+paramiko при необходимости.
+
+Файловой ИБ блок `dbms` **не** нужен — только `--db-path`.
+### Q6. AgentMode как запасной? (если preferred = ibcmd и ещё не «оба»)
+
+Коротко: «Настроить designer-agent на случай недоступности ibcmd?»  
+Да → проверить/предложить Python+paramiko, `designerAgent.transport: agent`.  
+Нет → `transport: batch` или оставить example; dump по умолчанию всё равно через ibcmd.
+
+---
+
+## Шаг 3 — запись конфигов (`boot-write`)
+
+1. Нет `project.json` → копия с `project.json.example`.
+2. Нет `project.local.json` → копия с example.
+3. Записать ответы; сохранить блок `template` (для `1c-template-sync`).
+4. `ibcmd.dataDir`: `.1c/ibcmd-data` (в `.gitignore`).
+5. `tools.preferredDump`: `ibcmd` | `agent`.
+6. Секреты 1С — Credential Manager / env; SQL при `windowsAuth: true` — без пароля. Не коммитить local.
+
+### Фрагменты
+
+**tools + file + ibcmd:**
+
+```json
+"tools": { "preferredDump": "ibcmd" },
+"infobase": { "type": "file", "path": "C:/Users/.../InfoBase8" },
+"ibcmd": { "dataDir": ".1c/ibcmd-data" },
+"auth": { "required": false }
+```
+
+**C/S + ibcmd + доменный SQL (как типичный пилот):**
+
+```json
+"tools": { "preferredDump": "ibcmd" },
+"infobase": {
+  "type": "ibname",
+  "name": "MyBase",
+  "dbms": {
+    "kind": "MSSQLServer",
+    "server": "sql-host",
+    "name": "db_name",
+    "windowsAuth": true
+  }
+},
+"auth": { "required": true, "credentialTarget": "1c-ib/my-base" }
+```
+
+(`windowsAuth: true` — без SQL-пароля. `credentialTarget` — только если в ИБ есть пользователи **1С**; если пользователей 1С нет → `"required": false` и CredMgr не вызывать.)
+**Только agent:**
+
+```json
+"tools": { "preferredDump": "agent" },
+"designerAgent": { "transport": "agent", "baseDir": "C:/Users/.../repo" }
+```
+
+---
+
+## Шаг 4 — проверка (`boot-ping`)
+
+С согласия:
+
+- если `preferredDump=ibcmd` → `Invoke-1cIbcmdDump.ps1 -Action ping`
+- иначе / fallback → `Invoke-1cDesignerAgent.ps1 -Action ping`
+
+Перед ping на **файловой** ИБ: обычный Конфигуратор закрыт.
+
+Успех → предложи `dump-full` ([docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md)).
+
+---
+
+## Как агент выбирает инструмент после bootstrap
+
+При любых dump/load в этом репо:
+
+1. Смотри `tools.preferredDump` в `project.json`.
+2. `ibcmd` → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` (нужен file path или `infobase.dbms`).
+3. `agent` или ibcmd недоступен → skill **`1c-designer-agent`**.
+4. Пользователь явно сказал «через агент» / «через ibcmd» — слушай запрос, не только конфиг.

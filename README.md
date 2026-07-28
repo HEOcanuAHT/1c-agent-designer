@@ -4,9 +4,9 @@
 
 - иерархическая выгрузка в `src/`
 - skills стандартов ИТС (`coding-standards`, `std-*`)
-- dump/load через `1c-designer-agent`
+- dump/load: предпочтительно **ibcmd** (`1c-ibcmd-pack`), запасной путь — `1c-designer-agent`
 - внешние обработки через `1c-external-epf` (`src/_extDataProcessors`)
-- упаковка `.cf` и быстрый dump XML через `1c-ibcmd-pack` (по запросу)
+- упаковка `.cf` через `1c-ibcmd-pack`
 - обновление шаблона в живых проектах: `1c-template-sync` (без `src/`)
 - субагент `/implementer`
 
@@ -35,7 +35,7 @@ Copy-Item .1c\project.local.json.example .1c\project.local.json
 # заполнить platformVersion, infobase (file|server|ibname), auth в local
 ```
 
-Агент следует skill **`1c-project-bootstrap`**: проверит Python/`paramiko`/платформу, предложит доустановить, спросит тип ИБ и запишет `.1c/project*.json`.
+Агент следует skill **`1c-project-bootstrap`**: Todo-чеклист и короткие вопросы (тип ИБ → auth → ibcmd или agent → доступ к SQL), затем `.1c/project*.json` (`tools.preferredDump`).
 
 Дальше: [docs/INITIAL_DUMP.md](docs/INITIAL_DUMP.md), [docs/WORKFLOW.md](docs/WORKFLOW.md), [AGENTS.md](AGENTS.md).
 

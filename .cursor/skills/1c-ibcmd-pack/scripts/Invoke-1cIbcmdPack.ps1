@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Pack 1C hierarchical XML dump (src) into .cf via ibcmd.
 #>
@@ -68,21 +68,17 @@ function Resolve-Git([string]$Explicit) {
   throw "git.exe not found. Install Git or add it to PATH."
 }
 
-function Get-AuthArgs($Cfg) {
-  $required = $false
-  if ($Cfg.auth -and $null -ne $Cfg.auth.required) { $required = [bool]$Cfg.auth.required }
-  if (-not $required) { return @() }
-
-  $user = $env:1C_IB_USER
-  $pwd = $env:1C_IB_PASSWORD
-  if ($Cfg.auth.user) { $user = [string]$Cfg.auth.user }
-  if ($Cfg.auth.password) { $pwd = [string]$Cfg.auth.password }
-
-  if (-not $user) {
-    throw "auth.required=true but user is missing (auth.user / 1C_IB_USER / project.local.json)."
+function Get-AuthArgs($Cfg, [string]$ProjectRoot = "") {
+  $credHelper = Join-Path $PSScriptRoot "..\..\1c-project-bootstrap\scripts\1c-WindowsCredential.ps1"
+  if (-not (Test-Path -LiteralPath $credHelper)) {
+    throw "Missing credential helper: $credHelper"
   }
-  $a = @("--user=$user")
-  if ($pwd) { $a += "--password=$pwd" }
+  . $credHelper
+  $auth = Resolve-1cIbAuth -Cfg $Cfg -ProjectRoot $ProjectRoot
+  if (-not $auth.Required) { return @() }
+  Write-Host "ibcmd auth source=$($auth.Source)"
+  $a = @("--user=$($auth.User)")
+  if ($auth.Password) { $a += "--password=$($auth.Password)" }
   return $a
 }
 
@@ -95,7 +91,6 @@ function Test-FileIbExists([string]$DbPath) {
 }
 
 function Invoke-Ibcmd([string]$IbcmdPath, [string[]]$IbcmdArgs) {
-  # Never print secrets; close stdin so auth prompts cannot hang automation.
   $safe = ($IbcmdArgs | ForEach-Object {
     if ($_ -match '^--password=' -or $_ -match '^--db-pwd=' -or $_ -match '^-P') {
       if ($_ -match '^-P$') { '-P***' } else { ($_ -replace '=.*$', '=***') }
@@ -105,22 +100,58 @@ function Invoke-Ibcmd([string]$IbcmdPath, [string[]]$IbcmdArgs) {
   $argStr = ($IbcmdArgs | ForEach-Object {
     if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
   }) -join ' '
-  $cmdLine = "`"$IbcmdPath`" $argStr < NUL"
   $outFile = [IO.Path]::GetTempFileName()
   $errFile = [IO.Path]::GetTempFileName()
+  function Read-Shared([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path)) { return "" }
+    try {
+      $fs = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+      try {
+        $sr = New-Object IO.StreamReader($fs, [Text.Encoding]::UTF8, $true)
+        try { return $sr.ReadToEnd() } finally { $sr.Dispose() }
+      } finally { $fs.Dispose() }
+    } catch { return "" }
+  }
   try {
-    $p = Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", $cmdLine) `
-      -NoNewWindow -PassThru -Wait `
-      -RedirectStandardOutput $outFile -RedirectStandardError $errFile
-    foreach ($f in @($outFile, $errFile)) {
-      $t = Get-Content -LiteralPath $f -Raw -EA SilentlyContinue
-      if ($t) { Write-Host $t.TrimEnd() }
+    $cmdInner = "`"$IbcmdPath`" $argStr < NUL > `"$outFile`" 2> `"$errFile`""
+    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$cmdInner`"" -WindowStyle Hidden -PassThru
+    $killedAuth = $false
+    $reAuth = [string]::Concat(
+      '\u0418\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f\s*:', '|',
+      '\u041f\u0430\u0440\u043e\u043b\u044c \u0434\u043b\u044f\s+.', '|',
+      '\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f'
+    )
+    while (-not $p.HasExited) {
+      $live = (Read-Shared $outFile) + "`n" + (Read-Shared $errFile)
+      if ([regex]::IsMatch($live, $reAuth)) {
+        $killedAuth = $true
+        try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch { }
+        Get-Process -Name ibcmd -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        break
+      }
+      Start-Sleep -Milliseconds 200
+    }
+    if (-not $p.HasExited) {
+      [void]$p.WaitForExit(3000)
+      if (-not $p.HasExited) {
+        try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch { }
+        Get-Process -Name ibcmd -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        [void]$p.WaitForExit(3000)
+      }
+    }
+    $stdout = Read-Shared $outFile
+    $stderr = Read-Shared $errFile
+    if ($stdout.Length -gt 2000) { $stdout = $stdout.Substring(0, 500) + "`n...[truncated]...`n" + $stdout.Substring($stdout.Length - 300) }
+    if ($stdout) { Write-Host $stdout.TrimEnd() }
+    if ($stderr) { Write-Host $stderr.TrimEnd() }
+    if ($killedAuth) {
+      throw "ibcmd: IB auth failed (wrong/missing user or password). Fix auth in project.local.json; if IB has no users set auth.required=false."
     }
     if ($p.ExitCode -ne 0) {
       throw "ibcmd exited with code $($p.ExitCode)"
     }
   } finally {
-    Remove-Item -LiteralPath $outFile, $errFile -Force -EA SilentlyContinue
+    Remove-Item -LiteralPath $outFile, $errFile -Force -ErrorAction SilentlyContinue
   }
 }
 
@@ -192,7 +223,7 @@ if ($Action -eq "pack-delta") {
   }
 }
 
-$authArgs = Get-AuthArgs $cfg
+$authArgs = Get-AuthArgs $cfg $ProjectRoot
 $commonDb = @("--db-path=$dbPath") + $authArgs
 $forceArgs = @()
 if ($force) { $forceArgs = @("--force") }

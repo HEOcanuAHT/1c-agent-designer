@@ -15,6 +15,8 @@ ConfigDumpInfo.xml.bak
 .1c/ib-pack/
 .1c/ib-pack-delta/
 .1c/ib-dev/
+.1c/ib-kb-file-test/
+.1c/ibcmd-data-filetest/
 .1c/delta-src/
 .1c/project.json
 .1c/project.local.json
@@ -85,4 +87,11 @@ __pycache__/
 
 .1c/_ibcmd-help-config.txt
 .1c/load-bench-*.txt
+.1c/bench-*.txt
 .1c/bench-incr-files.txt
+.1c/probe*.txt
+.1c/*-err.txt
+
+# Локальная помойка для проб/бенчей/хвостов (не коммитить)
+.1c/scratch/*
+!.1c/scratch/README.md

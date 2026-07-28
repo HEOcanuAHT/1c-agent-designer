@@ -86,21 +86,15 @@ function Resolve-Plink {
   return $null
 }
 
-function Get-AgentAuth($Cfg) {
-  $required = $true
-  if ($Cfg.auth -and $null -ne $Cfg.auth.required) { $required = [bool]$Cfg.auth.required }
-  $user = $env:1C_IB_USER
-  $pwd = $env:1C_IB_PASSWORD
-  if ($Cfg.auth -and $null -ne $Cfg.auth.user -and [string]$Cfg.auth.user -ne "") {
-    $user = [string]$Cfg.auth.user
+function Get-AgentAuth($Cfg, [string]$ProjectRoot = "") {
+  $credHelper = Join-Path $PSScriptRoot "..\..\1c-project-bootstrap\scripts\1c-WindowsCredential.ps1"
+  if (-not (Test-Path -LiteralPath $credHelper)) {
+    throw "Missing credential helper: $credHelper"
   }
-  if ($Cfg.auth -and $null -ne $Cfg.auth.password) { $pwd = [string]$Cfg.auth.password }
-  if ($null -eq $user) { $user = "" }
-  if ($null -eq $pwd) { $pwd = "" }
-  if ($required -and -not $user) {
-    throw "Need auth.user in project.local.json or 1C_IB_USER (or set auth.required=false for empty IB)."
-  }
-  return @{ User = $user; Password = $pwd; Required = $required }
+  . $credHelper
+  $auth = Resolve-1cIbAuth -Cfg $Cfg -ProjectRoot $ProjectRoot
+  Write-Host "agent auth source=$($auth.Source)"
+  return @{ User = $auth.User; Password = $auth.Password; Required = $auth.Required }
 }
 
 function Get-IbArgs($Cfg, [string]$ProjectRoot) {
@@ -196,8 +190,11 @@ function Start-DesignerAgent($Cfg, [string]$DesignerPath, [string]$ProjectRoot) 
     $ibVal = ($ibVal -replace '\\', '/')
   }
 
-  $auth = Get-AgentAuth $Cfg
-  $authPart = " /N$(Quote-1cArg $auth.User) /P$(Quote-1cArg $auth.Password)"
+  $auth = Get-AgentAuth $Cfg $ProjectRoot
+  $authPart = ""
+  if ($auth.Required -or ($auth.User -and $auth.User.Trim() -ne "")) {
+    $authPart = " /N$(Quote-1cArg $auth.User) /P$(Quote-1cArg $auth.Password)"
+  }
   $uc = Get-UnlockCode $Cfg
   if ($uc) { $authPart += " /UC$(Quote-1cArg $uc)" }
 
@@ -206,7 +203,11 @@ function Start-DesignerAgent($Cfg, [string]$DesignerPath, [string]$ProjectRoot) 
 
   $baseDirArg = ($baseDir -replace '\\', '/')
   $argString = "DESIGNER $ibKey $(Quote-1cArg $ibVal)$authPart /AgentMode /AgentPort $port /AgentListenAddress $listen /AgentSSHHostKeyAuto /AgentBaseDir $(Quote-1cArg $baseDirArg)$visiblePart"
-  $argStringLog = "DESIGNER $ibKey $(Quote-1cArg $ibVal) /N$(Quote-1cArg $auth.User) /P***$(if ($uc) { ' /UC***' } else { '' }) /AgentMode /AgentPort $port /AgentListenAddress $listen /AgentSSHHostKeyAuto /AgentBaseDir $(Quote-1cArg $baseDirArg)$visiblePart"
+  if ($authPart) {
+    $argStringLog = "DESIGNER $ibKey $(Quote-1cArg $ibVal) /N$(Quote-1cArg $auth.User) /P***$(if ($uc) { ' /UC***' } else { '' }) /AgentMode /AgentPort $port /AgentListenAddress $listen /AgentSSHHostKeyAuto /AgentBaseDir $(Quote-1cArg $baseDirArg)$visiblePart"
+  } else {
+    $argStringLog = "DESIGNER $ibKey $(Quote-1cArg $ibVal) (no /N/P)$(if ($uc) { ' /UC***' } else { '' }) /AgentMode /AgentPort $port /AgentListenAddress $listen /AgentSSHHostKeyAuto /AgentBaseDir $(Quote-1cArg $baseDirArg)$visiblePart"
+  }
   Write-Host ">> $DesignerPath $argStringLog"
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = $DesignerPath
@@ -505,6 +506,9 @@ function Invoke-AgentViaPython {
     if ($errText) { $text += "`n" + $errText }
     if ($text.Trim()) { Write-Host $text.TrimEnd() }
     if ($proc.ExitCode -ne 0) {
+      if ($text -match 'AuthenticationException|Authentication failed|transport shut down or saw EOF') {
+        throw "AgentMode SSH auth failed. Check IB user/password in project.local.json; if IB has no users set auth.required=false. If file IB: close Configurator on this base (exclusive lock). Details: .1c/last-agent-error.txt"
+      }
       $snip = if ($text.Length -gt 4000) { $text.Substring($text.Length - 4000) } else { $text }
       throw ("designer_agent_ssh.py exit=" + $proc.ExitCode + "`n" + $snip)
     }
@@ -519,7 +523,7 @@ function Invoke-AgentCommands {
   $da = $Cfg.designerAgent
   $hostName = if ($da.host) { [string]$da.host } else { "127.0.0.1" }
   $port = if ($da.port) { [int]$da.port } else { 1543 }
-  $auth = Get-AgentAuth $Cfg
+  $auth = Get-AgentAuth $Cfg $ProjectRoot
   Write-Host "Agent session: $Label"
 
   $prefer = "python"
@@ -568,15 +572,21 @@ function Invoke-AgentCommands {
 
 function Invoke-DesignerBatch {
   param([string]$DesignerPath, $Cfg, [string]$ProjectRoot, [string[]]$ExtraArgs, [string]$LogName)
-  $auth = Get-AgentAuth $Cfg
+  $auth = Get-AgentAuth $Cfg $ProjectRoot
   $logDir = Join-Path $ProjectRoot ".1c"
   New-Item -ItemType Directory -Force -Path $logDir | Out-Null
   $log = Join-Path $logDir $LogName
   if (Test-Path -LiteralPath $log) { Remove-Item -LiteralPath $log -Force }
 
-  $argsForLog = @("DESIGNER") + (Get-IbArgs $Cfg $ProjectRoot) + @("/N$($auth.User)", "/P***", "/DisableStartupDialogs", "/DisableStartupMessages", "/Out", $log) + $ExtraArgs
+  $authArgs = @()
+  $authArgsLog = @()
+  if ($auth.Required -or ($auth.User -and $auth.User.Trim() -ne "")) {
+    $authArgs = @("/N$($auth.User)", "/P$($auth.Password)")
+    $authArgsLog = @("/N$($auth.User)", "/P***")
+  }
+  $argsForLog = @("DESIGNER") + (Get-IbArgs $Cfg $ProjectRoot) + $authArgsLog + @("/DisableStartupDialogs", "/DisableStartupMessages", "/Out", $log) + $ExtraArgs
   Write-Host ">> $DesignerPath $($argsForLog -join ' ')"
-  $args = @("DESIGNER") + (Get-IbArgs $Cfg $ProjectRoot) + @("/N$($auth.User)", "/P$($auth.Password)", "/DisableStartupDialogs", "/DisableStartupMessages", "/Out", $log) + $ExtraArgs
+  $args = @("DESIGNER") + (Get-IbArgs $Cfg $ProjectRoot) + $authArgs + @("/DisableStartupDialogs", "/DisableStartupMessages", "/Out", $log) + $ExtraArgs
   $p = Start-Process -FilePath $DesignerPath -ArgumentList $args -WorkingDirectory $ProjectRoot -PassThru -Wait -NoNewWindow
   Write-Host "BATCH_EXIT=$($p.ExitCode) LOG=$log"
   if (Test-Path -LiteralPath $log) {
@@ -703,7 +713,7 @@ switch ($Action) {
         Stop-DesignerAgentAfterOp $cfg "ping"
       }
     } else {
-      $null = Get-AgentAuth $cfg
+      $null = Get-AgentAuth $cfg $ProjectRoot
       Write-Host "batch ping: designer+auth OK"
     }
   }

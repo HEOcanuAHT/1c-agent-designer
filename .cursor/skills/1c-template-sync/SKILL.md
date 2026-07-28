@@ -96,7 +96,65 @@ URL по умолчанию: `https://github.com/HEOcanuAHT/1c-agent-designer.gi
 3. После согласия: `check` → `sync` (сначала `-DryRun`, если пользователь хочет посмотреть).
 4. Покажи итог: новая `version`, список `SYNC …`.
 5. Напомни: `project.json` / `src/` не менялись (кроме `template.version` в project.json, если файл есть).
-6. Предложи закоммитить изменения tooling отдельным коммитом в проекте.
+6. **После sync** — проверка секретов (см. ниже); не молча переписывать `project.local.json`.
+7. Предложи закоммитить изменения tooling отдельным коммитом в проекте.
+
+## После sync: секреты в `project.local.json` → Credential Manager
+
+Sync **не** трогает `.1c/project.local.json`, но в старых пилотах там часто лежит `auth.password` в открытом виде. Новый шаблон ожидает `auth.credentialTarget` + Windows Credential Manager.
+
+### Когда предлагать миграцию
+
+После успешного `sync` прочитай `.1c/project.local.json` (только локально, не в чат):
+
+| Признак | Действие |
+|---------|----------|
+| `auth.password` непустой | **Предложить** перенос в CredMgr |
+| есть `auth.user` + `password`, нет `credentialTarget` | то же |
+| только `credentialTarget`, пароля нет | OK, не трогать |
+| `auth.required: false` | OK, не трогать |
+| `infobase.dbms.windowsAuth: true` | SQL-пароль **не** нужен; CredMgr только для пользователя **1С** |
+
+Коротко спроси одним сообщением:
+
+> «В `project.local.json` пароль ИБ в открытом виде. Перенести в Windows Credential Manager и убрать из файла?»
+
+Без согласия **не** запускать миграцию и **не** выводить пароль в чат.
+
+### Миграция (после согласия)
+
+```powershell
+# сначала dry-run
+…\1c-project-bootstrap\scripts\Migrate-1cAuthToCredMgr.ps1 -ProjectRoot "<repo>" -WhatIf
+
+# применить (пароль читается из local, в лог не пишется)
+…\1c-project-bootstrap\scripts\Migrate-1cAuthToCredMgr.ps1 -ProjectRoot "<repo>"
+```
+
+Скрипт: сохраняет user/password в CredMgr → пишет `credentialTarget` → удаляет `auth.password` (и `auth.user`) из local.
+
+Если пользователь предпочитает ввод сам:
+
+```powershell
+…\1c-project-bootstrap\scripts\Set-1cIbCredential.ps1 -ProjectRoot "<repo>"
+```
+
+и вручную убрать `password` из local.
+
+### Опционально: `tools.preferredDump`
+
+Если в `project.json` нет `tools.preferredDump` — **кратко предложи** добавить вручную (`ibcmd` | `agent`), sync сам `project.json` не меняет. Не навязывать без согласия.
+
+### Чеклист агента после sync
+
+| id | content |
+|----|---------|
+| `sync-done` | sync skills/rules |
+| `sync-secrets` | проверить local на plaintext password |
+| `sync-credmgr` | по согласию Migrate / Set-1cIbCredential |
+| `sync-ping` | по согласию ping dump-инструментом |
+
+`sync-credmgr` → `cancelled`, если пароля в файле нет.
 
 ## Версии
 

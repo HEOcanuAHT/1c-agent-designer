@@ -10,5 +10,6 @@ alwaysApply: true
 1. При просьбе «обнови шаблон / подтяни skills» — следуй skill **`1c-template-sync`**.
 2. Если видишь, что tooling устарел (нет `.1c/template-manifest.json`, или пользователь жалуется на старые скрипты dump/epf) — **кратко предложи** sync, не запускай без согласия.
 3. Sync **только** allowlist (skills/rules/docs/examples). **Не** трогать `src/`, `project.json` (кроме `template.*`), `project.local.json`.
+4. **После sync** (skill `1c-template-sync`): если в `project.local.json` есть `auth.password` — кратко предложить перенос в Windows Credential Manager (`Migrate-1cAuthToCredMgr.ps1`), не выводить пароль в чат.
 
 В репозитории самого шаблона (`template-manifest` + пустой `src/`) это правило не навязывать как обязательный sync.

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Dump / incremental dump / partial load via ibcmd (infobase config export|import).
 
@@ -8,6 +8,7 @@
   - MSSQL Windows auth: omit --db-user/--db-pwd.
   - import files → MAIN config only; NEVER config apply (no update-db-cfg / КБД).
   - export/--sync also reads MAIN (verified: sees edits without applying DB cfg).
+  - File IB + open Designer: exclusive lock error — tell user to close Configurator on that IB.
 #>
 [CmdletBinding()]
 param(
@@ -61,20 +62,17 @@ function Resolve-Ibcmd([string]$Explicit, [string]$PlatformVersion) {
   throw "ibcmd.exe not found. Set platformVersion or ibcmd / 1C_IBCMD."
 }
 
-function Get-IbAuthArgs($Cfg) {
-  $required = $true
-  if ($Cfg.auth -and $null -ne $Cfg.auth.required) { $required = [bool]$Cfg.auth.required }
-  if (-not $required) { return @() }
-
-  $user = $env:1C_IB_USER
-  $pwd = $env:1C_IB_PASSWORD
-  if ($Cfg.auth -and $Cfg.auth.user) { $user = [string]$Cfg.auth.user }
-  if ($Cfg.auth -and $Cfg.auth.password) { $pwd = [string]$Cfg.auth.password }
-  if (-not $user) {
-    throw "Need auth.user in project.local.json or 1C_IB_USER (or set auth.required=false)."
+function Get-IbAuthArgs($Cfg, [string]$ProjectRoot = "") {
+  $credHelper = Join-Path $PSScriptRoot "..\..\1c-project-bootstrap\scripts\1c-WindowsCredential.ps1"
+  if (-not (Test-Path -LiteralPath $credHelper)) {
+    throw "Missing credential helper: $credHelper"
   }
-  $a = @("--user=$user")
-  if ($null -ne $pwd -and $pwd -ne "") { $a += "--password=$pwd" }
+  . $credHelper
+  $auth = Resolve-1cIbAuth -Cfg $Cfg -ProjectRoot $ProjectRoot
+  if (-not $auth.Required) { return @() }
+  Write-Host "ibcmd auth source=$($auth.Source)"
+  $a = @("--user=$($auth.User)")
+  if ($null -ne $auth.Password -and $auth.Password -ne "") { $a += "--password=$($auth.Password)" }
   return $a
 }
 
@@ -132,6 +130,49 @@ function Get-DataDir($Cfg, [string]$ProjectRoot) {
   return $path
 }
 
+function Test-IbcmdAuthPrompt([string]$Text) {
+  if (-not $Text) { return $false }
+  $re = [string]::Concat(
+    '\u0418\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f\s*:', '|',
+    '\u041f\u0430\u0440\u043e\u043b\u044c \u0434\u043b\u044f\s+.', '|',
+    '\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f'
+  )
+  return [bool]([regex]::IsMatch($Text, $re))
+}
+
+function Read-SharedText([string]$Path) {
+  if (-not (Test-Path -LiteralPath $Path)) { return "" }
+  try {
+    $fs = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+    try {
+      # ibcmd console messages are OEM866
+      $sr = New-Object IO.StreamReader($fs, [Text.Encoding]::UTF8, $true)
+      try { return $sr.ReadToEnd() } finally { $sr.Dispose() }
+    } finally { $fs.Dispose() }
+  } catch { return "" }
+}
+
+function Throw-IbcmdFailure([string]$Combined, [int]$ExitCode) {
+  $reLock = '\u0438\u0441\u043a\u043b\u044e\u0447\u0438\u0442\u0435\u043b\u044c\u043d\w* \u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u043a|exclusive lock'
+  $reAuth = [string]::Concat(
+    '\u0418\u0434\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u0430', '|',
+    '\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f', '|',
+    '\u0418\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f\s*:', '|',
+    '\u041f\u0430\u0440\u043e\u043b\u044c \u0434\u043b\u044f\s+.'
+  )
+  $reFull = '\u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044e \u043f\u043e\u043b\u043d\u043e\u0441\u0442\u044c\u044e|export.*full'
+  if ([regex]::IsMatch($Combined, $reLock)) {
+    throw "ibcmd: exclusive lock on file IB - Configurator (or another process) holds this base. Close Designer on this IB and retry. exit=$ExitCode"
+  }
+  if ([regex]::IsMatch($Combined, $reAuth)) {
+    throw "ibcmd: IB auth failed (wrong/missing user or password). Fix auth in project.local.json; if IB has no users set auth.required=false. exit=$ExitCode"
+  }
+  if ([regex]::IsMatch($Combined, $reFull)) {
+    throw "ibcmd: ConfigDumpInfo does not match this IB - run dump-full into this folder first, then dump-update. exit=$ExitCode"
+  }
+  throw "ibcmd exited with code $ExitCode"
+}
+
 function Invoke-IbcmdNoHang([string]$IbcmdPath, [string[]]$IbcmdArgs, [string]$LogPath) {
   $safe = ($IbcmdArgs | ForEach-Object {
     if ($_ -match '^--password=' -or $_ -match '^--db-pwd=') {
@@ -144,29 +185,57 @@ function Invoke-IbcmdNoHang([string]$IbcmdPath, [string[]]$IbcmdArgs, [string]$L
   $argStr = ($IbcmdArgs | ForEach-Object {
     if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
   }) -join ' '
-  # Close stdin via NUL — prevents interactive auth hang.
-  $cmdLine = "`"$IbcmdPath`" $argStr < NUL"
+
   $outFile = [IO.Path]::GetTempFileName()
   $errFile = [IO.Path]::GetTempFileName()
+  $killedAuth = $false
+  $exitCode = -1
   try {
-    $p = Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", $cmdLine) `
-      -NoNewWindow -PassThru -Wait `
-      -RedirectStandardOutput $outFile -RedirectStandardError $errFile
-    $stdout = Get-Content -LiteralPath $outFile -Raw -EA SilentlyContinue
-    $stderr = Get-Content -LiteralPath $errFile -Raw -EA SilentlyContinue
-    if ($stdout) {
-      Write-Host $stdout.TrimEnd()
-      if ($LogPath) { Add-Content -Path $LogPath -Value $stdout.TrimEnd() }
+    # Redirects inside cmd (not Start-Process) - reliable with paths that contain spaces.
+    # Poll files: auth prompt is on stdout, often without waiting for process exit.
+    $cmdInner = "`"$IbcmdPath`" $argStr < NUL > `"$outFile`" 2> `"$errFile`""
+    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$cmdInner`"" -WindowStyle Hidden -PassThru
+    while (-not $p.HasExited) {
+      $combinedLive = (Read-SharedText $outFile) + "`n" + (Read-SharedText $errFile)
+      if ($combinedLive.Length -gt 8000) { $combinedLive = $combinedLive.Substring(0, 8000) }
+      if (Test-IbcmdAuthPrompt $combinedLive) {
+        $killedAuth = $true
+        try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch { }
+        Get-Process -Name ibcmd -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        break
+      }
+      Start-Sleep -Milliseconds 200
     }
-    if ($stderr) {
+    if (-not $p.HasExited) {
+      [void]$p.WaitForExit(3000)
+      if (-not $p.HasExited) {
+        try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch { }
+        Get-Process -Name ibcmd -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        [void]$p.WaitForExit(3000)
+      }
+    }
+    if ($p.HasExited) { $exitCode = $p.ExitCode }
+    if ($killedAuth) { $exitCode = -1 }
+
+    $stdout = Read-SharedText $outFile
+    $stderr = Read-SharedText $errFile
+    # Avoid dumping megabytes of repeated "User name:" prompts
+    $printOut = $stdout
+    if ($printOut.Length -gt 2000) { $printOut = $printOut.Substring(0, 500) + "`n...[truncated]...`n" + $printOut.Substring($printOut.Length - 300) }
+    if ($printOut.Trim()) {
+      Write-Host $printOut.TrimEnd()
+      if ($LogPath) { Add-Content -Path $LogPath -Value $printOut.TrimEnd() }
+    }
+    if ($stderr.Trim()) {
       Write-Host $stderr.TrimEnd()
       if ($LogPath) { Add-Content -Path $LogPath -Value $stderr.TrimEnd() }
     }
-    if ($p.ExitCode -ne 0) {
-      throw "ibcmd exited with code $($p.ExitCode)"
+    $combined = $stdout + "`n" + $stderr
+    if ($killedAuth -or $exitCode -ne 0) {
+      Throw-IbcmdFailure $combined $exitCode
     }
   } finally {
-    Remove-Item -LiteralPath $outFile, $errFile -Force -EA SilentlyContinue
+    Remove-Item -LiteralPath $outFile, $errFile -Force -ErrorAction SilentlyContinue
   }
 }
 
@@ -181,7 +250,7 @@ $cfg = Merge-Config (Read-JsonFile $cfgPath) (Read-JsonFile $localPath)
 $ibcmdPath = Resolve-Ibcmd ([string]$cfg.ibcmd) ([string]$cfg.platformVersion)
 $conn = Get-ConnectionArgs $cfg $ProjectRoot
 $dataDir = Get-DataDir $cfg $ProjectRoot
-$authArgs = Get-IbAuthArgs $cfg
+$authArgs = Get-IbAuthArgs $cfg $ProjectRoot
 
 $srcRel = if ($cfg.src) { ([string]$cfg.src -replace "\\", "/").TrimEnd("/") } else { "src" }
 if ($OutDir) {
