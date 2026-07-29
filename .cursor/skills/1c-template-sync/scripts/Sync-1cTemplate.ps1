@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Sync template tooling into a 1C config project without touching src/ or IB secrets.
 

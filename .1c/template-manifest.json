@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.07.28.5",
+  "version": "2026.07.29.1",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -51,6 +51,10 @@
     {
       "since": "2026.07.28.4",
       "summary": "Единый infobase: dbms в infobase (не ibcmd); type=file→path, ibname/server→name/server+dbms. См. docs/TEMPLATE_UPGRADE.md."
+    },
+    {
+      "since": "2026.07.29.1",
+      "summary": "Sync-1cTemplate.ps1: UTF-8 BOM — иначе Windows PowerShell 5.1 падает с ошибкой парсинга."
     }
   ]
 }
