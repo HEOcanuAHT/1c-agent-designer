@@ -46,6 +46,7 @@ ibcmd через SQL обычно **заметно быстрее** agent; дл�
 - `ibcmd` — только настройки **инструмента**: `dataDir`, `stagingDir`, `preservePaths` (не подключение к ИБ).
 - `tools.preferredDump`: `ibcmd` | `agent`.
 - `ext.dir` — внешние обработки (skill `1c-external-epf`).
+- `ext.serviceIb` — служебная файловая ИБ для pack/dump внешек (import `src/` без apply; не коммитить).
 - Auth пользователя **1С** (не SQL): `auth.credentialTarget` + `Set-1cIbCredential.ps1`.
 
 ```powershell

@@ -12,7 +12,10 @@ param(
   [string]$Name = "",
   [string]$Synonym = "",
   [string]$EpfPath = "",
-  [string]$RootXml = ""
+  [string]$RootXml = "",
+
+  [switch]$RefreshServiceIb,
+  [switch]$SkipServiceIbPrepare
 )
 
 $ErrorActionPreference = "Stop"
@@ -66,13 +69,33 @@ function Resolve-Designer([string]$Explicit, [string]$PlatformVersion) {
 }
 
 function Get-Auth($Cfg) {
+  $required = $true
+  if ($Cfg.auth -and $null -ne $Cfg.auth.required) { $required = [bool]$Cfg.auth.required }
   $user = $env:1C_IB_USER
   $pwd = $env:1C_IB_PASSWORD
-  if ($Cfg.auth -and $Cfg.auth.user) { $user = [string]$Cfg.auth.user }
-  if ($Cfg.auth -and $null -ne $Cfg.auth.password) { $pwd = [string]$Cfg.auth.password }
-  if (-not $user) { throw "Need auth.user in project.local.json or 1C_IB_USER." }
+  $auth = $Cfg.auth
+  if ($auth) {
+    if ($auth -is [hashtable]) {
+      if ($auth.ContainsKey("user") -and $auth["user"]) { $user = [string]$auth["user"] }
+      if ($auth.ContainsKey("password") -and $null -ne $auth["password"]) { $pwd = [string]$auth["password"] }
+    } else {
+      if ($auth.user) { $user = [string]$auth.user }
+      if ($null -ne $auth.password) { $pwd = [string]$auth.password }
+    }
+  }
+  if (-not $user -and $required) {
+    $ibType = "file"
+    if ($Cfg.infobase -and $Cfg.infobase.type) { $ibType = [string]$Cfg.infobase.type }
+    if ($ibType -eq "file") { $user = "Admin" }
+  }
+  if (-not $user -and $required) { throw "Need auth.user in project.local.json or 1C_IB_USER." }
   if ($null -eq $pwd) { $pwd = "" }
-  return @{ User = $user; Password = $pwd }
+  return @{ User = $user; Password = $pwd; Required = $required }
+}
+
+function Get-DesignerAuthArgs($Auth) {
+  if (-not $Auth.User) { return @() }
+  return @("/N$($Auth.User)", "/P$($Auth.Password)")
 }
 
 function Get-IbArgs($Cfg, [string]$ProjectRoot) {
@@ -111,6 +134,152 @@ function Get-SrcRel($Cfg) {
   return "src"
 }
 
+function Test-ServiceIbEnabled($Cfg) {
+  if ($Cfg.ext -and $Cfg.ext.serviceIb -and $null -ne $Cfg.ext.serviceIb.enabled) {
+    return [bool]$Cfg.ext.serviceIb.enabled
+  }
+  return $true
+}
+
+function Get-ServiceIbPaths($Cfg, [string]$ProjectRoot) {
+  $dbRel = ".1c/ib-ext"
+  $dataRel = ".1c/ib-ext-data"
+  if ($Cfg.ext -and $Cfg.ext.serviceIb) {
+    if ($Cfg.ext.serviceIb.dbPath) { $dbRel = ([string]$Cfg.ext.serviceIb.dbPath -replace "\\", "/").TrimEnd("/") }
+    if ($Cfg.ext.serviceIb.dataDir) { $dataRel = ([string]$Cfg.ext.serviceIb.dataDir -replace "\\", "/").TrimEnd("/") }
+  }
+  $dbAbs = if ([IO.Path]::IsPathRooted($dbRel)) { $dbRel } else { Join-Path $ProjectRoot ($dbRel -replace "/", "\") }
+  $dataAbs = if ([IO.Path]::IsPathRooted($dataRel)) { $dataRel } else { Join-Path $ProjectRoot ($dataRel -replace "/", "\") }
+  $stampAbs = Join-Path $dbAbs ".config-stamp"
+  return @{ DbRel = $dbRel; DataRel = $dataRel; DbAbs = $dbAbs; DataAbs = $dataAbs; StampAbs = $stampAbs }
+}
+
+function Resolve-Ibcmd([string]$Explicit, [string]$PlatformVersion) {
+  if ($env:1C_IBCMD -and (Test-Path -LiteralPath $env:1C_IBCMD)) { return $env:1C_IBCMD }
+  if ($Explicit -and (Test-Path -LiteralPath $Explicit)) { return $Explicit }
+  if ($PlatformVersion) {
+    $candidate = Join-Path ${env:ProgramFiles} "1cv8\$PlatformVersion\bin\ibcmd.exe"
+    if (Test-Path -LiteralPath $candidate) { return $candidate }
+  }
+  $found = Get-ChildItem (Join-Path ${env:ProgramFiles} "1cv8") -Recurse -Filter "ibcmd.exe" -ErrorAction SilentlyContinue |
+    Sort-Object FullName -Descending |
+    Select-Object -First 1 -ExpandProperty FullName
+  if ($found) { return $found }
+  throw "ibcmd.exe not found. Set platformVersion or 1C_IBCMD."
+}
+
+function Invoke-IbcmdSimple([string]$IbcmdPath, [string[]]$IbcmdArgs, [string]$LogPath) {
+  $safe = ($IbcmdArgs | ForEach-Object {
+    if ($_ -match '^--password=' -or $_ -match '^--db-pwd=') { ($_ -replace '=.*$', '=***') } else { $_ }
+  }) -join ' '
+  Write-Host ">> $IbcmdPath $safe"
+  if ($LogPath) { Add-Content -LiteralPath $LogPath -Value ">> $IbcmdPath $safe" -Encoding UTF8 }
+
+  $argStr = ($IbcmdArgs | ForEach-Object {
+    if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
+  }) -join ' '
+  $outFile = [IO.Path]::GetTempFileName()
+  $errFile = [IO.Path]::GetTempFileName()
+  try {
+    $cmdInner = "`"$IbcmdPath`" $argStr < NUL > `"$outFile`" 2> `"$errFile`""
+    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$cmdInner`"" -WindowStyle Hidden -PassThru -Wait
+    $stdout = if (Test-Path $outFile) { Get-Content -LiteralPath $outFile -Raw -Encoding Default } else { "" }
+    $stderr = if (Test-Path $errFile) { Get-Content -LiteralPath $errFile -Raw -Encoding Default } else { "" }
+    $combined = ($stdout + "`n" + $stderr).Trim()
+    if ($combined.Length -gt 1200) {
+      Write-Host ($combined.Substring(0, 600) + "`n...[truncated]...`n" + $combined.Substring($combined.Length - 400))
+    } elseif ($combined) {
+      Write-Host $combined
+    }
+    if ($LogPath -and $combined) { Add-Content -LiteralPath $LogPath -Value $combined -Encoding UTF8 }
+    if ($p.ExitCode -ne 0) {
+      throw "ibcmd exit $($p.ExitCode). See $LogPath"
+    }
+  } finally {
+    Remove-Item -LiteralPath $outFile, $errFile -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Get-ConfigImportStamp([string]$SrcAbs) {
+  $cfgXml = Join-Path $SrcAbs "Configuration.xml"
+  if (-not (Test-Path -LiteralPath $cfgXml)) {
+    throw "Configuration.xml not found under $SrcAbs - dump config to src/ first."
+  }
+  $item = Get-Item -LiteralPath $cfgXml
+  return "{0}|{1}" -f $item.LastWriteTimeUtc.Ticks, $item.Length
+}
+
+function Test-ServiceIbCurrent($Paths, [string]$ExpectedStamp) {
+  $cd = Join-Path $Paths.DbAbs "1Cv8.1CD"
+  if (-not (Test-Path -LiteralPath $cd)) { return $false }
+  if (-not (Test-Path -LiteralPath $Paths.StampAbs)) { return $false }
+  $saved = (Get-Content -LiteralPath $Paths.StampAbs -Raw -Encoding UTF8).Trim()
+  return $saved -eq $ExpectedStamp
+}
+
+function Remove-ServiceIbTree($Paths) {
+  if (Test-Path -LiteralPath $Paths.DbAbs) { Remove-Item -LiteralPath $Paths.DbAbs -Recurse -Force }
+  if (Test-Path -LiteralPath $Paths.DataAbs) { Remove-Item -LiteralPath $Paths.DataAbs -Recurse -Force }
+}
+
+function Ensure-ServiceIb($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$Force) {
+  $paths = Get-ServiceIbPaths $Cfg $ProjectRoot
+  $stamp = Get-ConfigImportStamp $SrcAbs
+  if (-not $Force -and (Test-ServiceIbCurrent $paths $stamp)) {
+    Write-Host "SERVICE_IB=ready stamp=$stamp path=$($paths.DbAbs)"
+    return $paths
+  }
+
+  $ibcmdExplicit = ""
+  if ($Cfg.ibcmd -and $Cfg.ibcmd.path) { $ibcmdExplicit = [string]$Cfg.ibcmd.path }
+  $platformVersion = if ($Cfg.platformVersion) { [string]$Cfg.platformVersion } else { "" }
+  $ibcmdPath = Resolve-Ibcmd $ibcmdExplicit $platformVersion
+
+  $logDir = Join-Path $ProjectRoot ".1c"
+  New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+  $log = Join-Path $logDir "ext-service-ib.log"
+  $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+  Add-Content -LiteralPath $log -Value "`n=== $ts Ensure-ServiceIb force=$Force ===" -Encoding UTF8
+
+  Write-Host "SERVICE_IB=prepare wipe+create+import (no apply) path=$($paths.DbAbs)"
+  Remove-ServiceIbTree $paths
+  New-Item -ItemType Directory -Force -Path $paths.DbAbs, $paths.DataAbs | Out-Null
+
+  Invoke-IbcmdSimple $ibcmdPath @(
+    "infobase", "create",
+    "--db-path=$($paths.DbAbs)",
+    "--data=$($paths.DataAbs)",
+    "--create-database", "--force"
+  ) $log
+
+  Invoke-IbcmdSimple $ibcmdPath @(
+    "infobase", "config", "import",
+    "--db-path=$($paths.DbAbs)",
+    "--data=$($paths.DataAbs)",
+    $SrcAbs
+  ) $log
+
+  $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+  [IO.File]::WriteAllText($paths.StampAbs, $stamp, $utf8NoBom)
+  Write-Host "SERVICE_IB=ready stamp=$stamp"
+  return $paths
+}
+
+function Get-DesignerCfgForEpf($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$ForceRefresh, [switch]$SkipPrepare) {
+  if ($SkipPrepare -or -not (Test-ServiceIbEnabled $Cfg)) {
+    Write-Host "SERVICE_IB=skipped (using project infobase from project.json)"
+    return $Cfg
+  }
+  $paths = Ensure-ServiceIb $Cfg $ProjectRoot $SrcAbs $ForceRefresh
+  $epfCfg = $Cfg | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+  $epfCfg.infobase = [pscustomobject]@{
+    type = "file"
+    path = $paths.DbRel
+  }
+  $epfCfg.auth = [pscustomobject]@{ required = $false }
+  return $epfCfg
+}
+
 function Resolve-UnderRoot([string]$ProjectRoot, [string]$RelOrAbs) {
   if ([System.IO.Path]::IsPathRooted($RelOrAbs)) { return $RelOrAbs }
   return (Join-Path $ProjectRoot ($RelOrAbs -replace "/", "\"))
@@ -140,19 +309,25 @@ function Invoke-DesignerBatch {
     [string]$LogName
   )
   $auth = Get-Auth $Cfg
+  $authArgs = Get-DesignerAuthArgs $auth
   $logDir = Join-Path $ProjectRoot ".1c"
   New-Item -ItemType Directory -Force -Path $logDir | Out-Null
   $log = Join-Path $logDir $LogName
   if (Test-Path -LiteralPath $log) { Remove-Item -LiteralPath $log -Force }
 
-  $argsForLog = @("DESIGNER") + (Get-IbArgs $Cfg $ProjectRoot) + @(
-    "/N$($auth.User)", "/P***", "/DisableStartupDialogs", "/DisableStartupMessages", "/Out", $log
+  $allArgs = @("DESIGNER") + (Get-IbArgs $Cfg $ProjectRoot) + $authArgs + @(
+    "/DisableStartupDialogs", "/DisableStartupMessages", "/Out", $log
   ) + $ExtraArgs
+  $argsForLog = $allArgs | ForEach-Object {
+    if ($_ -eq "/P$($auth.Password)" -and $auth.Password) { "/P***" } elseif ($_ -match '^/P') { "/P***" } else { $_ }
+  }
   Write-Host ">> $DesignerPath $($argsForLog -join ' ')"
-  $args = @("DESIGNER") + (Get-IbArgs $Cfg $ProjectRoot) + @(
-    "/N$($auth.User)", "/P$($auth.Password)", "/DisableStartupDialogs", "/DisableStartupMessages", "/Out", $log
-  ) + $ExtraArgs
-  $p = Start-Process -FilePath $DesignerPath -ArgumentList $args -WorkingDirectory $ProjectRoot -PassThru -Wait -NoNewWindow
+
+  $argStr = ($allArgs | ForEach-Object {
+    if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '""') + '"' } else { $_ }
+  }) -join ' '
+  $cmdInner = "`"$DesignerPath`" $argStr < NUL"
+  $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$cmdInner`"" -WorkingDirectory $ProjectRoot -PassThru -Wait -NoNewWindow
   Write-Host "BATCH_EXIT=$($p.ExitCode) LOG=$log"
   if (Test-Path -LiteralPath $log) {
     Get-Content -LiteralPath $log -Encoding Default -EA SilentlyContinue | Select-Object -Last 40 | ForEach-Object { Write-Host $_ }
@@ -204,6 +379,19 @@ function Rename-TemplateNodes([string]$ExtAbs, [string]$Name) {
   return $dstXml
 }
 
+function Fix-ProcessorRefsToExternal([string]$Text, [string]$Name) {
+  $t = $Text
+  # Collapse accidental double External prefix from naive Replace
+  $t = $t.Replace("ExternalExternalDataProcessor", "ExternalDataProcessor")
+  $esc = [regex]::Escape($Name)
+  # Only rewrite bare DataProcessor* refs (not already ExternalDataProcessor*)
+  $t = [regex]::Replace($t, '(?<!External)DataProcessorObject\.' + $esc, "ExternalDataProcessorObject.$Name")
+  $t = [regex]::Replace($t, '(?<!External)DataProcessorManager\.' + $esc, "ExternalDataProcessorManager.$Name")
+  $t = [regex]::Replace($t, '(?<!External)DataProcessor\.' + $esc + '\.', "ExternalDataProcessor.$Name.")
+  $t = [regex]::Replace($t, '(?<!External)DataProcessor\.' + $esc + '(?=<)', "ExternalDataProcessor.$Name")
+  return $t
+}
+
 function Convert-DataProcessorRootToExternal([string]$RootXmlPath, [string]$Name) {
   if (-not (Test-Path -LiteralPath $RootXmlPath)) { throw "Root XML not found: $RootXmlPath" }
   $text = Get-Content -LiteralPath $RootXmlPath -Raw -Encoding UTF8
@@ -216,22 +404,53 @@ function Convert-DataProcessorRootToExternal([string]$RootXmlPath, [string]$Name
     throw "Expected DataProcessor root in $RootXmlPath"
   }
 
-  # Order matters: longer identifiers first.
+  # Fresh UUIDs: same TypeId/uuid as config DataProcessor clashes with service IB import.
+  $uuidRoot = New-Uuid
+  $uuidContained = New-Uuid
+  $uuidType = New-Uuid
+  $uuidValue = New-Uuid
+
+  $text = [regex]::Replace($text, '(?<=<DataProcessor uuid=")[^"]+(?=")', $uuidRoot)
+  $text = [regex]::Replace(
+    $text,
+    '(?s)<xr:GeneratedType name="DataProcessorManager\.[^"]+" category="Manager">.*?</xr:GeneratedType>\s*',
+    ''
+  )
   $text = $text.Replace("DataProcessorObject.", "ExternalDataProcessorObject.")
   $text = [regex]::Replace($text, '<DataProcessor(\s|>)', '<ExternalDataProcessor$1')
   $text = $text.Replace("</DataProcessor>", "</ExternalDataProcessor>")
-  $text = [regex]::Replace(
-    $text,
-    '(?<=<xr:ClassId>)[0-9a-fA-F-]{36}(?=</xr:ClassId>)',
-    $ExternalClassId
-  )
-  # DefaultForm / paths: DataProcessor.Name → ExternalDataProcessor.Name (not TabularSection*)
   $text = $text.Replace("DataProcessor.$Name.", "ExternalDataProcessor.$Name.")
   $text = [regex]::Replace($text, ">DataProcessor\.$([regex]::Escape($Name))<", ">ExternalDataProcessor.$Name<")
+  $text = Fix-ProcessorRefsToExternal $text $Name
 
-  $utf8Bom = New-Object System.Text.UTF8Encoding $true
-  [System.IO.File]::WriteAllText($RootXmlPath, $text, $utf8Bom)
-  Write-Host "Converted root to ExternalDataProcessor: $RootXmlPath"
+  # Drop properties not valid on ExternalDataProcessor
+  foreach ($prop in @("UseStandardCommands", "IncludeHelpInContents", "ExtendedPresentation", "Explanation")) {
+    $text = [regex]::Replace($text, "(?s)\s*<$prop>.*?</$prop>", "")
+    $text = [regex]::Replace($text, "\s*<$prop\s*/>", "")
+  }
+
+  # ContainedObject + ClassId required for external; regenerate TypeId/ValueId
+  if ($text -notmatch '<xr:ContainedObject>') {
+    $contained = @"
+			<xr:ContainedObject>
+				<xr:ClassId>$ExternalClassId</xr:ClassId>
+				<xr:ObjectId>$uuidContained</xr:ObjectId>
+			</xr:ContainedObject>
+"@
+    $text = $text.Replace("<InternalInfo>", "<InternalInfo>`r`n$contained")
+  } else {
+    $text = [regex]::Replace($text, '(?<=<xr:ClassId>)[0-9a-fA-F-]{36}(?=</xr:ClassId>)', $ExternalClassId)
+    $text = [regex]::Replace($text, '(?<=<xr:ObjectId>)[0-9a-fA-F-]{36}(?=</xr:ObjectId>)', $uuidContained)
+  }
+  $text = [regex]::Replace(
+    $text,
+    '(?s)(<xr:GeneratedType name="ExternalDataProcessorObject\.' + [regex]::Escape($Name) + '" category="Object">\s*<xr:TypeId>)[0-9a-fA-F-]{36}(</xr:TypeId>\s*<xr:ValueId>)[0-9a-fA-F-]{36}',
+    "`${1}$uuidType`${2}$uuidValue"
+  )
+
+  $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+  [System.IO.File]::WriteAllText($RootXmlPath, $text, $utf8NoBom)
+  Write-Host "Converted root to ExternalDataProcessor: $RootXmlPath (new uuids)"
 }
 
 function Find-RootXml([string]$ExtAbs, [string]$Name) {
@@ -251,6 +470,7 @@ if ($null -eq $cfg) { throw "Missing .1c/project.json under $ProjectRoot" }
 $extRel = Get-ExtDirRel $cfg
 $artRel = Get-ArtifactsRel $cfg
 $srcRel = Get-SrcRel $cfg
+$srcAbs = Resolve-UnderRoot $ProjectRoot $srcRel
 $extAbs = Resolve-UnderRoot $ProjectRoot $extRel
 $artAbs = Resolve-UnderRoot $ProjectRoot $artRel
 
@@ -302,8 +522,9 @@ switch ($Action) {
     if (-not (Test-Path -LiteralPath $EpfPath)) { throw "EPF not found: $EpfPath" }
     $epfAbs = (Resolve-Path -LiteralPath $EpfPath).Path
     New-Item -ItemType Directory -Force -Path $extAbs | Out-Null
+    $epfCfg = Get-DesignerCfgForEpf $cfg $ProjectRoot $srcAbs $RefreshServiceIb $SkipServiceIbPrepare
     $designerPath = Resolve-Designer $designerExplicit $platformVersion
-    Invoke-DesignerBatch -DesignerPath $designerPath -Cfg $cfg -ProjectRoot $ProjectRoot -LogName "ext-dump.log" -ExtraArgs @(
+    Invoke-DesignerBatch -DesignerPath $designerPath -Cfg $epfCfg -ProjectRoot $ProjectRoot -LogName "ext-dump.log" -ExtraArgs @(
       "/DumpExternalDataProcessorOrReportToFiles", $extAbs, $epfAbs, "-Format", "Hierarchical"
     )
     Write-Host "DUMP_DIR=$extAbs"
@@ -320,8 +541,9 @@ switch ($Action) {
     $baseName = [System.IO.Path]::GetFileNameWithoutExtension($rootAbs)
     New-Item -ItemType Directory -Force -Path $artAbs | Out-Null
     $outEpf = Join-Path $artAbs ($baseName + ".epf")
+    $epfCfg = Get-DesignerCfgForEpf $cfg $ProjectRoot $srcAbs $RefreshServiceIb $SkipServiceIbPrepare
     $designerPath = Resolve-Designer $designerExplicit $platformVersion
-    Invoke-DesignerBatch -DesignerPath $designerPath -Cfg $cfg -ProjectRoot $ProjectRoot -LogName "ext-pack.log" -ExtraArgs @(
+    Invoke-DesignerBatch -DesignerPath $designerPath -Cfg $epfCfg -ProjectRoot $ProjectRoot -LogName "ext-pack.log" -ExtraArgs @(
       "/LoadExternalDataProcessorOrReportFromFiles", $rootAbs, $outEpf
     )
     if (-not (Test-Path -LiteralPath $outEpf)) {
@@ -353,17 +575,24 @@ switch ($Action) {
 
     Convert-DataProcessorRootToExternal -RootXmlPath $dstXml -Name $Name
 
-    # Form.xml may reference cfg:DataProcessorObject.Name — fix in copied tree
+    # Form.xml may reference cfg:DataProcessorObject.Name - fix in copied tree;
+    # regenerate Form uuid (same uuid as config form clashes with service IB).
     if (Test-Path -LiteralPath $dstDir) {
       Get-ChildItem -LiteralPath $dstDir -Recurse -Include *.xml,*.bsl -File | ForEach-Object {
         $t = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8
-        $orig = $t
-        $t = $t.Replace("cfg:DataProcessorObject.$Name", "cfg:ExternalDataProcessorObject.$Name")
-        $t = $t.Replace("DataProcessorObject.$Name", "ExternalDataProcessorObject.$Name")
-        $t = $t.Replace("DataProcessor.$Name.", "ExternalDataProcessor.$Name.")
-        if ($t -ne $orig) {
-          $utf8Bom = New-Object System.Text.UTF8Encoding $true
-          [System.IO.File]::WriteAllText($_.FullName, $t, $utf8Bom)
+        $fixed = Fix-ProcessorRefsToExternal $t $Name
+        if ($_.Name -eq "$Name.xml" -or ($_.Name -eq "Форма.xml" -and $_.Directory.Name -eq "Forms") -or $_.FullName -match '\\Forms\\[^\\]+\\.xml$') {
+          if ($fixed -match '<Form uuid="') {
+            $fixed = [regex]::Replace($fixed, '(?<=<Form uuid=")[^"]+(?=")', (New-Uuid))
+          }
+        }
+        # Forms\<Name>.xml meta
+        if ($_.Directory.Name -eq "Forms" -and $_.Extension -eq ".xml") {
+          $fixed = [regex]::Replace($fixed, '(?<=<Form uuid=")[^"]+(?=")', (New-Uuid))
+        }
+        if ($fixed -ne $t) {
+          $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+          [System.IO.File]::WriteAllText($_.FullName, $fixed, $utf8NoBom)
         }
       }
     }

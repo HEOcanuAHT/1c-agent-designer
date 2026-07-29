@@ -33,7 +33,12 @@
   },
   "ext": {
     "dir": "src/_extDataProcessors",
-    "artifacts": "artifacts/ext"
+    "artifacts": "artifacts/ext",
+    "serviceIb": {
+      "enabled": true,
+      "dbPath": ".1c/ib-ext",
+      "dataDir": ".1c/ib-ext-data"
+    }
   },
   "designerAgent": {
     "host": "127.0.0.1",

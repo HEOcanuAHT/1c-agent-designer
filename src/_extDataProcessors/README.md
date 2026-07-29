@@ -3,7 +3,7 @@
 Иерархическая XML-выгрузка **внешних** обработок (`.epf`), связанных с этой конфигурацией.
 
 - Не объекты метаданных конфигурации — `/LoadConfigFromFiles` и `load-changed` их не загружают.
-- Сборка/разбор: skill `1c-external-epf` (`Invoke-1cExternalEpf.ps1`).
+- Сборка/разбор: skill `1c-external-epf` (`Invoke-1cExternalEpf.ps1`); перед pack/dump скрипт наполняет служебную `.1c/ib-ext` метаданными конфы (без КБД).
 - Готовые `.epf` → `artifacts/ext/` (не коммитить).
 
 Структура одной обработки: `<Name>.xml` + каталог `<Name>/`.

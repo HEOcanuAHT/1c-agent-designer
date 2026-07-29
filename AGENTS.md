@@ -5,7 +5,7 @@
  - `ibcmd` (предпочтительно) → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` 
    (file `infobase.path` или `infobase.dbms`; **только основная**, без `apply`/КБД)
   - `agent` → skill **`1c-designer-agent`** (load **без** `update-db-cfg`)
-- Внешние обработки (`.epf`): skill **`1c-external-epf`** → `src/_extDataProcessors/`
+- Внешние обработки (`.epf`): skill **`1c-external-epf`** → `src/_extDataProcessors/`; dump/pack через служебную `.1c/ib-ext` (import конфы без apply)
 - Упаковка `.cf`: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdPack.ps1`
 - **Первая настройка** (clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
   (интерактивный чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)

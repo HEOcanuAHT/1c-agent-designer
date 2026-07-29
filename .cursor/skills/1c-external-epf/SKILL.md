@@ -2,8 +2,9 @@
 name: 1c-external-epf
 description: >-
   Внешние обработки (.epf): scaffold XML, dump из .epf, вынос из DataProcessors,
-  pack в .epf. Исходники в src/_extDataProcessors. Use when user asks внешняя
-  обработка, epf, вынести обработку, разобрать epf, собрать epf.
+  pack в .epf. Служебная файловая ИБ (ibcmd import без apply) для cfg:* типов.
+  Use when user asks внешняя обработка, epf, создай внешку, вынести обработку,
+  разобрать epf, собрать epf.
 disable-model-invocation: true
 ---
 
@@ -46,11 +47,32 @@ src/_extDataProcessors/
 `.1c/project.json` (+ `project.local.json` для auth):
 
 - `platformVersion` / `designer` — как у dump/load конфы
-- `infobase` + `auth` — **нужны** для dump/pack (ссылочные типы из конфы)
 - `ext.dir` — дефолт `src/_extDataProcessors`
 - `ext.artifacts` — дефолт `artifacts/ext`
+- `ext.serviceIb` — **служебная файловая ИБ** для dump/pack (см. ниже)
 
 Пример полей — `project.json.example` рядом со skill.
+
+## Служебная ИБ (dump/pack)
+
+Dump/pack внешек требуют ИБ с **метаданными основной конфы** (`cfg:*` типы). Боевую/рабочую ИБ для этого **не трогаем**.
+
+Перед `dump` / `pack` скрипт (если `ext.serviceIb.enabled` ≠ false):
+
+1. Файловая ИБ в `.1c/ib-ext` (+ `dataDir` `.1c/ib-ext-data`, настраивается).
+2. `ibcmd infobase create` (если нет или устарела / `-RefreshServiceIb`).
+3. `ibcmd infobase config import` из `src/` — **только метаданные, без `config apply`**.
+4. Designer batch (`/DumpExternal…`, `/LoadExternal…`) — **только** на эту служебную ИБ.
+
+| | Служебная ИБ | Боевая ИБ проекта |
+|--|--------------|-------------------|
+| Назначение | pack/dump внешек | разработка, dump/load конфы |
+| apply / КБД | **никогда** | вручную в Конфигураторе |
+| Обновление | wipe→create→import при смене `src/` (~14 с) | по workflow проекта |
+
+**Не делать:** `config apply` на служебной ИБ — повторный import после apply зависает; при сомнениях `-RefreshServiceIb`.
+
+`scaffold` / `extract-from-config` ИБ не требуют; `pack` / `dump` — готовят служебную ИБ автоматически.
 
 ## Команды
 
@@ -59,6 +81,7 @@ src/_extDataProcessors/
 …\Invoke-1cExternalEpf.ps1 -Action dump -EpfPath "C:\path\file.epf"
 …\Invoke-1cExternalEpf.ps1 -Action extract-from-config -Name "ИмяИзКонфы"
 …\Invoke-1cExternalEpf.ps1 -Action pack -Name "СписокЗависшихЗадач"
+…\Invoke-1cExternalEpf.ps1 -Action pack -Name "…" -RefreshServiceIb   # принудительно пересоздать служебную ИБ
 ```
 
 | Action | Вход | Результат |
@@ -68,20 +91,23 @@ src/_extDataProcessors/
 | `extract-from-config` | `-Name` | копия + трансформ корня в ExternalDataProcessor |
 | `pack` | `-Name` или `-RootXml` | `.epf` в `ext.artifacts` |
 
-Перед dump/pack на файловой ИБ закрой обычный Конфигуратор (как для designer-agent).
+Перед dump/pack закрой Конфигуратор **на служебной** `.1c/ib-ext` (если открывали).
 
 ## Сценарии для агента
 
-### Новая обработка
+### Новая обработка («создай внешку»)
 
 1. Уточни имя (и синоним при необходимости).
 2. `scaffold` → правки модулей/форм.
-3. `pack` → отдай путь к `.epf`.
+3. `pack` — скрипт сам подготовит служебную ИБ (import `src/` без apply) и соберёт `.epf`.
+4. Отдай путь к `artifacts/ext/<Name>.epf`.
+
+Не подключай боевую ИБ и не вызывай `update-db-cfg` / apply.
 
 ### Прислали `.epf` в чат
 
 1. Сохрани в `.1c/incoming/<file>.epf`.
-2. `dump -EpfPath …`.
+2. `dump -EpfPath …` (служебная ИБ с метаданными конфы).
 3. Править XML; по запросу — `pack`.
 
 ### Вынос из конфигурации
@@ -97,6 +123,6 @@ src/_extDataProcessors/
 ## Правила
 
 1. Не коммитить `.epf` / содержимое `artifacts/`.
-2. Dump/pack только через ИБ проекта (иначе ломаются `cfg:*` типы).
-3. Не вызывать `update-db-cfg` / `/UpdateDBCfg` в этом skill.
+2. Dump/pack — через **служебную** файловую ИБ с import конфы (не боевая ИБ проекта).
+3. На служебной ИБ **никогда** `config apply` / `update-db-cfg` / `/UpdateDBCfg`.
 4. Отчёты (`.erf`) — вне scope v1.
