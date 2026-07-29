@@ -61,24 +61,33 @@ description: >-
    → `ConfigDumpInfo.xml` не от этой ИБ (другая база / битый маркер). Сделай `dump-full` в этот каталог, потом снова `--sync`.
 
 4. `Каталог … не пуст` (при полном `export`)  
-   → ibcmd требует **пустой** каталог. В `src/` обычно лежат `README.md` и `_extDataProcessors/` — скрипт `Invoke-1cIbcmdDump.ps1` **сам** выгружает во staging (`.1c/ibcmd-dump-staging/`) и мержит в целевой каталог, сохраняя preserve-пути. Для бенч-каталогов: `-NoStaging` только если каталог пустой.
+   → ibcmd требует **пустой** каталог. В `src/` обычно лежат `README.md` и `_extDataProcessors/` — скрипт `Invoke-1cIbcmdDump.ps1` **сам** выгружает во staging (`.1c/ibcmd-dump-staging/`) и мержит в целевой каталог, сохраняя preserve-пути. Для инкремента staging не нужен: preserve временно уезжает в `.1c/ibcmd-dump-park/`, `--sync` идёт сразу в `src/`.
 
 5. Голый `ibcmd config …` (без `infobase`) при пользователях → интерактивный auth на stdin → «завис». Всегда `ibcmd infobase config …` + закрытый stdin.  
    Скрипты `Invoke-1cIbcmdDump` / `Pack` дополнительно **poll** stdout/stderr: при `Имя пользователя:` / `Пароль для` / `требуется аутентификация` процесс убивается сразу (не ждать ~1 мин).
 
 ## Критические правила CLI (проверено 8.3.23)
 
-1. **Всегда** `ibcmd infobase config …`, не голый `ibcmd config …`.  
+1. **Всегда** вызывай `Invoke-1cIbcmdDump.ps1` / `Pack` — не собирай `ibcmd` вручную.
+2. **Два независимых входа** (не путать):
+
+| Слой | Поля | CLI |
+|------|------|-----|
+| SQL (СУБД) | `infobase.dbms.windowsAuth` (+ при `false`: `dbms.credentialTarget` / `dbms.user`) | `--db-user` только если **не** Windows auth |
+| 1С (пользователи ИБ) | `auth.credentialTarget` (CredMgr) | `--user` / `--password` |
+
+   `auth.credentialTarget` — **только 1С**. При `windowsAuth: true` **не** подставлять CredMgr в SQL.
+3. **Всегда** `ibcmd infobase config …`, не голый `ibcmd config …`.  
    Иначе при пользователях в ИБ — запрос auth на stdin → агент «зависает».
-2. **Нет** `/IBName` и cluster `Srvr=…;Ref=…`. Только файл или СУБД.
-3. **MSSQL / доменная учётка**: без `--db-user` / `--db-pwd`.
-4. **Пользователь 1С**: `--user` / `--password` (`project.local.json` / env).
-5. `--data=<dir>` (обычно `.1c/ibcmd-data/`, в `.gitignore`).
-6. Автоматизация: **stdin закрыт** (`< NUL`) — скрипты это делают.
-7. **`export` / `export --sync` и `import` / `import files` → только основная конфигурация.**  
+4. **Нет** `/IBName` и cluster `Srvr=…;Ref=…`. Только файл или СУБД.
+5. **MSSQL / доменная учётка** (`windowsAuth: true`): без `--db-user` / `--db-pwd`.
+6. **Пользователь 1С**: `--user` / `--password` из CredMgr / env / local JSON.
+7. `--data=<dir>` (обычно `.1c/ibcmd-data/`, в `.gitignore`).
+8. Автоматизация: **stdin закрыт** (`< NUL`) — скрипты это делают.
+9. **`export` / `export --sync` и `import` / `import files` → только основная конфигурация.**  
    **Не** вызывать `config apply` (= обновление КБД / `update-db-cfg`). Принятие в КБД — вручную в Конфигураторе.  
    Пилот: после `import files` обновилась **только основная**, КБД без изменений (подтверждено в UI).
-8. `config save` без `--db` — основная; `save --db` — КБД.  
+10. `config save` без `--db` — основная; `save --db` — КБД.  
    `export`/`--sync` также видит правки **основной** без прожатия бочки (совпало с designer `dump-update`).
 
 ## Dump / export
@@ -97,20 +106,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibc
 
 `-OutDir` — каталог XML (дефолт `src`). Бенчи: `-OutDir .1c/dump-test/ibcmd`.
 
-### Staging (`src/` + README / `_extDataProcessors`)
+### Staging / park (`src/` + README / `_extDataProcessors`)
 
 Проверено 8.3.23: полный `ibcmd export` требует **пустой** каталог; `export --sync` ломается, если рядом с XML есть посторонние файлы.
 
 `Invoke-1cIbcmdDump.ps1` по умолчанию:
 
-| Action | Когда staging | Что делает |
-|--------|---------------|------------|
+| Action | Когда | Что делает |
+|--------|-------|------------|
 | `dump-full` | целевой каталог не пуст | export → `.1c/ibcmd-dump-staging/` → merge в `OutDir` |
-| `dump-update` | в каталоге есть preserve-пути | копия только XML → staging → `--sync` → merge |
+| `dump-update` | в каталоге есть preserve-пути | **Move** preserve → `.1c/ibcmd-dump-park/` → `--sync` сразу в `OutDir` → вернуть |
 
-**Сохраняются** (не удаляются при merge): `README.md`, `ext.dir` (обычно `_extDataProcessors/`), опционально `ibcmd.preservePaths` в `project.json`.
+**Сохраняются**: `README.md`, `ext.dir` (обычно `_extDataProcessors/`), опционально `ibcmd.preservePaths` в `project.json`.
 
-Пустой бенч-каталог: `-NoStaging`. Designer-agent staging **не** нужен — дампит прямо в `src/`.
+Пустой бенч-каталог: `-NoStaging`. Designer-agent staging/park **не** нужны — дампит прямо в `src/`.
 
 ## Load / import (только основная)
 

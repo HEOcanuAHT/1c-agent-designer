@@ -23,7 +23,7 @@ param(
   # For load-files: paths relative to OutDir/src, one per line (UTF-8)
   [string]$ListFile = "",
 
-  # Export/sync directly into OutDir (bench dirs). Default: staging when README/_ext present.
+  # Full dump: no empty-dir staging. Incremental: no preserve park (may fail if README/_ext in OutDir).
   [switch]$NoStaging
 )
 
@@ -72,11 +72,26 @@ function Get-IbAuthArgs($Cfg, [string]$ProjectRoot = "") {
   }
   . $credHelper
   $auth = Resolve-1cIbAuth -Cfg $Cfg -ProjectRoot $ProjectRoot
-  if (-not $auth.Required) { return @() }
-  Write-Host "ibcmd auth source=$($auth.Source)"
+  if (-not $auth.Required) {
+    Write-Host "ibcmd 1C-IB auth: none (auth.required=false)"
+    return @()
+  }
+  # CredMgr/auth → ONLY 1C IB --user/--password. Never SQL (--db-user).
+  Write-Host "ibcmd 1C-IB auth source=$($auth.Source) (--user only; NOT SQL)"
   $a = @("--user=$($auth.User)")
   if ($null -ne $auth.Password -and $auth.Password -ne "") { $a += "--password=$($auth.Password)" }
   return $a
+}
+
+function Test-DbmsWindowsAuth($Dbms) {
+  # Default: Windows/Integrated to SQL. Do not use [bool]$string — [bool]"false" is $true in PS.
+  if ($null -eq $Dbms -or $null -eq $Dbms.windowsAuth) { return $true }
+  $v = $Dbms.windowsAuth
+  if ($v -is [bool]) { return $v }
+  $s = ([string]$v).Trim().ToLowerInvariant()
+  if ($s -in @("0", "false", "no", "off")) { return $false }
+  if ($s -in @("1", "true", "yes", "on")) { return $true }
+  return $true
 }
 
 function Get-InfobaseType($Cfg) {
@@ -130,18 +145,36 @@ Fill infobase.dbms { kind, server, name } or use designer-agent (tools.preferred
     }
     $args = @("--dbms=$kind", "--db-server=$server", "--db-name=$name")
 
-    $winAuth = $true
-    if ($null -ne $dbms.windowsAuth) { $winAuth = [bool]$dbms.windowsAuth }
-    if (-not $winAuth) {
-      $dbUser = $env:1C_DB_USER
-      $dbPwd = $env:1C_DB_PASSWORD
-      if ($dbms.user) { $dbUser = [string]$dbms.user }
-      if ($dbms.password) { $dbPwd = [string]$dbms.password }
-      if (-not $dbUser) { throw "infobase.dbms.windowsAuth=false but db user missing (dbms.user / 1C_DB_USER)." }
-      $args += "--db-user=$dbUser"
-      if ($null -ne $dbPwd -and $dbPwd -ne "") { $args += "--db-pwd=$dbPwd" }
+    $winAuth = Test-DbmsWindowsAuth $dbms
+    if ($winAuth) {
+      return @{ Mode = "dbms"; Args = $args; Label = "$kind/$server/$name"; SqlAuth = "windows (no --db-user; NOT auth.credentialTarget)" }
     }
-    return @{ Mode = "dbms"; Args = $args; Label = "$kind/$server/$name (windowsAuth=$winAuth)" }
+
+    # SQL login (not 1C IB). Prefer dbms.credentialTarget, then env, then plaintext dbms.user/password.
+    $dbUser = $env:1C_DB_USER
+    $dbPwd = $env:1C_DB_PASSWORD
+    $sqlSource = "env"
+    if ($dbms.credentialTarget) {
+      $credHelper = Join-Path $PSScriptRoot "..\..\1c-project-bootstrap\scripts\1c-WindowsCredential.ps1"
+      if (-not (Test-Path -LiteralPath $credHelper)) {
+        throw "Missing credential helper: $credHelper"
+      }
+      . $credHelper
+      $stored = Get-1cWindowsCredential -Target ([string]$dbms.credentialTarget)
+      if ($stored) {
+        $dbUser = $stored.User
+        $dbPwd = $stored.Password
+        $sqlSource = "credmgr:$($dbms.credentialTarget)"
+      }
+    }
+    if ($dbms.user) { $dbUser = [string]$dbms.user; $sqlSource = "json" }
+    if ($dbms.password) { $dbPwd = [string]$dbms.password; if ($sqlSource -eq "env") { $sqlSource = "json" } }
+    if (-not $dbUser) {
+      throw "infobase.dbms.windowsAuth=false but SQL user missing (dbms.credentialTarget / dbms.user / 1C_DB_USER). Do NOT use auth.credentialTarget — that is 1C IB only."
+    }
+    $args += "--db-user=$dbUser"
+    if ($null -ne $dbPwd -and $dbPwd -ne "") { $args += "--db-pwd=$dbPwd" }
+    return @{ Mode = "dbms"; Args = $args; Label = "$kind/$server/$name"; SqlAuth = "sql-login source=$sqlSource" }
   }
 
   throw "infobase.type must be file, ibname, or server (got '$type')."
@@ -193,14 +226,23 @@ function Test-PathIsPreserved([string]$Name, [string[]]$PreserveRels) {
   return $false
 }
 
-function Test-NeedsDumpStaging([string]$DumpAbs, [string[]]$PreserveRels, [string]$Action) {
+function Test-NeedsDumpStaging([string]$DumpAbs) {
   $items = @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)
-  if ($items.Count -eq 0) { return $false }
-  if ($Action -eq "dump-full") { return $true }
-  foreach ($item in $items) {
+  return ($items.Count -gt 0)
+}
+
+function Test-NeedsPreservePark([string]$DumpAbs, [string[]]$PreserveRels) {
+  foreach ($item in @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)) {
     if (Test-PathIsPreserved $item.Name $PreserveRels) { return $true }
   }
   return $false
+}
+
+function Get-ParkDir($Cfg, [string]$ProjectRoot) {
+  $rel = ".1c/ibcmd-dump-park"
+  if ($Cfg.ibcmd -and $Cfg.ibcmd.parkDir) { $rel = [string]$Cfg.ibcmd.parkDir }
+  if ([System.IO.Path]::IsPathRooted($rel)) { return $rel }
+  return Join-Path $ProjectRoot $rel
 }
 
 function Reset-StagingDir([string]$Staging) {
@@ -225,19 +267,36 @@ function Copy-DumpTree([string]$From, [string]$To) {
   }
 }
 
-function Copy-ConfigDumpToStaging([string]$DumpAbs, [string]$Staging, [string[]]$PreserveRels) {
-  Reset-StagingDir $Staging
-  foreach ($item in @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)) {
-    if (-not (Test-PathIsPreserved $item.Name $PreserveRels)) {
-      Copy-Item -LiteralPath $item.FullName -Destination $Staging -Recurse -Force
-    }
-  }
-}
-
 function Merge-DumpStaging([string]$Staging, [string]$DumpAbs, [string[]]$PreserveRels) {
   New-Item -ItemType Directory -Force -Path $DumpAbs | Out-Null
   Clear-DumpDirExceptPreserve $DumpAbs $PreserveRels
   Copy-DumpTree $Staging $DumpAbs
+}
+
+# Move README/_ext aside so --sync can run in-place (cheap Move, not full dump copy).
+function Move-PreserveAside([string]$DumpAbs, [string]$ParkDir, [string[]]$PreserveRels) {
+  Reset-StagingDir $ParkDir
+  $moved = [System.Collections.Generic.List[string]]::new()
+  foreach ($item in @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)) {
+    if (Test-PathIsPreserved $item.Name $PreserveRels) {
+      Move-Item -LiteralPath $item.FullName -Destination $ParkDir -Force
+      [void]$moved.Add($item.Name)
+    }
+  }
+  return @($moved)
+}
+
+function Restore-PreserveFromPark([string]$ParkDir, [string]$DumpAbs) {
+  if (-not (Test-Path -LiteralPath $ParkDir)) { return }
+  New-Item -ItemType Directory -Force -Path $DumpAbs | Out-Null
+  foreach ($item in @(Get-ChildItem -LiteralPath $ParkDir -Force -ErrorAction SilentlyContinue)) {
+    $dest = Join-Path $DumpAbs $item.Name
+    if (Test-Path -LiteralPath $dest) {
+      Remove-Item -LiteralPath $dest -Recurse -Force
+    }
+    Move-Item -LiteralPath $item.FullName -Destination $DumpAbs -Force
+  }
+  Remove-Item -LiteralPath $ParkDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 function Test-IbcmdAuthPrompt([string]$Text) {
@@ -377,8 +436,9 @@ if ($OutDir) {
 New-Item -ItemType Directory -Force -Path $dumpAbs | Out-Null
 $preserveRels = Get-PreserveRels $cfg $outRel
 $stagingDir = Get-StagingDir $cfg $ProjectRoot
-$useStaging = (-not $NoStaging) -and (($Action -eq "dump-full") -or ($Action -eq "dump-update")) `
-  -and (Test-NeedsDumpStaging $dumpAbs $preserveRels $Action)
+$parkDir = Get-ParkDir $cfg $ProjectRoot
+$useStaging = (-not $NoStaging) -and ($Action -eq "dump-full") -and (Test-NeedsDumpStaging $dumpAbs)
+$parkPreserve = (-not $NoStaging) -and ($Action -eq "dump-update") -and (Test-NeedsPreservePark $dumpAbs $preserveRels)
 
 $log = Join-Path $ProjectRoot ".1c\ibcmd-dump.log"
 $common = @("infobase", "config") + $conn.Args + @("--data=$dataDir") + $authArgs
@@ -386,11 +446,13 @@ $common = @("infobase", "config") + $conn.Args + @("--data=$dataDir") + $authArg
 Write-Host "project=$ProjectRoot"
 Write-Host "ibcmd=$ibcmdPath"
 Write-Host "connection=$($conn.Label)"
+if ($conn.SqlAuth) { Write-Host "SQL auth=$($conn.SqlAuth)" }
 Write-Host "data=$dataDir"
 Write-Host "xmlDir=$dumpAbs"
 Write-Host "action=$Action"
 if ($preserveRels.Count -gt 0) { Write-Host "preserve=$($preserveRels -join ', ')" }
 if ($useStaging) { Write-Host "staging=$stagingDir" }
+if ($parkPreserve) { Write-Host "park=$parkDir" }
 Write-Host "update-db-cfg/apply: never (main config only)"
 
 $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -416,14 +478,14 @@ switch ($Action) {
     if (-not (Test-Path -LiteralPath $cdi)) {
       throw "need ConfigDumpInfo.xml in $dumpAbs - run dump-full first"
     }
-    if ($useStaging) {
-      Copy-ConfigDumpToStaging $dumpAbs $stagingDir $preserveRels
-      $cdiStage = Join-Path $stagingDir "ConfigDumpInfo.xml"
-      if (-not (Test-Path -LiteralPath $cdiStage)) {
-        throw "staging copy missing ConfigDumpInfo.xml - run dump-full first"
+    if ($parkPreserve) {
+      $moved = Move-PreserveAside $dumpAbs $parkDir $preserveRels
+      if ($moved.Count -gt 0) { Write-Host "parked=$($moved -join ', ')" }
+      try {
+        Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $dumpAbs)) $log
+      } finally {
+        Restore-PreserveFromPark $parkDir $dumpAbs
       }
-      Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $stagingDir)) $log
-      Merge-DumpStaging $stagingDir $dumpAbs $preserveRels
     } else {
       Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $dumpAbs)) $log
     }

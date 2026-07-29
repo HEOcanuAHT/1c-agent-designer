@@ -43,11 +43,19 @@ ibcmd через SQL обычно **заметно быстрее** agent; дл�
 
 ### Прочее
 
-- `ibcmd` — только настройки **инструмента**: `dataDir`, `stagingDir`, `preservePaths` (не подключение к ИБ).
+- `ibcmd` — только настройки **инструмента**: `dataDir`, `stagingDir`, `parkDir`, `preservePaths` (не подключение к ИБ).
 - `tools.preferredDump`: `ibcmd` | `agent`.
 - `ext.dir` — внешние обработки (skill `1c-external-epf`).
 - `ext.serviceIb` — служебная файловая ИБ для pack/dump внешек (import `src/` без apply; не коммитить).
-- Auth пользователя **1С** (не SQL): `auth.credentialTarget` + `Set-1cIbCredential.ps1`.
+
+### Два входа (не путать)
+
+| Слой | Поля | Кто |
+|------|------|-----|
+| **SQL** | `infobase.dbms.windowsAuth: true` → доменная учётка процесса; при `false` → `dbms.credentialTarget` или `dbms.user` | только **ibcmd** |
+| **1С** | `auth.credentialTarget` (CredMgr) → пользователь ИБ | ibcmd `--user` и designer-agent |
+
+`auth.credentialTarget` — **не** логин SQL. Путь CredMgr уже задаётся здесь (`1c-ib/<project>`); для SQL при Windows auth отдельный CredMgr **не нужен**.
 
 ```powershell
 .\.cursor\skills\1c-project-bootstrap\scripts\Check-1cDevEnv.ps1 -ProjectRoot .

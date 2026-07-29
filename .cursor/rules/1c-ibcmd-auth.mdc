@@ -1,0 +1,14 @@
+---
+description: ibcmd — два входа (SQL ≠ пользователь 1С / CredMgr)
+alwaysApply: true
+---
+
+# ibcmd: SQL и auth.credentialTarget — разные вещи
+
+При dump/load через skill `1c-ibcmd-pack` / `Invoke-1cIbcmdDump.ps1`:
+
+1. **Всегда** вызывай готовый скрипт. Не собирай `ibcmd` вручную и не подставляй пароли из CredMgr в SQL.
+2. **`auth.credentialTarget`** (CredMgr) → только пользователь **1С** (`--user`/`--password`). Это **не** логин SQL.
+3. **`infobase.dbms.windowsAuth: true`** → к SQL **без** `--db-user`/`--db-pwd` (доменная/Windows-учётка процесса). CredMgr сюда **не** относится.
+4. SQL login (`windowsAuth: false`) → `infobase.dbms.credentialTarget` / `dbms.user` / env `1C_DB_*`. **Не** брать `auth.credentialTarget`.
+5. Designer-agent к SQL не ходит: ему `infobase.name` (`/IBName`) или `infobase.server` (`/S`) + тот же `auth` (1С).

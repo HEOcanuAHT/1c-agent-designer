@@ -57,13 +57,18 @@
    ```
    Без доступа к SQL: `tools.preferredDump: "agent"`, `dbms` не заполнять.
 
-3. **`ibcmd`** — только инструмент: `dataDir`, `stagingDir`, `preservePaths` (без подключения к ИБ).
+3. **`ibcmd`** — только инструмент: `dataDir`, `stagingDir`, `parkDir`, `preservePaths` (без подключения к ИБ).
 
 4. Свериться с `.1c/README.md`.
 
-### ibcmd staging (≥ 2026.07.28.3)
+### ibcmd staging / park (≥ 2026.07.28.3, park ≥ 2026.07.29.2)
 
-Полный `export` требует пустой каталог — `Invoke-1cIbcmdDump.ps1` сам делает staging в `.1c/ibcmd-dump-staging/` и сохраняет `README.md` / `_extDataProcessors/`. Менять `src/` не нужно.
+Полный `export` требует пустой каталог — `Invoke-1cIbcmdDump.ps1` сам делает staging в `.1c/ibcmd-dump-staging/` и сохраняет `README.md` / `_extDataProcessors/`. Инкремент: preserve → `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/`. Менять `src/` вручную не нужно.
+
+### ibcmd: два auth (≥ 2026.07.29.3)
+
+`auth.credentialTarget` — только пользователь **1С**. SQL: `infobase.dbms.windowsAuth` (или при `false` — `dbms.credentialTarget` / `dbms.user`). Не подставлять CredMgr 1С в `--db-user`.
+
 
 ---
 

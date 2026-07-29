@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.07.29.1",
+  "version": "2026.07.29.3",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -55,6 +55,14 @@
     {
       "since": "2026.07.29.1",
       "summary": "Sync-1cTemplate.ps1: UTF-8 BOM — иначе Windows PowerShell 5.1 падает с ошибкой парсинга."
+    },
+    {
+      "since": "2026.07.29.2",
+      "summary": "ibcmd dump-update: preserve (README/_ext) временно в .1c/ibcmd-dump-park/, --sync сразу в src/ (без копии всего дампа)."
+    },
+    {
+      "since": "2026.07.29.3",
+      "summary": "auth.credentialTarget = только пользователь 1С; SQL — dbms.windowsAuth / dbms.credentialTarget. Rule 1c-ibcmd-auth."
     }
   ]
 }

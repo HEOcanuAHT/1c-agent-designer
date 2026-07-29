@@ -11,5 +11,6 @@
   (интерактивный чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)
 - **Обновление tooling в живом проекте** — skill `1c-template-sync`; после sync см. `docs/TEMPLATE_UPGRADE.md`
 
-Секреты ИБ — **Windows Credential Manager** (`auth.credentialTarget`, скрипт `Set-1cIbCredential.ps1`);  
-fallback: env `1C_IB_USER`/`1C_IB_PASSWORD` или устаревший plaintext в `.1c/project.local.json` (не коммитить).
+Секреты пользователя **1С** (не SQL) — Windows Credential Manager (`auth.credentialTarget`, `Set-1cIbCredential.ps1`);  
+fallback: env `1C_IB_USER`/`1C_IB_PASSWORD` или plaintext в `.1c/project.local.json` (не коммитить).  
+SQL при `infobase.dbms.windowsAuth: true` — доменная учётка процесса; CredMgr 1С туда **не** подставлять (см. rule `1c-ibcmd-auth`).

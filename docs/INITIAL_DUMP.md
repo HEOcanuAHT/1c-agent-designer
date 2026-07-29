@@ -15,7 +15,7 @@
 …\1c-designer-agent\scripts\Invoke-1cDesignerAgent.ps1 -Action dump-full -ProjectRoot "<этот-репо>"
 ```
 
-**ibcmd и непустой `src/`:** полный `export` требует пустой каталог. Скрипт выгружает во временный `.1c/ibcmd-dump-staging/` и мержит XML в `src/`, сохраняя `README.md` и `_extDataProcessors/`. Инкремент (`dump-update`) — аналогично, если в `src/` есть эти папки.
+**ibcmd и непустой `src/`:** полный `export` требует пустой каталог — скрипт выгружает во `.1c/ibcmd-dump-staging/` и мержит XML в `src/`, сохраняя `README.md` и `_extDataProcessors/`. Инкремент (`dump-update`): preserve временно уезжает в `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/` (без копирования всего дампа).
 
 На файловой ИБ перед dump закрой Конфигуратор. Для ibcmd на client-server в `infobase` нужен блок `dbms`.
 
