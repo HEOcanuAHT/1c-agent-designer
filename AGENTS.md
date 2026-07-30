@@ -10,7 +10,7 @@
 - Упаковка `.cf`: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdPack.ps1`
 - **Первая настройка** (clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
   (интерактивный чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)
-- **Обновление tooling в живом проекте** — skill `1c-template-sync`; после sync см. `docs/TEMPLATE_UPGRADE.md`
+- **Обновление tooling** — skill `1c-template-sync`; после sync см. `docs/TEMPLATE_UPGRADE.md` (актуальная форма `project.json`, без истории версий)
 Scaffold, pack/dump, load конфы — **основной агент** (rule `1c-orchestrator` при работе с кодом/артефактами, `docs/WORKFLOW.md`).
 
 Секреты пользователя **1С** (не SQL) — Windows Credential Manager (`auth.credentialTarget`, `Set-1cIbCredential.ps1`);  

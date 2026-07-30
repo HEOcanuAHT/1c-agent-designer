@@ -5,21 +5,21 @@
 
 ## Cursor
 
-Открывать отдельный workspace (не пилот конкретной конфы):
+Открывать отдельный workspace с этим репозиторием:
 
 - клон: `https://github.com/HEOcanuAHT/1c-agent-designer`
 - или локальный Folder с этим репозиторием
 
-Пилот (конкретная конфа + кит `1C`) — другое окно.
+Репозиторий **конкретной конфигурации** — другое окно Cursor.
 
 ## Что можно менять здесь
 
 | Можно | Нельзя |
 |--------|--------|
 | `.cursor/skills` (bootstrap, std-*, designer-agent, ibcmd-pack, external-epf, external-cfe, tech-decisions) | XML конкретной конфы в `src/` (кроме `src/README.md`, `src/_extDataProcessors/README.md`, `src/_extensions/README.md`) |
-| `.cursor/agents/implementer.md` | feature-pipeline / SDMS / analyst-planner-reviewer |
-| `.cursor/rules`, каркас `.1c/*.example`, `docs/*` шаблона | Секреты, пути к личной ИБ пилота |
-| `.gitignore`, MR-шаблон, README шаблона | Коммиты «под пилот» без обобщения |
+| `.cursor/agents/implementer.md` | Секреты, пути к личным ИБ |
+| `.cursor/rules`, каркас `.1c/*.example`, `docs/*` шаблона | Коммиты под одну конфу без обобщения |
+| `.gitignore`, MR-шаблон, README шаблона | |
 
 `src/` в шаблоне — пустой каркас: `README.md`, `src/_extDataProcessors/README.md`, `src/_extensions/README.md` (без XML конкретной конфы/внешек/расширений).
 
@@ -34,13 +34,10 @@
 ## После изменения skills/rules
 
 1. **Подними `version`** в `.1c/template-manifest.json` (и в `project.json.example` → `template.version`).
-2. При **breaking change** для живых проектов — секция в `docs/TEMPLATE_UPGRADE.md` и пункт в `upgradeNotes` манифеста.
+2. При **breaking change** для живых проектов — обнови `docs/TEMPLATE_UPGRADE.md` и краткий пункт в `upgradeNotes` манифеста.
 3. Если файл нужен **только в шаблоне** (например `template-maintenance.mdc`) — добавь в `projectSkipPaths`, не в allowlist проектов.
 4. Запушить в шаблон.
-5. Пилоты/новые конфиги подтягивают изменения осознанно:
-   - новый проект: `git clone` шаблона;
-   - уже живой репо: skill **`1c-template-sync`** / `Sync-1cTemplate.ps1` (allowlist, **без** `src/` и секретов).
-6. Кит `1C` пока держит копии skills; синхронизация кит ↔ шаблон — отдельная задача (не обязательно в каждом PR).
+5. Живые проекты подтягивают tooling через skill **`1c-template-sync`** / `Sync-1cTemplate.ps1` (allowlist, **без** `src/` и секретов).
 
 Пример:
 
@@ -52,7 +49,7 @@
 
 ## Чеклист перед PR в шаблон
 
-- [ ] Нет имён/путей конкретной конфы (пилотные ИБ, СДМС-номера)
+- [ ] Нет имён/путей конкретной конфы и личных серверов
 - [ ] Load по-прежнему без `update-db-cfg` (правило `1c-designer-agent`)
 - [ ] Примеры в `.1c/*.example`, не `project.local.json`
 - [ ] README/docs обновлены, если менялся процесс

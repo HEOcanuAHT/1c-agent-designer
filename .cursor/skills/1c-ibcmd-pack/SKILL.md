@@ -17,17 +17,9 @@ description: >-
 | XML → `.cf` | `Invoke-1cIbcmdPack.ps1` | служебная **файловая** |
 | dump / partial load XML | `Invoke-1cIbcmdDump.ps1` | `--db-path` **или** DBMS |
 
-На пилоте (client-server, `adm-sand-theta` / MSSQL `theta-msdb-sd`/`com_dackov`, 8.3.23, ~8801 XML ≈174 МБ):
+На типичной client-server ИБ (8.3.23, ~8–9 тыс. XML) ibcmd обычно **в 3–7 раз быстрее** designer-agent на полном dump и инкременте. На файловой ИБ полный `export` — порядка **10–20 с** (Конфигуратор **закрыт**).
 
-| Операция | agent | ibcmd |
-|----------|------:|------:|
-| полная выгрузка | ~68 с | ~14 с |
-| инкремент (`dump-update` / `--sync`) | ~28 с | ~9 с |
-| partial load (3 файла РС) | ~36 с | ~7 с |
-
-И dump, и load — только **основная** (КБД не трогали; подтверждено в UI).
-
-Файловая ИБ (пилот «КБ файл тест», тот же XML ≈8802 файла): полный `export` ~**15 с** (Конфигуратор **закрыт**).
+И dump, и load — только **основная** (КБД не трогают).
 
 ### Открытый Конфигуратор (файловая ИБ)
 
@@ -85,15 +77,14 @@ description: >-
 7. `--data=<dir>` (обычно `.1c/ibcmd-data/`, в `.gitignore`).
 8. Автоматизация: **stdin закрыт** (`< NUL`) — скрипты это делают.
 9. **`export` / `export --sync` и `import` / `import files` → только основная конфигурация.**  
-   **Не** вызывать `config apply` (= обновление КБД / `update-db-cfg`). Принятие в КБД — вручную в Конфигураторе.  
-   Пилот: после `import files` обновилась **только основная**, КБД без изменений (подтверждено в UI).
+   **Не** вызывать `config apply` (= обновление КБД / `update-db-cfg`). Принятие в КБД — вручную в Конфигураторе.
 10. `config save` без `--db` — основная; `save --db` — КБД.  
    `export`/`--sync` также видит правки **основной** без прожатия бочки (совпало с designer `dump-update`).
 
 ## Dump / export
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1" `
+powershell -NoProfile -ExecutionPolicy Bypass -File "<repo>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1" `
   -Action dump-full -ProjectRoot "<repo>"
 ```
 
@@ -124,7 +115,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibc
 ## Load / import (только основная)
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1" `
+powershell -NoProfile -ExecutionPolicy Bypass -File "<repo>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1" `
   -Action load-files -ProjectRoot "<repo>" -ListFile ".1c/load-list.txt"
 ```
 
@@ -177,7 +168,7 @@ ibcmd infobase config export ^
 Служебная ИБ может быть пустой файловой без пользователя — тогда auth **не** спрашивать.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdPack.ps1" -Action pack
+powershell -NoProfile -ExecutionPolicy Bypass -File "<repo>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdPack.ps1" -Action pack
 ```
 
 | Action | Что |

@@ -40,22 +40,22 @@ description: >-
 `.cursor/skills/1c-template-sync/scripts/Sync-1cTemplate.ps1`  
 (не ищи в `tools/`). Clone шаблона во temp делай **вне sandbox** / с полными правами — иначе клон может пропасть.
 
-## Первый sync со старого пилота (нет skill/манифеста)
+## Первый sync (нет skill/манифеста в проекте)
 
-В проекте ещё нет `1c-template-sync`. Не копируй репо шаблона целиком поверх пилота.
+В проекте ещё нет `1c-template-sync`. Не копируй репо шаблона целиком поверх проекта конфигурации.
 
 1. `git clone --depth 1 https://github.com/HEOcanuAHT/1c-agent-designer.git` во временную папку (или `-TemplateRoot` на локальный клон).
-2. Запусти скрипт **из клона шаблона**, цель = пилот:
+2. Запусти скрипт **из клона шаблона**, цель = проект конфигурации:
 
 ```powershell
 # cwd = клон шаблона
 .\.cursor\skills\1c-template-sync\scripts\Sync-1cTemplate.ps1 `
   -Action sync `
-  -ProjectRoot "C:\path\to\pilot" `
+  -ProjectRoot "C:\path\to\my-config" `
   -TemplateRoot .
 ```
 
-3. После этого в пилоте появятся skill, манифест и `template.*` в `project.json`. Дальше sync можно делать уже из пилота.
+3. После этого в проекте появятся skill, манифест и `template.*` в `project.json`. Дальше sync можно делать уже из проекта.
 
 Если пользователь дал только URL шаблона — сделай clone во temp и шаг 2; **не** трогай `src/` и секреты вручную в обход скрипта.
 
@@ -101,7 +101,7 @@ URL по умолчанию: `https://github.com/HEOcanuAHT/1c-agent-designer.gi
 
 ## После sync: секреты в `project.local.json` → Credential Manager
 
-Sync **не** трогает `.1c/project.local.json`, но в старых пилотах там часто лежит `auth.password` в открытом виде. Новый шаблон ожидает `auth.credentialTarget` + Windows Credential Manager.
+Sync **не** трогает `.1c/project.local.json`. Если в файле лежит `auth.password` в открытом виде — предложи перенос в Credential Manager.
 
 ### Когда предлагать миграцию
 
@@ -150,23 +150,19 @@ Sync **не** трогает `.1c/project.local.json`, но в старых пи
 | id | content |
 |----|---------|
 | `sync-done` | sync skills/rules |
-| `sync-upgrade` | прочитать вывод `UPGRADE …` и `docs/TEMPLATE_UPGRADE.md`; вручную поправить `.1c/project.json` |
+| `sync-upgrade` | сверить `.1c/project.json` с example и `docs/TEMPLATE_UPGRADE.md` |
 | `sync-secrets` | проверить local на plaintext password |
 | `sync-credmgr` | по согласию Migrate / Set-1cIbCredential |
 | `sync-ping` | по согласию ping dump-инструментом |
 
 `sync-credmgr` → `cancelled`, если пароля в файле нет.
 
-### После sync: upgrade notes (не как в 1С)
+### После sync: сверка конфига
 
-Полноценные цепочки «обработчиков обновления» для `project.json` **не делаем** — конфиг у каждого проекта свой, sync его не перезаписывает.
+Sync **не перезаписывает** `project.json` / `project.local.json` (кроме `template.version`).
 
-Вместо этого:
-
-1. В `.1c/template-manifest.json` → `upgradeNotes[]` (`since`, `summary`) — краткие шаги по версиям.
-2. `docs/TEMPLATE_UPGRADE.md` — подробные инструкции для агента/человека.
-3. После `sync` скрипт печатает `UPGRADE [версия] …` для всех `since`, попавших между старой и новой версией.
-4. Агент **вручную** правит `project.json` / `project.local.json` по чеклисту (согласие пользователя на каждое изменение конфига).
+1. Сверь `.1c/project.json` с `.1c/project.json.example` и `docs/TEMPLATE_UPGRADE.md` (актуальная форма полей).
+2. Если в манифесте есть `upgradeNotes` — скрипт печатает `UPGRADE [версия] …` для пропущенных версий; правки в конфиг — **вручную**, с согласия пользователя.
 
 Автоматически только безопасное: CredMgr, копирование allowlist, `template.version` в `project.json`.
 
@@ -178,7 +174,7 @@ Sync **не** трогает `.1c/project.local.json`, но в старых пи
 ```json
 "template": {
   "name": "1c-agent-designer",
-  "version": "2026.07.27.2",
+  "version": "2026.07.30.3",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main"
 }

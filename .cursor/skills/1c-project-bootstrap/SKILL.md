@@ -31,7 +31,7 @@ description: >-
 2. Вопросы — **короткие**, один за раз; варианты нумерованным списком (1/2/3) или AskQuestion, если доступен.
 3. Не пиши конфиги молча до ответов. Не ставь софт без согласия.  
    Пароли ИБ: **Windows Credential Manager** (`Set-1cIbCredential.ps1`), не в чат и не в git. В JSON — только `credentialTarget`.
-4. Dump/load: load **без** `update-db-cfg`. Не смешивать с SDMS / feature-pipeline.
+4. Dump/load: load **без** `update-db-cfg`.
 
 ### Todo-чеклист (создать в начале)
 

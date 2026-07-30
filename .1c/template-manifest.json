@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.07.30.2",
+  "version": "2026.07.30.3",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -35,42 +35,5 @@
     ".1c/ibcmd-data",
     "artifacts"
   ],
-  "upgradeNotes": [
-    {
-      "since": "2026.07.28.1",
-      "summary": "Добавить tools.preferredDump (ibcmd|agent) в project.json при отсутствии."
-    },
-    {
-      "since": "2026.07.28.2",
-      "summary": "Перенести auth.password из project.local.json в Credential Manager (Migrate-1cAuthToCredMgr.ps1)."
-    },
-    {
-      "since": "2026.07.28.3",
-      "summary": "ibcmd dump-full: staging для непустого src/ (README, _extDataProcessors) — скрипт делает сам."
-    },
-    {
-      "since": "2026.07.28.4",
-      "summary": "Единый infobase: dbms в infobase (не ibcmd); type=file→path, ibname/server→name/server+dbms. См. docs/TEMPLATE_UPGRADE.md."
-    },
-    {
-      "since": "2026.07.29.1",
-      "summary": "Sync-1cTemplate.ps1: UTF-8 BOM — иначе Windows PowerShell 5.1 падает с ошибкой парсинга."
-    },
-    {
-      "since": "2026.07.29.2",
-      "summary": "ibcmd dump-update: preserve (README/_ext) временно в .1c/ibcmd-dump-park/, --sync сразу в src/ (без копии всего дампа)."
-    },
-    {
-      "since": "2026.07.29.3",
-      "summary": "auth.credentialTarget = только пользователь 1С; SQL — dbms.windowsAuth / dbms.credentialTarget. Rule 1c-ibcmd-auth."
-    },
-    {
-      "since": "2026.07.30.1",
-      "summary": "Расширения .cfe: skill 1c-external-cfe (src/_extensions, artifacts/cfe), общая служебная ИБ .1c/ib-ext с EPF. В project.json: cfe.dir / cfe.artifacts."
-    },
-    {
-      "since": "2026.07.30.2",
-      "summary": "implementer — только файлы (BSL/XML), без ИБ; оркестрация scaffold/pack/dump/load — основной агент (rule 1c-orchestrator)."
-    }
-  ]
+  "upgradeNotes": []
 }

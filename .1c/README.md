@@ -23,7 +23,7 @@ Bootstrap: skill `1c-project-bootstrap`. Sync tooling: skill `1c-template-sync`.
 "ibcmd": { "dataDir": ".1c/ibcmd-data" }
 ```
 
-### Серверная (типичный пилот)
+### Серверная (client-server)
 
 ```json
 "infobase": {

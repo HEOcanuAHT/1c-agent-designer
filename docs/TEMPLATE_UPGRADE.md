@@ -1,120 +1,88 @@
-# Обновление tooling шаблона в живом проекте
+# После sync шаблона в живом проекте
 
-После `Sync-1cTemplate.ps1 -Action sync` скрипт печатает `UPGRADE …` для пропущенных версий.  
-Агент: выполни шаги **по порядку**, `project.json` / `project.local.json` — **вручную** (sync их не трогает, кроме `template.version`).
+После `Sync-1cTemplate.ps1 -Action sync` сверь конфиг с актуальным шаблоном.  
+`project.json` / `project.local.json` sync **не перезаписывает** (кроме `template.version`).
 
-## Общий порядок (любое обновление)
+## Порядок
 
 1. `check` → `sync` (сначала `-DryRun` по желанию).
-2. Прочитать вывод `UPGRADE` / этот файл для пропущенных версий.
-3. Проверить `.1c/project.json` по `.1c/project.json.example` и `.1c/README.md`.
-4. Проверить `project.local.json` на plaintext `auth.password` → CredMgr (skill `1c-template-sync`).
-5. `ping` выбранным dump-инструментом.
-6. Отдельный коммит tooling (не смешивать с `src/`).
+2. Сверить `.1c/project.json` с `.1c/project.json.example` и `.1c/README.md`.
+3. Проверить `project.local.json` на plaintext `auth.password` → CredMgr (skill `1c-template-sync`).
+4. `ping` выбранным dump-инструментом.
+5. Отдельный коммит tooling (не смешивать с `src/`).
 
-**Не делаем:** цепочку автоматических «обработчиков» как в конфигурации 1С — слишком мало breaking changes, `project.json` у каждого свой. Автоматизируем только безопасное (CredMgr, подсказки).
+## Ожидаемая форма `project.json` (текущая версия)
 
----
+### `tools.preferredDump`
 
-## ≥ 2026.07.30.2 — implementer только файлы, оркестратор
+`"ibcmd"` при доступе к SQL/файловой ИБ, иначе `"agent"`.
 
-**Новое:** `/implementer` не трогает Конфигуратор, ibcmd и `Invoke-1c*.ps1` — только BSL/XML в репозитории.  
-Scaffold, pack/dump, load конфы — **основной агент** (rule `.cursor/rules/1c-orchestrator.mdc`).
+### `infobase` — один блок для agent и ibcmd
 
-Менять `project.json` не нужно. При sync подтянутся `implementer.md` и rule.
+| `type` | Поля | designer-agent | ibcmd |
+|--------|------|----------------|-------|
+| `file` | `path` | `/F` | `--db-path` |
+| `ibname` | `name` + `dbms` | `/IBName` | SQL через `dbms` |
+| `server` | `server` + `dbms` | `/S` | SQL через `dbms` |
 
----
+`dbms` — только в `infobase`, не в `ibcmd`. Для файловой ИБ блок `dbms` не нужен.
 
-## ≥ 2026.07.30.1 — расширения `.cfe`
-
-**Новое:** skill `1c-external-cfe` — `src/_extensions/` → `artifacts/cfe/*.cfe`, служебная ИБ та же (`.1c/ib-ext`).
-
-В `project.json` при желании:
+Пример серверной ИБ:
 
 ```json
+"infobase": {
+  "type": "ibname",
+  "name": "My Base",
+  "dbms": {
+    "kind": "MSSQLServer",
+    "server": "sql-host",
+    "name": "db_name",
+    "windowsAuth": true
+  }
+}
+```
+
+### Auth — два слоя (не путать)
+
+| Слой | Где | Назначение |
+|------|-----|------------|
+| SQL | `infobase.dbms.windowsAuth` / `dbms.credentialTarget` | только ibcmd → СУБД |
+| 1С | `auth.credentialTarget` (CredMgr) | пользователь ИБ в ibcmd и designer-agent |
+
+`auth.credentialTarget` — **не** логин SQL. Пароль 1С — в Credential Manager, не в git.
+
+### `ibcmd` — только настройки инструмента
+
+`dataDir`, `stagingDir`, `parkDir`, `preservePaths` — без подключения к ИБ.
+
+Полный `export` в непустой `src/`: скрипт сам делает staging (`.1c/ibcmd-dump-staging/`) и сохраняет `README.md`, `_extDataProcessors/`, `_extensions/`.  
+Инкремент: preserve → `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/`.
+
+### Внешние обработки и расширения
+
+```json
+"ext": {
+  "dir": "src/_extDataProcessors",
+  "artifacts": "artifacts/ext",
+  "serviceIb": { "enabled": true, "dbPath": ".1c/ib-ext", "dataDir": ".1c/ib-ext-data" }
+},
 "cfe": {
   "dir": "src/_extensions",
   "artifacts": "artifacts/cfe"
 }
 ```
 
-Без блока — сработают дефолты. `ext.serviceIb` общий с внешками.
+Дефолты совпадают — блоки опциональны.
 
----
+### Роли агентов
 
-## ≥ 2026.07.29.1 — UTF-8 BOM у Sync-скрипта
-
-**Симптом:** `Sync-1cTemplate.ps1` на Windows PowerShell 5.1 — ошибка парсинга (часто вокруг `Write-Host` с `;` в строке).  
-**Причина:** файл без UTF-8 BOM; PS 5.1 иначе ломает разбор.  
-**Фикс:** в шаблоне скрипт сохранён с BOM. Первый sync после этой версии — клоном шаблона (локальный битый скрипт пилота не запускать).
-
----
-
-## ≥ 2026.07.28.4 — единый `infobase`
-
-**Зачем:** одно описание ИБ; agent и ibcmd читают разные поля из одного блока.
-
-### Проверить `infobase`
-
-| `type` | Нужные поля | Кто что берёт |
-|--------|-------------|---------------|
-| `file` | `path` | agent `/F`, ibcmd `--db-path` |
-| `ibname` | `name` + `dbms` | agent `/IBName`, ibcmd SQL |
-| `server` | `server` + `dbms` | agent `/S`, ibcmd SQL |
-
-### Миграция конфига (ручная)
-
-1. **`dbms` только в `infobase`**, не в `ibcmd`:
-   - было `ibcmd.dbms` → перенести в `infobase.dbms`, удалить из `ibcmd`.
-   - было `infobase.dbms` при `type: file` — убрать `dbms` (файловой ИБ SQL не нужен).
-
-2. **Серверная ИБ** — не смешивать file и C/S:
-   ```json
-   "infobase": {
-     "type": "ibname",
-     "name": "Имя из списка 1С",
-     "dbms": {
-       "kind": "MSSQLServer",
-       "server": "sql-host",
-       "name": "db_name",
-       "windowsAuth": true
-     }
-   }
-   ```
-   Без доступа к SQL: `tools.preferredDump: "agent"`, `dbms` не заполнять.
-
-3. **`ibcmd`** — только инструмент: `dataDir`, `stagingDir`, `parkDir`, `preservePaths` (без подключения к ИБ).
-
-4. Свериться с `.1c/README.md`.
-
-### ibcmd staging / park (≥ 2026.07.28.3, park ≥ 2026.07.29.2)
-
-Полный `export` требует пустой каталог — `Invoke-1cIbcmdDump.ps1` сам делает staging в `.1c/ibcmd-dump-staging/` и сохраняет `README.md` / `_extDataProcessors/` / `_extensions/`. Инкремент: preserve → `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/`. Менять `src/` вручную не нужно.
-
-### ibcmd: два auth (≥ 2026.07.29.3)
-
-`auth.credentialTarget` — только пользователь **1С**. SQL: `infobase.dbms.windowsAuth` (или при `false` — `dbms.credentialTarget` / `dbms.user`). Не подставлять CredMgr 1С в `--db-user`.
-
-
----
-
-## ≥ 2026.07.28.2 — auth в Credential Manager
-
-Если в `project.local.json` есть `auth.password` → предложить `Migrate-1cAuthToCredMgr.ps1`.  
-В JSON оставить `auth.credentialTarget`, не plaintext.
-
----
-
-## ≥ 2026.07.28.1 — `tools.preferredDump`
-
-Если нет `tools.preferredDump` — добавить `"ibcmd"` (при доступе к SQL/файлу) или `"agent"`.
-
----
+- `/implementer` — только BSL/XML в репозитории.
+- Основной агент — scaffold/pack/dump, load конфы (rule `1c-orchestrator`).
 
 ## Для разработчиков шаблона
 
-Новый breaking change для живых проектов:
+При breaking change для живых проектов:
 
-1. Поднять `version` в `.1c/template-manifest.json`.
-2. Добавить секцию **сюда** (заголовок `≥ YYYY.MM.DD.N`).
-3. Дублировать краткий пункт в `template-manifest.json` → `upgradeNotes` (для вывода sync).
+1. Поднять `version` в `.1c/template-manifest.json` (+ `template.version` в example).
+2. Обновить **этот файл** — актуальная форма конфига, без истории версий.
+3. Краткий пункт в `upgradeNotes` манифеста (для одного вывода `UPGRADE` после sync).

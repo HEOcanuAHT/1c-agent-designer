@@ -23,7 +23,7 @@ AgentMode+SSH — experimental (`designerAgent.transport: agent` или `-UseAge
 Быстрый dump/load через **ibcmd**: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdDump.ps1`.  
 Оба инструмента читают **`infobase`**: agent — `path`/`name`/`server`; ibcmd — `path` (файл) или `dbms` (C/S, быстрее).  
 Если в проекте `tools.preferredDump: "ibcmd"` — по умолчанию используй ibcmd, не agent.
-**И dump, и import** — только **основная** конфигурация; `config apply` / КБД не трогать (как и этот skill без `update-db-cfg`). Пилот: `import files` обновил только основную.
+**И dump, и import** — только **основная** конфигурация; `config apply` / КБД не трогать (как и этот skill без `update-db-cfg`).
 
 ## Два «только отличия»
 
