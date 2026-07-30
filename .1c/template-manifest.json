@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.07.29.3",
+  "version": "2026.07.30.2",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -63,6 +63,14 @@
     {
       "since": "2026.07.29.3",
       "summary": "auth.credentialTarget = только пользователь 1С; SQL — dbms.windowsAuth / dbms.credentialTarget. Rule 1c-ibcmd-auth."
+    },
+    {
+      "since": "2026.07.30.1",
+      "summary": "Расширения .cfe: skill 1c-external-cfe (src/_extensions, artifacts/cfe), общая служебная ИБ .1c/ib-ext с EPF. В project.json: cfe.dir / cfe.artifacts."
+    },
+    {
+      "since": "2026.07.30.2",
+      "summary": "implementer — только файлы (BSL/XML), без ИБ; оркестрация scaffold/pack/dump/load — основной агент (rule 1c-orchestrator)."
     }
   ]
 }

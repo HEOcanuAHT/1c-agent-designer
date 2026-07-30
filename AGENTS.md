@@ -6,10 +6,12 @@
    (file `infobase.path` или `infobase.dbms`; **только основная**, без `apply`/КБД)
   - `agent` → skill **`1c-designer-agent`** (load **без** `update-db-cfg`)
 - Внешние обработки (`.epf`): skill **`1c-external-epf`** → `src/_extDataProcessors/`; dump/pack через служебную `.1c/ib-ext` (import конфы без apply)
+- Расширения (`.cfe`): skill **`1c-external-cfe`** → `src/_extensions/`; dump/pack/scaffold через ту же `.1c/ib-ext`
 - Упаковка `.cf`: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdPack.ps1`
 - **Первая настройка** (clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
   (интерактивный чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)
 - **Обновление tooling в живом проекте** — skill `1c-template-sync`; после sync см. `docs/TEMPLATE_UPGRADE.md`
+Scaffold, pack/dump, load конфы — **основной агент** (rule `1c-orchestrator` при работе с кодом/артефактами, `docs/WORKFLOW.md`).
 
 Секреты пользователя **1С** (не SQL) — Windows Credential Manager (`auth.credentialTarget`, `Set-1cIbCredential.ps1`);  
 fallback: env `1C_IB_USER`/`1C_IB_PASSWORD` или plaintext в `.1c/project.local.json` (не коммитить).  

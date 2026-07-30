@@ -198,17 +198,27 @@ function Get-StagingDir($Cfg, [string]$ProjectRoot) {
 function Get-PreserveRels($Cfg, [string]$DumpRel) {
   $rels = [System.Collections.Generic.List[string]]::new()
   [void]$rels.Add("README.md")
+  $dumpNorm = ($DumpRel -replace "\\", "/").TrimEnd("/")
+
+  $extraDirs = [System.Collections.Generic.List[string]]::new()
   $extDir = "src/_extDataProcessors"
   if ($Cfg.ext -and $Cfg.ext.dir) { $extDir = ([string]$Cfg.ext.dir -replace "\\", "/").TrimEnd("/") }
-  $dumpNorm = ($DumpRel -replace "\\", "/").TrimEnd("/")
-  if ($extDir.StartsWith("$dumpNorm/", [System.StringComparison]::OrdinalIgnoreCase)) {
-    [void]$rels.Add($extDir.Substring($dumpNorm.Length + 1))
-  } elseif ($extDir -notmatch "/") {
-    [void]$rels.Add($extDir)
-  } else {
-    $leaf = [IO.Path]::GetFileName($extDir)
-    if ($leaf) { [void]$rels.Add($leaf) }
+  [void]$extraDirs.Add($extDir)
+  $cfeDir = "src/_extensions"
+  if ($Cfg.cfe -and $Cfg.cfe.dir) { $cfeDir = ([string]$Cfg.cfe.dir -replace "\\", "/").TrimEnd("/") }
+  [void]$extraDirs.Add($cfeDir)
+
+  foreach ($dir in $extraDirs) {
+    if ($dir.StartsWith("$dumpNorm/", [System.StringComparison]::OrdinalIgnoreCase)) {
+      [void]$rels.Add($dir.Substring($dumpNorm.Length + 1))
+    } elseif ($dir -notmatch "/") {
+      [void]$rels.Add($dir)
+    } else {
+      $leaf = [IO.Path]::GetFileName($dir)
+      if ($leaf) { [void]$rels.Add($leaf) }
+    }
   }
+
   if ($Cfg.ibcmd -and $Cfg.ibcmd.preservePaths) {
     foreach ($p in @($Cfg.ibcmd.preservePaths)) {
       $norm = ([string]$p -replace "\\", "/").TrimStart("./")
@@ -341,7 +351,7 @@ function Throw-IbcmdFailure([string]$Combined, [int]$ExitCode) {
     throw "ibcmd: ConfigDumpInfo does not match this IB - run dump-full into this folder first, then dump-update. exit=$ExitCode"
   }
   if ([regex]::IsMatch($Combined, $reNotEmpty)) {
-    throw "ibcmd: export target must be empty (README/_extDataProcessors break full export). Use Invoke-1cIbcmdDump without -NoStaging. exit=$ExitCode"
+    throw "ibcmd: export target must be empty (README/_extDataProcessors/_extensions break full export). Use Invoke-1cIbcmdDump without -NoStaging. exit=$ExitCode"
   }
   throw "ibcmd exited with code $ExitCode"
 }

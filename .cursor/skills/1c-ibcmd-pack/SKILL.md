@@ -61,7 +61,7 @@ description: >-
    → `ConfigDumpInfo.xml` не от этой ИБ (другая база / битый маркер). Сделай `dump-full` в этот каталог, потом снова `--sync`.
 
 4. `Каталог … не пуст` (при полном `export`)  
-   → ibcmd требует **пустой** каталог. В `src/` обычно лежат `README.md` и `_extDataProcessors/` — скрипт `Invoke-1cIbcmdDump.ps1` **сам** выгружает во staging (`.1c/ibcmd-dump-staging/`) и мержит в целевой каталог, сохраняя preserve-пути. Для инкремента staging не нужен: preserve временно уезжает в `.1c/ibcmd-dump-park/`, `--sync` идёт сразу в `src/`.
+   → ibcmd требует **пустой** каталог. В `src/` обычно лежат `README.md`, `_extDataProcessors/`, `_extensions/` — скрипт `Invoke-1cIbcmdDump.ps1` **сам** выгружает во staging (`.1c/ibcmd-dump-staging/`) и мержит в целевой каталог, сохраняя preserve-пути. Для инкремента staging не нужен: preserve временно уезжает в `.1c/ibcmd-dump-park/`, `--sync` идёт сразу в `src/`.
 
 5. Голый `ibcmd config …` (без `infobase`) при пользователях → интерактивный auth на stdin → «завис». Всегда `ibcmd infobase config …` + закрытый stdin.  
    Скрипты `Invoke-1cIbcmdDump` / `Pack` дополнительно **poll** stdout/stderr: при `Имя пользователя:` / `Пароль для` / `требуется аутентификация` процесс убивается сразу (не ждать ~1 мин).
@@ -106,7 +106,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibc
 
 `-OutDir` — каталог XML (дефолт `src`). Бенчи: `-OutDir .1c/dump-test/ibcmd`.
 
-### Staging / park (`src/` + README / `_extDataProcessors`)
+### Staging / park (`src/` + README / `_extDataProcessors` / `_extensions`)
 
 Проверено 8.3.23: полный `ibcmd export` требует **пустой** каталог; `export --sync` ломается, если рядом с XML есть посторонние файлы.
 
@@ -117,7 +117,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "<kit>/.cursor/skills/1c-ibc
 | `dump-full` | целевой каталог не пуст | export → `.1c/ibcmd-dump-staging/` → merge в `OutDir` |
 | `dump-update` | в каталоге есть preserve-пути | **Move** preserve → `.1c/ibcmd-dump-park/` → `--sync` сразу в `OutDir` → вернуть |
 
-**Сохраняются**: `README.md`, `ext.dir` (обычно `_extDataProcessors/`), опционально `ibcmd.preservePaths` в `project.json`.
+**Сохраняются**: `README.md`, `ext.dir` (обычно `_extDataProcessors/`), `cfe.dir` (обычно `_extensions/`), опционально `ibcmd.preservePaths` в `project.json`.
 
 Пустой бенч-каталог: `-NoStaging`. Designer-agent staging/park **не** нужны — дампит прямо в `src/`.
 

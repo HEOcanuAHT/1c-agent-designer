@@ -27,4 +27,7 @@
 
 ## Код
 
-Субагент `/implementer` + skills `coding-standards` → нужные `std-*`, `tech-decisions` (`docs/TECH_DECISIONS.md`).
+**Оркестратор** (основной агент): декомпозиция, scaffold/pack/dump, dump/load конфы — rule `1c-orchestrator`.  
+**Субагент `/implementer`**: только правки файлов (BSL, формы, XML) по `coding-standards` → нужные `std-*`, `tech-decisions` (`docs/TECH_DECISIONS.md`). Без Конфигуратора и скриптов ИБ.
+
+См. `.cursor/agents/implementer.md`.

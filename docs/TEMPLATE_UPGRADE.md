@@ -16,6 +16,32 @@
 
 ---
 
+## ≥ 2026.07.30.2 — implementer только файлы, оркестратор
+
+**Новое:** `/implementer` не трогает Конфигуратор, ibcmd и `Invoke-1c*.ps1` — только BSL/XML в репозитории.  
+Scaffold, pack/dump, load конфы — **основной агент** (rule `.cursor/rules/1c-orchestrator.mdc`).
+
+Менять `project.json` не нужно. При sync подтянутся `implementer.md` и rule.
+
+---
+
+## ≥ 2026.07.30.1 — расширения `.cfe`
+
+**Новое:** skill `1c-external-cfe` — `src/_extensions/` → `artifacts/cfe/*.cfe`, служебная ИБ та же (`.1c/ib-ext`).
+
+В `project.json` при желании:
+
+```json
+"cfe": {
+  "dir": "src/_extensions",
+  "artifacts": "artifacts/cfe"
+}
+```
+
+Без блока — сработают дефолты. `ext.serviceIb` общий с внешками.
+
+---
+
 ## ≥ 2026.07.29.1 — UTF-8 BOM у Sync-скрипта
 
 **Симптом:** `Sync-1cTemplate.ps1` на Windows PowerShell 5.1 — ошибка парсинга (часто вокруг `Write-Host` с `;` в строке).  
@@ -63,7 +89,7 @@
 
 ### ibcmd staging / park (≥ 2026.07.28.3, park ≥ 2026.07.29.2)
 
-Полный `export` требует пустой каталог — `Invoke-1cIbcmdDump.ps1` сам делает staging в `.1c/ibcmd-dump-staging/` и сохраняет `README.md` / `_extDataProcessors/`. Инкремент: preserve → `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/`. Менять `src/` вручную не нужно.
+Полный `export` требует пустой каталог — `Invoke-1cIbcmdDump.ps1` сам делает staging в `.1c/ibcmd-dump-staging/` и сохраняет `README.md` / `_extDataProcessors/` / `_extensions/`. Инкремент: preserve → `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/`. Менять `src/` вручную не нужно.
 
 ### ibcmd: два auth (≥ 2026.07.29.3)
 

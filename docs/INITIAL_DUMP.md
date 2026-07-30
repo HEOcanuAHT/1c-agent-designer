@@ -8,14 +8,14 @@
 5. Полная выгрузка — по `tools.preferredDump` (**ibcmd** по умолчанию):
 
 ```powershell
-# предпочтительно (README и src/_extDataProcessors/ можно не убирать — скрипт сам сделает staging):
+# предпочтительно (README, src/_extDataProcessors/, src/_extensions/ можно не убирать — скрипт сам сделает staging):
 …\1c-ibcmd-pack\scripts\Invoke-1cIbcmdDump.ps1 -Action dump-full -ProjectRoot "<этот-репо>"
 
 # fallback (designer-agent — дампит прямо в src/, staging не нужен):
 …\1c-designer-agent\scripts\Invoke-1cDesignerAgent.ps1 -Action dump-full -ProjectRoot "<этот-репо>"
 ```
 
-**ibcmd и непустой `src/`:** полный `export` требует пустой каталог — скрипт выгружает во `.1c/ibcmd-dump-staging/` и мержит XML в `src/`, сохраняя `README.md` и `_extDataProcessors/`. Инкремент (`dump-update`): preserve временно уезжает в `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/` (без копирования всего дампа).
+**ibcmd и непустой `src/`:** полный `export` требует пустой каталог — скрипт выгружает во `.1c/ibcmd-dump-staging/` и мержит XML в `src/`, сохраняя `README.md`, `_extDataProcessors/` и `_extensions/`. Инкремент (`dump-update`): preserve временно уезжает в `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/` (без копирования всего дампа).
 
 На файловой ИБ перед dump закрой Конфигуратор. Для ibcmd на client-server в `infobase` нужен блок `dbms`.
 

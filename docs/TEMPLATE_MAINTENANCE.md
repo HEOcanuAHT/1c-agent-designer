@@ -16,12 +16,12 @@
 
 | Можно | Нельзя |
 |--------|--------|
-| `.cursor/skills` (bootstrap, std-*, designer-agent, ibcmd-pack, external-epf, tech-decisions) | XML конкретной конфы в `src/` (кроме `src/README.md`, `src/_extDataProcessors/README.md`) |
+| `.cursor/skills` (bootstrap, std-*, designer-agent, ibcmd-pack, external-epf, external-cfe, tech-decisions) | XML конкретной конфы в `src/` (кроме `src/README.md`, `src/_extDataProcessors/README.md`, `src/_extensions/README.md`) |
 | `.cursor/agents/implementer.md` | feature-pipeline / SDMS / analyst-planner-reviewer |
 | `.cursor/rules`, каркас `.1c/*.example`, `docs/*` шаблона | Секреты, пути к личной ИБ пилота |
 | `.gitignore`, MR-шаблон, README шаблона | Коммиты «под пилот» без обобщения |
 
-`src/` в шаблоне — пустой каркас: `README.md` и `src/_extDataProcessors/README.md` (без XML конкретной конфы/внешек).
+`src/` в шаблоне — пустой каркас: `README.md`, `src/_extDataProcessors/README.md`, `src/_extensions/README.md` (без XML конкретной конфы/внешек/расширений).
 
 ## Git
 

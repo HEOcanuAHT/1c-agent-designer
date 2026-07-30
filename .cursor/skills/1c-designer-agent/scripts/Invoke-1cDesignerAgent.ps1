@@ -595,10 +595,15 @@ function Invoke-DesignerBatch {
   if ($p.ExitCode -ne 0) { throw "Designer batch exit $($p.ExitCode)" }
 }
 
-function Test-IsExtDataProcessorRel([string]$RelPath) {
+function Test-IsNonConfigSrcRel([string]$RelPath) {
   $r = ($RelPath -replace "\\", "/").TrimStart("/")
-  return $r.StartsWith("_extDataProcessors/", [System.StringComparison]::OrdinalIgnoreCase) -or
-    $r.Equals("_extDataProcessors", [System.StringComparison]::OrdinalIgnoreCase)
+  foreach ($top in @("_extDataProcessors", "_extensions")) {
+    if ($r.StartsWith("$top/", [System.StringComparison]::OrdinalIgnoreCase) -or
+        $r.Equals($top, [System.StringComparison]::OrdinalIgnoreCase)) {
+      return $true
+    }
+  }
+  return $false
 }
 
 function Build-LoadListFromGit {
@@ -615,7 +620,7 @@ function Build-LoadListFromGit {
     if ($fn.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
       $rel = $fn.Substring($prefix.Length)
       if (-not $rel) { continue }
-      if (Test-IsExtDataProcessorRel $rel) {
+      if (Test-IsNonConfigSrcRel $rel) {
         $skipped++
         continue
       }
@@ -624,9 +629,9 @@ function Build-LoadListFromGit {
   }
   $files = @($files | Select-Object -Unique)
   if ($skipped -gt 0) {
-    Write-Host "Skipped $skipped path(s) under _extDataProcessors (external epf sources)"
+    Write-Host "Skipped $skipped path(s) under _extDataProcessors/_extensions (external sources)"
   }
-  if ($files.Count -eq 0) { throw "no changed files under $SrcRel (excluding _extDataProcessors)" }
+  if ($files.Count -eq 0) { throw "no changed files under $SrcRel (excluding _extDataProcessors/_extensions)" }
   $utf8NoBom = New-Object System.Text.UTF8Encoding $false
   [System.IO.File]::WriteAllLines($ListPath, $files, $utf8NoBom)
   Write-Host "LIST_FILE=$ListPath ($($files.Count))"
@@ -640,7 +645,7 @@ function Write-LoadListFile {
   foreach ($raw in @($RelPaths)) {
     $rel = ($raw -replace "\\", "/").Trim()
     if (-not $rel) { continue }
-    if (Test-IsExtDataProcessorRel $rel) {
+    if (Test-IsNonConfigSrcRel $rel) {
       $skipped++
       continue
     }
@@ -648,9 +653,9 @@ function Write-LoadListFile {
   }
   $files = @($files | Select-Object -Unique)
   if ($skipped -gt 0) {
-    Write-Host "Skipped $skipped path(s) under _extDataProcessors (external epf sources)"
+    Write-Host "Skipped $skipped path(s) under _extDataProcessors/_extensions (external sources)"
   }
-  if ($files.Count -eq 0) { throw "empty load list (after excluding _extDataProcessors)" }
+  if ($files.Count -eq 0) { throw "empty load list (after excluding _extDataProcessors/_extensions)" }
   $utf8NoBom = New-Object System.Text.UTF8Encoding $false
   [System.IO.File]::WriteAllLines($ListPath, $files, $utf8NoBom)
   Write-Host "LIST_FILE=$ListPath ($($files.Count))"

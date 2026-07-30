@@ -5,7 +5,7 @@
   "src": "src",
   "template": {
     "name": "1c-agent-designer",
-    "version": "2026.07.29.3",
+    "version": "2026.07.30.2",
     "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
     "ref": "main"
   },
@@ -40,6 +40,10 @@
       "dbPath": ".1c/ib-ext",
       "dataDir": ".1c/ib-ext-data"
     }
+  },
+  "cfe": {
+    "dir": "src/_extensions",
+    "artifacts": "artifacts/cfe"
   },
   "designerAgent": {
     "host": "127.0.0.1",

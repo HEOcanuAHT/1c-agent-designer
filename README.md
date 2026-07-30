@@ -6,9 +6,10 @@
 - skills стандартов ИТС (`coding-standards`, `std-*`)
 - dump/load: предпочтительно **ibcmd** (`1c-ibcmd-pack`), запасной путь — `1c-designer-agent`
 - внешние обработки через `1c-external-epf` (`src/_extDataProcessors`)
+- расширения через `1c-external-cfe` (`src/_extensions` → `.cfe`)
 - упаковка `.cf` через `1c-ibcmd-pack`
 - обновление шаблона в живых проектах: `1c-template-sync` (без `src/`)
-- субагент `/implementer`
+- субагент `/implementer` (только файлы; сборка и ИБ — основной агент)
 
 **Не включает** персональный оркестратор (feature-pipeline, SDMS, analyst/planner/reviewer) — он живёт в отдельном ките.
 
@@ -48,7 +49,7 @@ Copy-Item .1c\project.local.json.example .1c\project.local.json
   skills/                # bootstrap, template-sync, coding-standards, std-*, designer-agent, …
 .1c/                     # project.json.example, template-manifest.json, secrets example
 docs/
-src/                     # XML-выгрузка конфигурации + _extDataProcessors (внешки)
+src/                     # XML конфы + _extDataProcessors (внешки) + _extensions (.cfe)
 .gitlab/merge_request_templates/
 ```
 
