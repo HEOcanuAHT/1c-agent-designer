@@ -72,6 +72,20 @@ disable-model-invocation: true
 …\Invoke-1cExternalCfe.ps1 -Action pack -Name "…" -AllowServiceIbApplyOnCompatMismatch -RefreshServiceIb
 ```
 
+### Проверка языка запросов (служебная ИБ)
+
+Пример расширения: `examples/QueryValidate` (HTTP `/hs/qv/validate`).
+
+```powershell
+…\Invoke-1cValidateQuery.ps1 -Action ensure
+…\Invoke-1cValidateQuery.ps1 -QueryText "ВЫБРАТЬ 1"
+…\Invoke-1cValidateQuery.ps1 -Action stop
+```
+
+См. `examples/QueryValidate/README.md`. На `.1c/ib-ext` выполняется apply (нужен runtime HTTP).
+
+**Режим агента (opt-in):** rule `1c-query-validate` — по умолчанию выкл.; фраза «проверяй запросы» → `.1c/query-validate.mode=on`, после правок запросов вызывать `Invoke-1cValidateQuery.ps1`. «не проверяй запросы» → `off`.
+
 | Action | Параметры | Результат |
 |--------|-----------|-----------|
 | `scaffold` | `-Name` [`-Prefix`] [`-Synonym`] [`-Purpose`] | `src/_extensions/<Name>/` + явный `NamePrefix` |

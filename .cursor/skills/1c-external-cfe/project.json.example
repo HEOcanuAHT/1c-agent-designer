@@ -24,5 +24,8 @@
   "cfe": {
     "dir": "src/_extensions",
     "artifacts": "artifacts/cfe"
+  },
+  "queryValidate": {
+    "httpPort": 18088
   }
 }
