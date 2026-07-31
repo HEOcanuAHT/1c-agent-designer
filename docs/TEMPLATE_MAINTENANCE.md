@@ -16,7 +16,7 @@
 
 | Можно | Нельзя |
 |--------|--------|
-| `.cursor/skills` (bootstrap, std-*, designer-agent, ibcmd-pack, external-epf, external-cfe, tech-decisions) | XML конкретной конфы в `src/` (кроме `src/README.md`, `src/_extDataProcessors/README.md`, `src/_extensions/README.md`) |
+| `.cursor/skills` (bootstrap, std-*, 1c-forms, 1c-metadata-manage, designer-agent, ibcmd-pack, external-epf/cfe, tech-decisions) | XML конкретной конфы в `src/` (кроме `src/README.md`, `src/_extDataProcessors/README.md`, `src/_extensions/README.md`) |
 | `.cursor/agents/implementer.md` | Секреты, пути к личным ИБ |
 | `.cursor/rules`, каркас `.1c/*.example`, `docs/*` шаблона | Коммиты под одну конфу без обобщения |
 | `.gitignore`, MR-шаблон, README шаблона | |

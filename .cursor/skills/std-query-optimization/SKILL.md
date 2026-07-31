@@ -13,7 +13,8 @@ disable-model-invocation: true
 - [#std652 Несоответствие индексов и условий](https://its.1c.ru/db/v8std/content/652/hdoc)
 - Раздел: [Оптимизация запросов](https://its.1c.ru/db/v8std/browse/13/-1/26/28)
 
-Оформление текста — в `std-queries`.
+Оформление текста — в `std-queries`.  
+Практические приёмы (ВТ, соединения, СКД) — [docs/practices.md](docs/practices.md) (адапт. ai_rules_1c).
 
 ## #std658 — эффективные условия (must)
 

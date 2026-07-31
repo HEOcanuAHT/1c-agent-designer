@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 # std-transactions-locks — транзакции и модификация данных
 
+Практика порядка блокировок / диагностики — [docs/practices.md](docs/practices.md) (адапт. ai_rules_1c).
+
 Источник ИТС (сессия): [#std783 Транзакции](https://its.1c.ru/db/v8std/content/783/hdoc)  
 Раздел: [Обработка и модификация данных](https://its.1c.ru/db/v8std/browse/13/-1/26/29).
 

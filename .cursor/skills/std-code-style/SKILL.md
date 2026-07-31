@@ -9,6 +9,9 @@ disable-model-invocation: true
 
 # std-code-style — соглашения при написании кода
 
+Глубже практики (запрещённые конструкции, комментарии, внутреннее ревью) — [docs/practices.md](docs/practices.md)  
+(адапт. из ai_rules_1c; без MCP). Регионы модулей — skill `std-module-structure`.
+
 Источники ИТС (сессия):
 - [#std469 Правила создания общих модулей](https://its.1c.ru/db/v8std/content/469/hdoc)
 - [#std679 Ограничение «Вызов сервера»](https://its.1c.ru/db/v8std/content/679/hdoc)

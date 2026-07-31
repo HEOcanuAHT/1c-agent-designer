@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.07.31.1",
+  "version": "2026.07.31.2",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -10,6 +10,7 @@
     "docs/WORKFLOW.md",
     "docs/INITIAL_DUMP.md",
     "docs/TEMPLATE_UPGRADE.md",
+    "docs/ATTRIBUTION.md",
     "AGENTS.md",
     ".1c/project.json.example",
     ".1c/project.local.json.example",
@@ -36,6 +37,10 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.07.31.2",
+      "summary": "Knowledge + XML: 1c-forms, 1c-metadata-manage (без db/epf upstream), std-anti-patterns/extension/dcs/…; dump/load/EPF/CFE без изменений."
+    },
     {
       "since": "2026.07.31.1",
       "summary": "CFE: -AllowServiceIbApplyOnCompatMismatch (apply только на .1c/ib-ext); ASCII Name/Prefix; reference-adopted.md; implementer — Adopted/protected .bin."

@@ -85,6 +85,12 @@
 - `/implementer` — только BSL/XML в репозитории.
 - Основной агент — scaffold/pack/dump, load конфы (rule `1c-orchestrator`).
 
+### Knowledge / XML (с 2026.07.31.2)
+
+После sync появятся skills: `1c-forms`, `1c-metadata-manage`, `std-anti-patterns`, `std-extension-patterns`, `std-dcs-design`, `std-registers-design`, `std-architecture`, `std-logging`, `std-integrations`, …  
+Роутер — обновлённый `coding-standards`.  
+**Не** используют upstream dump/load/`UpdateDBCfg`/epf-build — канон по-прежнему `1c-ibcmd-pack` / `1c-designer-agent` / `1c-external-*`.
+
 ## Для разработчиков шаблона
 
 При breaking change для живых проектов:
