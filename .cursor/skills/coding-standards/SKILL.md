@@ -21,19 +21,33 @@ disable-model-invocation: true
 
 | Если в задаче есть… | Skill |
 |---------------------|--------|
-| BSL-модули, именование, области, общие модули | `std-code-style` |
-| Клиент/сервер, формы, вызовы сервера, трафик | `std-client-server` |
-| Текст запроса, `Запрос`, СКД-запросы (оформление) | `std-queries` |
-| Производительность запросов, индексы, ВТ, вирт. таблицы | `std-query-optimization` |
-| Запись данных, транзакции, блокировки | `std-transactions-locks` |
+| BSL-модули, именование, области, общие модули | `std-code-style` (+ `docs/practices.md` при глубоком стиле) |
+| Регионы модулей (каркас) | `std-module-structure` |
+| Клиент/сервер, вызовы сервера, трафик | `std-client-server` |
+| Управляемые формы / `Form.xml` / async | `1c-forms` (+ `1c-metadata-manage` form-*) |
+| Текст запроса, `Запрос`, СКД-запросы (оформление) | `std-queries` (+ `docs/query-writing.md`) |
+| Производительность запросов, индексы, ВТ | `std-query-optimization` (+ `docs/practices.md`) |
+| Запись данных, транзакции, блокировки | `std-transactions-locks` (+ `docs/practices.md`) |
 | Роли, RLS, `ПравоДоступа`, привилегированный режим | `std-access-rights` |
 | План обмена, `ОбменДанными.Загрузка`, EnterpriseData | `std-data-exchange` |
 | API с `Вызов сервера`, пароли, Выполнить/Вычислить | `std-security` |
-| Новые/изменённые объекты метаданных, подсистемы | `std-metadata` |
+| Новые/изменённые объекты метаданных, подсистемы | `std-metadata` + `1c-metadata-manage` |
+| Ручная правка XML метаданных / типичные факапы | `std-metadata-xml` |
+| Расширения CFE (перехватчики BSL) | `std-extension-patterns` (+ pack: `1c-external-cfe`) |
+| СКД / отчёты (проектирование) | `std-dcs-design` (+ `1c-metadata-manage` skd-*) |
+| Регистры (проектирование) | `std-registers-design` |
+| Антипаттерны / ревью perf | `std-anti-patterns` |
+| Ловушки платформы | `std-platform-solutions` |
+| Архитектура (шире ITS-выжимок) | `std-architecture` |
+| Журнал регистрации | `std-logging` |
+| HTTP/REST/очереди | `std-integrations` |
 
 Типичные комбинации:
 - правка общего модуля без запросов → `std-code-style` (+ `std-client-server`, если есть клиентский API)
-- новый запрос в отчёте → `std-queries` + `std-query-optimization`
+- новая/правка формы → `1c-forms` + `1c-metadata-manage` (form-*)
+- новый объект метаданных → `std-metadata` + `1c-metadata-manage` (meta-*) + `std-metadata-xml`
+- код в расширении → `std-extension-patterns` (+ `1c-external-cfe` для pack)
+- новый запрос в отчёте → `std-queries` + `std-query-optimization` (+ `std-dcs-design` при СКД)
 - проведение документа → `std-transactions-locks` (+ запросы при наличии)
 - обработчик `ПередЗаписью` в объекте обмена → `std-data-exchange`
 

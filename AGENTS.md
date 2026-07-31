@@ -1,12 +1,13 @@
 # Agent notes — шаблон конфигурации 1С
 
-- Стандарты кода: skills `coding-standards`, `std-*`
+- Стандарты кода: skills `coding-standards`, `std-*` (в т.ч. формы/`1c-forms`, антипаттерны, СКД, расширения)
+- **XML метаданных** (создать/править/validate Form/СКД/роли/CFE borrow): skill **`1c-metadata-manage`** — не заменяет dump/load
 - **Dump/load XML** — смотри `tools.preferredDump` в `.1c/project.json`:
- - `ibcmd` (предпочтительно) → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` 
-   (file `infobase.path` или `infobase.dbms`; **только основная**, без `apply`/КБД)
+  - `ibcmd` (предпочтительно) → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` 
+    (file `infobase.path` или `infobase.dbms`; **только основная**, без `apply`/КБД)
   - `agent` → skill **`1c-designer-agent`** (load **без** `update-db-cfg`)
 - Внешние обработки (`.epf`): skill **`1c-external-epf`** → `src/_extDataProcessors/`; dump/pack через служебную `.1c/ib-ext` (import конфы без apply)
-- Расширения (`.cfe`): skill **`1c-external-cfe`** → `src/_extensions/`; dump/pack/scaffold через ту же `.1c/ib-ext`
+- Расширения (`.cfe`): skill **`1c-external-cfe`** → `src/_extensions/`; dump/pack/scaffold через ту же `.1c/ib-ext`; BSL-паттерны — `std-extension-patterns`
 - Упаковка `.cf`: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdPack.ps1`
 - **Первая настройка** (clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
   (интерактивный чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)
@@ -16,3 +17,5 @@ Scaffold, pack/dump, load конфы — **основной агент** (rule `
 Секреты пользователя **1С** (не SQL) — Windows Credential Manager (`auth.credentialTarget`, `Set-1cIbCredential.ps1`);  
 fallback: env `1C_IB_USER`/`1C_IB_PASSWORD` или plaintext в `.1c/project.local.json` (не коммитить).  
 SQL при `infobase.dbms.windowsAuth: true` — доменная учётка процесса; CredMgr 1С туда **не** подставлять (см. rule `1c-ibcmd-auth`).
+
+Knowledge-слой форм/антипаттернов/XML частично адаптирован из [comol/ai_rules_1c](https://github.com/comol/ai_rules_1c) (без MCP-гейтов и без их dump/load).

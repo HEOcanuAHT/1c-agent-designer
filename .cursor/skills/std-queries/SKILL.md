@@ -11,7 +11,8 @@ disable-model-invocation: true
 Источник ИТС (сессия): [#std437 Оформление текстов запросов](https://its.1c.ru/db/v8std/content/437/hdoc)  
 Раздел: [Работа с запросами](https://its.1c.ru/db/v8std/browse/13/-1/26/27).
 
-Если вопрос про скорость/индексы/ВТ — дополнительно грузи `std-query-optimization`.
+Если вопрос про скорость/индексы/ВТ — дополнительно грузи `std-query-optimization`.  
+Шаблоны/сборка сложных запросов — [docs/query-writing.md](docs/query-writing.md) (адапт. ai_rules_1c).
 
 ## #std437 — оформление (must)
 
