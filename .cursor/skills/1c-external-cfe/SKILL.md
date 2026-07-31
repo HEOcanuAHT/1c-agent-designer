@@ -2,8 +2,9 @@
 name: 1c-external-cfe
 description: >-
   Расширения конфигурации (.cfe): scaffold XML, dump из .cfe, pack в .cfe.
-  Служебная файловая ИБ (.1c/ib-ext, та же что у EPF) — import конфы без apply.
-  Use when user asks расширение, cfe, создай расширение, собрать cfe, разобрать cfe.
+  Служебная файловая ИБ (.1c/ib-ext, та же что у EPF) — import конфы без apply
+  (исключение: -AllowServiceIbApplyOnCompatMismatch). Use when user asks
+  расширение, cfe, создай расширение, собрать cfe, разобрать cfe.
 disable-model-invocation: true
 ---
 
@@ -11,102 +12,108 @@ disable-model-invocation: true
 
 ## Цель
 
-Работать с **расширениями** отдельно от основной конфигурации и внешек:
-
-1. `scaffold` — пустое расширение в `src/_extensions/<Name>/` (через create+export на служебной ИБ)
+1. `scaffold` — пустое расширение в `src/_extensions/<Name>/`
 2. `dump` — `.cfe` → XML
-3. правки BSL/XML (свои объекты с `NamePrefix`, заимствования)
+3. правки BSL/XML — `/implementer` (Adopted XML: `reference-adopted.md`)
 4. `pack` → `artifacts/cfe/<Name>.cfe`
 
-Стандарты кода: `coding-standards`, `std-*`. Служебная ИБ **та же**, что у `1c-external-epf` (`ext.serviceIb` → `.1c/ib-ext`).
+Служебная ИБ **та же**, что у `1c-external-epf` (`.1c/ib-ext`).
 
 ## Каталоги
 
 | Путь | Назначение |
 |------|------------|
-| `src/_extensions/<Name>/` | Hierarchical XML расширения (`Configuration.xml` + объекты) |
-| `artifacts/cfe/` | собранные `.cfe` (gitignore) |
-| `.1c/incoming/` | временные `.cfe` из чата перед dump |
+| `src/_extensions/<Name>/` | Hierarchical XML |
+| `artifacts/cfe/` | `.cfe` (gitignore) |
+| `.1c/cfe-*.log` | логи scaffold/dump/pack (UTF-8) |
 
-Папка `_extensions` **не** входит в dump/load основной конфы (preserve + фильтр designer-agent). Не клади расширения в корень `src/` как будто это основная конфигурация.
-
-Структура:
-
-```
-src/_extensions/
-  <Name>/
-    Configuration.xml
-    ConfigDumpInfo.xml
-    CommonModules/...
-    ...
-```
+`_extensions` не входит в dump/load основной конфы.
 
 ## Конфиг
 
-`.1c/project.json`:
-
-- `cfe.dir` — дефолт `src/_extensions`
-- `cfe.artifacts` — дефолт `artifacts/cfe`
-- `ext.serviceIb` — **общая** служебная ИБ с внешками (import `src/` без apply)
-
-Пример — `project.json.example` рядом со skill.
+- `cfe.dir` / `cfe.artifacts` — дефолты `src/_extensions`, `artifacts/cfe`
+- `ext.serviceIb` — общая служебная ИБ с внешками
 
 ## Служебная ИБ
 
-Перед `scaffold` / `dump` / `pack` (если `ext.serviceIb.enabled` ≠ false):
+По умолчанию: create → **import без apply** → extension create/import/export/save.
 
-1. Файловая ИБ `.1c/ib-ext` (та же, что для EPF).
-2. `ibcmd config import` основной конфы из `src/` — **без `config apply`**.
-3. `ibcmd config extension create` → `import`/`load`/`export`/`save` с `--extension=<Name>`.
+### CompatibilityMode vs платформа
 
-Боевую ИБ не трогать. `apply` / КБД на служебной — **никогда**.
+Если основная конфа со старым `CompatibilityMode` (например `Version8_3_10` на платформе 8.3.23), после import без apply:
 
-Нужен `src/Configuration.xml` (дамп основной конфы) — иначе служебную ИБ не собрать.
+> Режим совместимости основной конфигурации не соответствует версии ИБ
+
+→ `extension create` падает.
+
+**Обход (только `.1c/ib-ext`, не боевая ИБ):**
+
+```powershell
+…\Invoke-1cExternalCfe.ps1 -Action scaffold -Name FixDbmsType -Prefix Fix_ `
+  -AllowServiceIbApplyOnCompatMismatch -RefreshServiceIb
+```
+
+Флаг делает одноразовый `ibcmd config apply --force` на служебной ИБ после import.  
+На боевую ИБ / `update-db-cfg` проекта — **никогда**.
+
+## Имена: латиница предпочтительнее
+
+`-Name` / `-Prefix` с кириллицей через PowerShell→cmd→ibcmd часто приходят кракозябрами.
+
+**Рекомендация:** ASCII-идентификаторы (`FixDbmsType`, префикс `Fix_`). Синоним можно кириллицей в XML после scaffold.  
+Скрипт пишет Warning, если Name/Prefix не ASCII.
 
 ## Команды
 
 ```powershell
-…\Invoke-1cExternalCfe.ps1 -Action scaffold -Name "МоёРасширение" -Prefix "Моё_" -Synonym "Моё расширение" -ProjectRoot "<repo>"
-…\Invoke-1cExternalCfe.ps1 -Action dump -CfePath "C:\path\file.cfe" -Name "МоёРасширение"
-…\Invoke-1cExternalCfe.ps1 -Action pack -Name "МоёРасширение"
-…\Invoke-1cExternalCfe.ps1 -Action pack -Name "…" -RefreshServiceIb
+…\Invoke-1cExternalCfe.ps1 -Action scaffold -Name "FixDbmsType" -Prefix "Fix_" -Synonym "Фикс типа СУБД"
+…\Invoke-1cExternalCfe.ps1 -Action dump -CfePath "C:\path\file.cfe" -Name "FixDbmsType"
+…\Invoke-1cExternalCfe.ps1 -Action pack -Name "FixDbmsType"
+…\Invoke-1cExternalCfe.ps1 -Action pack -Name "…" -AllowServiceIbApplyOnCompatMismatch -RefreshServiceIb
 ```
 
 | Action | Параметры | Результат |
 |--------|-----------|-----------|
-| `scaffold` | `-Name` [`-Prefix`] [`-Synonym`] [`-Purpose`] | `src/_extensions/<Name>/` |
+| `scaffold` | `-Name` [`-Prefix`] [`-Synonym`] [`-Purpose`] | `src/_extensions/<Name>/` + явный `NamePrefix` |
 | `dump` | `-CfePath` `-Name` | XML в `cfe.dir/<Name>/` |
 | `pack` | `-Name` или `-XmlDir` | `.cfe` в `cfe.artifacts` |
 
-`-Purpose`: `Customization` (дефолт) / `AddOn` / `Patch`.  
-`-Prefix` по умолчанию: `<Name>_`. Для `pack` читается из `Configuration.xml`, если не задан.
+После scaffold пустой `<NamePrefix/>` скрипт заполняет из `-Prefix`.
 
-Перед операциями закрой Конфигуратор на `.1c/ib-ext`, если открывали.
+## Сценарии
 
-## Сценарии для агента
-
-**Правки кода/форм/метаданных** — `/implementer`. `scaffold` / `pack` / `dump` — оркестратор (rule `1c-orchestrator`).
+**Код/формы/заимствования** — `/implementer` + `reference-adopted.md`.  
+**scaffold / pack / dump** — оркестратор.
 
 ### Новое расширение
 
-1. Уточни имя, префикс, назначение (Customization/AddOn/Patch).
-2. Оркестратор: `scaffold` → `/implementer` правит объекты/модули.
-3. Оркестратор: `pack` → отдай `artifacts/cfe/<Name>.cfe`.
+1. ASCII-имя и префикс; при compat-ошибке — `-AllowServiceIbApplyOnCompatMismatch`.
+2. `scaffold` → implementer (объекты, `&Вместо`, Adopted).
+3. Перед pack — чеклист ниже.
+4. `pack` → `artifacts/cfe/<Name>.cfe`. Лог ошибок: `.1c/cfe-pack.log`.
 
-### Прислали `.cfe`
+### Заимствования (Adopted)
 
-1. Сохрани в `.1c/incoming/<file>.cfe`.
-2. `dump -CfePath … -Name …` (`-Name` = имя расширения внутри файла).
-3. Править XML; по запросу — `pack`.
+Ручной XML хрупкий. Предпочтительно:
 
-### Сборка после правок
+1. Заимствовать объект в Конфигураторе на служебной/дев ИБ и сделать `dump` расширения, **или**
+2. Копировать минимальный шаблон из `reference-adopted.md` (CommonModule / DataProcessor).
 
-`pack -Name …`. Лог: `.1c/cfe-*.log`. При смене `src/Configuration.xml` — `-RefreshServiceIb` или авто-wipe по stamp.
+Не копировать uuid/`GeneratedType` 1:1 с основной без проверки.
+
+## Чеклист перед pack
+
+- [ ] `Configuration.xml`: непустой `<NamePrefix>…</NamePrefix>`
+- [ ] У Adopted-объектов: `ObjectBelonging=Adopted`, `ExtendedConfigurationObject`, `InternalInfo`/`GeneratedType`, `<ChildObjects/>` (хотя бы пустой)
+- [ ] Модули расширения: `PropertyState` ObjectModule/Module = `Extended`, где нужно
+- [ ] CommonModule: uuid в расширении ≠ обязательно копировать как `ExtendedConfigurationObject` основной (см. reference)
+- [ ] Нет кириллицы в Name расширения, если раньше ломался ibcmd
+- [ ] При ошибке import — читать `.1c/cfe-pack.log` (UTF-8)
 
 ## Правила
 
 1. Не коммитить `.cfe` / `artifacts/`.
-2. Исходники только в `src/_extensions/` — не смешивать с основной выгрузкой.
-3. Dump/pack/scaffold — через **служебную** `.1c/ib-ext` (не боевая ИБ).
-4. На служебной ИБ **никогда** `config apply` / `update-db-cfg` / `/UpdateDBCfg`.
-5. Установка расширения в боевую ИБ — вручную пользователем (не через этот skill).
+2. Исходники только в `src/_extensions/`.
+3. Dump/pack/scaffold — служебная `.1c/ib-ext`.
+4. `config apply` на служебной — **только** с `-AllowServiceIbApplyOnCompatMismatch`. На боевой ИБ — никогда.
+5. Установка `.cfe` в боевую ИБ — вручную пользователем.

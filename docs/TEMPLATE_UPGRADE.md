@@ -74,6 +74,12 @@
 
 Дефолты совпадают — блоки опциональны.
 
+### CFE: CompatibilityMode и имена (≥ 2026.07.31.1)
+
+При ошибке «режим совместимости… не соответствует версии ИБ» на scaffold/pack:  
+`-AllowServiceIbApplyOnCompatMismatch` (apply **только** служебной `.1c/ib-ext`).  
+Имена расширения для ibcmd — ASCII. Adopted XML: skill `1c-external-cfe` / `reference-adopted.md`.
+
 ### Роли агентов
 
 - `/implementer` — только BSL/XML в репозитории.

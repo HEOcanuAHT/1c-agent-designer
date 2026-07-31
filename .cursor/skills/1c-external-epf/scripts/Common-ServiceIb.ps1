@@ -190,9 +190,10 @@ function Remove-ServiceIbTree($Paths) {
   if (Test-Path -LiteralPath $Paths.DataAbs) { Remove-Item -LiteralPath $Paths.DataAbs -Recurse -Force }
 }
 
-function Ensure-ServiceIb($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$Force) {
+function Ensure-ServiceIb($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$Force, [switch]$AllowApply) {
   $paths = Get-ServiceIbPaths $Cfg $ProjectRoot
-  $stamp = Get-ConfigImportStamp $SrcAbs
+  # Stamp includes apply flag so toggling Apply forces rebuild
+  $stamp = "{0}|apply={1}" -f (Get-ConfigImportStamp $SrcAbs), ([bool]$AllowApply)
   if (-not $Force -and (Test-ServiceIbCurrent $paths $stamp)) {
     Write-Host "SERVICE_IB=ready stamp=$stamp path=$($paths.DbAbs)"
     return $paths
@@ -207,9 +208,13 @@ function Ensure-ServiceIb($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$
   New-Item -ItemType Directory -Force -Path $logDir | Out-Null
   $log = Join-Path $logDir "ext-service-ib.log"
   $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-  Add-Content -LiteralPath $log -Value "`n=== $ts Ensure-ServiceIb force=$Force ===" -Encoding UTF8
+  Add-Content -LiteralPath $log -Value "`n=== $ts Ensure-ServiceIb force=$Force allowApply=$AllowApply ===" -Encoding UTF8
 
-  Write-Host "SERVICE_IB=prepare wipe+create+import (no apply) path=$($paths.DbAbs)"
+  if ($AllowApply) {
+    Write-Host "SERVICE_IB=prepare wipe+create+import+apply (SERVICE IB ONLY) path=$($paths.DbAbs)"
+  } else {
+    Write-Host "SERVICE_IB=prepare wipe+create+import (no apply) path=$($paths.DbAbs)"
+  }
   Remove-ServiceIbTree $paths
   New-Item -ItemType Directory -Force -Path $paths.DbAbs, $paths.DataAbs | Out-Null
 
@@ -227,18 +232,28 @@ function Ensure-ServiceIb($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$
     $SrcAbs
   ) $log
 
+  if ($AllowApply) {
+    Write-Host "SERVICE_IB=apply --force (compat mismatch workaround; never on project IB)"
+    Invoke-IbcmdSimple $ibcmdPath @(
+      "infobase", "config", "apply",
+      "--db-path=$($paths.DbAbs)",
+      "--data=$($paths.DataAbs)",
+      "--force"
+    ) $log
+  }
+
   $utf8NoBom = New-Object System.Text.UTF8Encoding $false
   [IO.File]::WriteAllText($paths.StampAbs, $stamp, $utf8NoBom)
   Write-Host "SERVICE_IB=ready stamp=$stamp"
   return $paths
 }
 
-function Get-ServiceIbCfg($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$ForceRefresh, [switch]$SkipPrepare) {
+function Get-ServiceIbCfg($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$ForceRefresh, [switch]$SkipPrepare, [switch]$AllowApply) {
   if ($SkipPrepare -or -not (Test-ServiceIbEnabled $Cfg)) {
     Write-Host "SERVICE_IB=skipped (using project infobase from project.json)"
     return @{ Cfg = $Cfg; Paths = $null; IbcmdPath = $null }
   }
-  $paths = Ensure-ServiceIb $Cfg $ProjectRoot $SrcAbs $ForceRefresh
+  $paths = Ensure-ServiceIb $Cfg $ProjectRoot $SrcAbs $ForceRefresh $AllowApply
   $svcCfg = $Cfg | ConvertTo-Json -Depth 20 | ConvertFrom-Json
   $svcCfg.infobase = [pscustomobject]@{
     type = "file"

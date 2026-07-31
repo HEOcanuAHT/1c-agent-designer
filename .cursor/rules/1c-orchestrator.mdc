@@ -15,7 +15,7 @@ alwaysApply: false
 | декомпозиция задачи | правки BSL, Form.xml, метаданных XML |
 | `scaffold` / `extract` / `pack` / `dump` (EPF, CFE) | только файлы в `src/`, `_extDataProcessors/`, `_extensions/` |
 | dump/load основной конфы (`1c-ibcmd-pack`, `1c-designer-agent`) | **без** Конфигуратора, ibcmd, скриптов `Invoke-1c*.ps1` |
-| контекст для субагента (пути, заимствования) | `coding-standards` + нужные `std-*` |
+| при compat-ошибке CFE: `-AllowServiceIbApplyOnCompatMismatch` (только `.1c/ib-ext`) | coding-standards + `reference-adopted.md` для расширений |
 
 ## Когда делегировать implementer
 

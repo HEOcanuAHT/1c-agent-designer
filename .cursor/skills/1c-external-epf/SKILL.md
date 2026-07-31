@@ -72,7 +72,8 @@ Dump/pack внешек требуют ИБ с **метаданными осно�
 | apply / КБД | **никогда** | вручную в Конфигураторе |
 | Обновление | wipe→create→import при смене `src/` (~14 с) | по workflow проекта |
 
-**Не делать:** `config apply` на служебной ИБ — повторный import после apply зависает; при сомнениях `-RefreshServiceIb`.
+**Не делать:** `config apply` на служебной ИБ — повторный import после apply зависает; при сомнениях `-RefreshServiceIb`.  
+**Исключение для CFE:** skill `1c-external-cfe`, флаг `-AllowServiceIbApplyOnCompatMismatch` — одноразовый apply на `.1c/ib-ext` при несовпадении CompatibilityMode и платформы (иначе `extension create` падает). На боевую ИБ не переносить.
 
 `scaffold` / `extract-from-config` ИБ не требуют; `pack` / `dump` — готовят служебную ИБ автоматически.
 

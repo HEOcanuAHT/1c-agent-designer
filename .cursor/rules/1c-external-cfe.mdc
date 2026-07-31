@@ -11,5 +11,8 @@ alwaysApply: true
 2. Исходники только в `src/_extensions/<Name>/` — не в корень `src/` как основную конфу.
 3. Сборка → `artifacts/cfe/*.cfe`; бинарники не коммитить.
 4. `load-changed` / dump основной конфигурации не должен включать `_extensions`.
-5. Dump/pack/scaffold — служебная файловая ИБ `.1c/ib-ext` (общая с EPF): import конфы **без apply**; боевую ИБ не трогать.
-6. Установку `.cfe` в боевую ИБ не автоматизировать этим skill.
+5. Dump/pack/scaffold — служебная `.1c/ib-ext` (общая с EPF): import конфы **без apply**; боевую ИБ не трогать.
+6. Исключение: `-AllowServiceIbApplyOnCompatMismatch` — одноразовый `apply` **только** на `.1c/ib-ext` при несовпадении CompatibilityMode и платформы.
+7. Имена расширения для ibcmd — предпочтительно ASCII (`FixDbmsType` / `Fix_`).
+8. Adopted XML / protected `.bin` — `reference-adopted.md`; код пишет `/implementer`.
+9. Установку `.cfe` в боевую ИБ не автоматизировать этим skill.
