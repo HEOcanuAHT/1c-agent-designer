@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.07.31.2",
+  "version": "2026.07.31.3",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -37,6 +37,10 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.07.31.3",
+      "summary": "QueryValidate: HTTP-проверка запросов на .1c/ib-ext (Invoke-1cValidateQuery); opt-in rule «проверяй запросы» (.1c/query-validate.mode)."
+    },
     {
       "since": "2026.07.31.2",
       "summary": "Knowledge + XML: 1c-forms, 1c-metadata-manage (без db/epf upstream), std-anti-patterns/extension/dcs/…; dump/load/EPF/CFE без изменений."
