@@ -30,10 +30,8 @@ ConfigDumpInfo.xml.bak
 .1c/load-changed-list.txt
 .1c/agent.pid
 .1c/query-validate.mode
-.1c/qv-http.pid
-.1c/qv-http.port
-.1c/qv-ext.stamp
 .1c/qv-validate.log
+
 .1c/incoming/
 .1c/ext-*.log
 .1c/test-*.ps1

@@ -1,7 +1,7 @@
 ---
 description: >-
   Запрет убивать пользовательские 1cv8/Конфигуратор; только orphan ibcmd
-  служебной ИБ и HTTP QueryValidate по pid-файлу.
+  служебной ИБ.
 alwaysApply: true
 ---
 
@@ -20,7 +20,6 @@ alwaysApply: true
 | Что | Когда |
 |-----|--------|
 | `ibcmd` с `--db-path` на **служебную** `.1c/ib-ext` | orphan после hang (`Stop-OrphanIbcmdForDb`) |
-| `1cv8` из `.1c/qv-http.pid` | только HTTP QueryValidate, который **сам** поднял скрипт (`-Action stop` / перед рестартом) |
 
 Перед kill — по pid/cmdline убедиться, что это **не** ИБ пользователя (`infobase.path` / `/S` / `/IBName`).
 

@@ -1,26 +1,17 @@
 <#
 .SYNOPSIS
-  Validate 1C query text via service IB (.1c/ib-ext) + QueryValidate extension HTTP API.
+  Validate 1C query text via COM on service IB (.1c/ib-ext).
 
 .DESCRIPTION
-  Loads extension QueryValidate into service IB (with config apply — runtime needs DB cfg),
-  starts 1cv8 ENTERPRISE with /HTTPPort, POSTs query to /hs/qv/validate.
-
-  Supported scope: Windows + 1cv8 thick client (same bin as Designer). No web publication.
-  Extension sources: .cursor/skills/1c-external-cfe/examples/QueryValidate
-  (optional override: src/_extensions/QueryValidate).
+  V83.COMConnector — QuerySchema + Query.FindParameters.
+  No ENTERPRISE / HTTP / extension. Needs applied main config on .1c/ib-ext
+  (Get-ServiceIbCfg -AllowApply).
 
 .PARAMETER Action
   validate — check query (default)
-  ensure   — prepare IB + extension + HTTP listener
-  stop     — stop HTTP listener started by ensure/validate
-  health   — GET /hs/qv/health
-
-.PARAMETER QueryText
-  Query language text to validate.
-
-.PARAMETER QueryFile
-  UTF-8 file with query text.
+  ensure   — prepare service IB (import + apply)
+  stop     — no-op (back-compat; no HTTP listener)
+  health   — COM connect smoke test
 #>
 [CmdletBinding()]
 param(
@@ -30,10 +21,7 @@ param(
   [string]$ProjectRoot = (Get-Location).Path,
   [string]$QueryText = "",
   [string]$QueryFile = "",
-  [int]$HttpPort = 0,
-  [switch]$RefreshServiceIb,
-  [switch]$SkipStartHttp,
-  [int]$ReadyTimeoutSec = 45
+  [switch]$RefreshServiceIb
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,347 +29,17 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $CommonPath = Join-Path $ScriptDir "..\..\1c-external-epf\scripts\Common-ServiceIb.ps1"
 . (Resolve-Path -LiteralPath $CommonPath).Path
 
-$ExtName = "QueryValidate"
-$ExtPrefix = "Qv_"
-$RootUrl = "qv"
-
 function Get-QvStatePaths([string]$ProjectRoot) {
   $dir = Join-Path $ProjectRoot ".1c"
   New-Item -ItemType Directory -Force -Path $dir | Out-Null
   return @{
     Dir = $dir
-    Pid = Join-Path $dir "qv-http.pid"
-    Port = Join-Path $dir "qv-http.port"
-    ExtStamp = Join-Path $dir "qv-ext.stamp"
     Log = Join-Path $dir "qv-validate.log"
-  }
-}
-
-function Get-QvHttpPort($Cfg, [int]$Override) {
-  if ($Override -gt 0) { return $Override }
-  if ($Cfg.queryValidate -and $Cfg.queryValidate.httpPort) {
-    return [int]$Cfg.queryValidate.httpPort
-  }
-  return 18088
-}
-
-function Find-QueryValidateXmlDir([string]$ProjectRoot) {
-  $candidates = @(
-    (Join-Path $ProjectRoot "src\_extensions\QueryValidate"),
-    # Prefer examples shipped with this script (current tooling), not a stale project copy
-    (Join-Path $ScriptDir "..\examples\QueryValidate"),
-    (Join-Path $ProjectRoot ".cursor\skills\1c-external-cfe\examples\QueryValidate")
-  )
-  foreach ($c in $candidates) {
-    $resolved = $null
-    try { $resolved = (Resolve-Path -LiteralPath $c -ErrorAction Stop).Path } catch { continue }
-    $cfg = Join-Path $resolved "Configuration.xml"
-    if (Test-Path -LiteralPath $cfg) { return $resolved }
-  }
-  throw "QueryValidate XML not found. Expected examples under .cursor/skills/1c-external-cfe/examples/QueryValidate"
-}
-
-function Find-LanguageXml([string]$Dir) {
-  $langDir = Join-Path $Dir "Languages"
-  if (-not (Test-Path -LiteralPath $langDir)) { return $null }
-  $hit = Get-ChildItem -LiteralPath $langDir -Filter "*.xml" -File -ErrorAction SilentlyContinue |
-    Select-Object -First 1
-  if ($hit) { return $hit.FullName }
-  return $null
-}
-
-function Fix-ExtensionLanguageUuid([string]$ExtDir, [string]$SrcAbs) {
-  $langFile = Find-LanguageXml $ExtDir
-  if (-not $langFile) { return }
-  $baseLang = Find-LanguageXml $SrcAbs
-  if (-not $baseLang) {
-    Write-Warning "Base Languages/*.xml missing - ExtendedConfigurationObject may stay zeros until dump."
-    return
-  }
-  $baseDoc = New-Object System.Xml.XmlDocument
-  $baseDoc.PreserveWhitespace = $false
-  $baseDoc.Load($baseLang)
-  $langEl = $null
-  foreach ($n in $baseDoc.DocumentElement.ChildNodes) {
-    if ($n.NodeType -eq 'Element' -and $n.LocalName -eq 'Language') { $langEl = $n; break }
-  }
-  if (-not $langEl) { return }
-  $baseUuid = $langEl.GetAttribute("uuid")
-  if (-not $baseUuid -or $baseUuid -eq "00000000-0000-0000-0000-000000000000") { return }
-
-  $text = Get-Content -LiteralPath $langFile -Raw -Encoding UTF8
-  if ($text -match '<ExtendedConfigurationObject>00000000-0000-0000-0000-000000000000</ExtendedConfigurationObject>') {
-    $text = $text.Replace(
-      '<ExtendedConfigurationObject>00000000-0000-0000-0000-000000000000</ExtendedConfigurationObject>',
-      "<ExtendedConfigurationObject>$baseUuid</ExtendedConfigurationObject>"
-    )
-    $utf8Bom = New-Object System.Text.UTF8Encoding $true
-    [IO.File]::WriteAllText($langFile, $text, $utf8Bom)
-    Write-Host "LANGUAGE_UUID=$baseUuid"
   }
 }
 
 function Ensure-LogLine([string]$Log, [string]$Line) {
   Add-Content -LiteralPath $Log -Value $Line -Encoding UTF8
-}
-
-function Remove-ExtensionIfExists([string]$IbcmdPath, $Paths, [string]$Name, [string]$Log) {
-  try {
-    Invoke-IbcmdSimple $IbcmdPath (@(
-      "infobase", "config", "extension", "delete"
-    ) + (Get-IbcmdDbArgs $Paths) + @("--name=$Name")) $Log
-  } catch {
-    Write-Host "EXTENSION_DELETE=skip ($Name)"
-  }
-}
-
-function Get-ExtSourcesStamp([string]$ExtDir) {
-  $files = @(
-    (Join-Path $ExtDir "Configuration.xml"),
-    (Join-Path $ExtDir "HTTPServices\Qv_QueryValidate.xml"),
-    (Join-Path $ExtDir "HTTPServices\Qv_QueryValidate\Ext\Module.bsl")
-  )
-  $parts = foreach ($f in $files) {
-    if (Test-Path -LiteralPath $f) {
-      $i = Get-Item -LiteralPath $f
-      "{0}:{1}:{2}" -f $i.Name, $i.Length, $i.LastWriteTimeUtc.Ticks
-    }
-  }
-  return ($parts -join "|")
-}
-
-function Test-CompatMismatchMessage([string]$Message) {
-  if (-not $Message) { return $false }
-  if ($Message -match 'CompatibilityMode|compatibility') { return $true }
-  # Avoid Cyrillic literals in .ps1 (PS 5.1 without BOM breaks parse) - build from codepoints
-  $compatRu = -join ([char[]](0x0441,0x043E,0x0432,0x043C,0x0435,0x0441,0x0442,0x0438,0x043C,0x043E,0x0441,0x0442,0x0438))
-  $mismatchRu = -join ([char[]](0x043D,0x0435,0x0020,0x0441,0x043E,0x043E,0x0442,0x0432,0x0435,0x0442,0x0441,0x0442,0x0432,0x0443,0x0435,0x0442))
-  return ($Message.IndexOf($compatRu, [StringComparison]::Ordinal) -ge 0) -or
-    ($Message.IndexOf($mismatchRu, [StringComparison]::Ordinal) -ge 0)
-}
-
-function New-QueryValidateImportStaging([string]$IbcmdPath, $Paths, [string]$ExtDir, [string]$Log, [string]$StagingRoot) {
-  # create already done: export platform shell, merge HTTPService from examples (keep Configuration uuid)
-  if (Test-Path -LiteralPath $StagingRoot) {
-    Remove-Item -LiteralPath $StagingRoot -Recurse -Force
-  }
-  New-Item -ItemType Directory -Force -Path $StagingRoot | Out-Null
-
-  Invoke-IbcmdSimple $IbcmdPath (@(
-    "infobase", "config", "export"
-  ) + (Get-IbcmdDbArgs $Paths) + @(
-    "--extension=$ExtName",
-    "--force",
-    $StagingRoot
-  )) $Log
-
-  $srcHttp = Join-Path $ExtDir "HTTPServices"
-  if (-not (Test-Path -LiteralPath $srcHttp)) {
-    throw "HTTPServices missing in QueryValidate examples: $srcHttp"
-  }
-  $dstHttp = Join-Path $StagingRoot "HTTPServices"
-  Copy-Item -LiteralPath $srcHttp -Destination $dstHttp -Recurse -Force
-
-  # Platform rejects explicit ObjectBelonging=Own on new extension objects (ibcmd import)
-  Get-ChildItem -LiteralPath $dstHttp -Filter "*.xml" -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
-    $raw = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8
-    if ($raw -match '<ObjectBelonging>Own</ObjectBelonging>') {
-      $fixed = [regex]::Replace($raw, '(?m)^\s*<ObjectBelonging>Own</ObjectBelonging>\r?\n', '')
-      $bom = New-Object System.Text.UTF8Encoding $true
-      [IO.File]::WriteAllText($_.FullName, $fixed, $bom)
-    }
-  }
-  $cfgXml = Join-Path $StagingRoot "Configuration.xml"
-  if (-not (Test-Path -LiteralPath $cfgXml)) {
-    throw "Extension export missing Configuration.xml: $cfgXml"
-  }
-
-  $text = Get-Content -LiteralPath $cfgXml -Raw -Encoding UTF8
-  if ($text -match '<NamePrefix/>') {
-    $text = $text.Replace('<NamePrefix/>', "<NamePrefix>$ExtPrefix</NamePrefix>")
-  } elseif ($text -match '<NamePrefix></NamePrefix>') {
-    $text = $text.Replace('<NamePrefix></NamePrefix>', "<NamePrefix>$ExtPrefix</NamePrefix>")
-  } elseif ($text -match '<NamePrefix>[^<]*</NamePrefix>') {
-    $text = [regex]::Replace($text, '<NamePrefix>[^<]*</NamePrefix>', "<NamePrefix>$ExtPrefix</NamePrefix>")
-  }
-
-  $child = @"
-<ChildObjects>
-			<HTTPService>Qv_QueryValidate</HTTPService>
-		</ChildObjects>
-"@
-  if ($text -match '<ChildObjects\s*/>') {
-    $text = [regex]::Replace($text, '<ChildObjects\s*/>', $child)
-  } elseif ($text -match '(?s)<ChildObjects>.*?</ChildObjects>') {
-    $text = [regex]::Replace($text, '(?s)<ChildObjects>.*?</ChildObjects>', $child)
-  } else {
-    throw "Cannot patch ChildObjects in $cfgXml"
-  }
-
-  $utf8Bom = New-Object System.Text.UTF8Encoding $true
-  [IO.File]::WriteAllText($cfgXml, $text, $utf8Bom)
-
-  # Stale dumpinfo blocks import of new objects
-  $dumpInfo = Join-Path $StagingRoot "ConfigDumpInfo.xml"
-  if (Test-Path -LiteralPath $dumpInfo) {
-    Remove-Item -LiteralPath $dumpInfo -Force
-  }
-
-  return $StagingRoot
-}
-
-function Install-QueryValidateExtension([string]$IbcmdPath, $Paths, [string]$ExtDir, [string]$Log, [string]$StampPath, [string]$ProjectRoot, [switch]$Force) {
-  $stamp = Get-ExtSourcesStamp $ExtDir
-  if (-not $Force -and (Test-Path -LiteralPath $StampPath)) {
-    $prev = (Get-Content -LiteralPath $StampPath -Raw -Encoding UTF8).Trim()
-    if ($prev -eq $stamp) {
-      Write-Host "EXTENSION=cached $ExtName"
-      return
-    }
-  }
-
-  Remove-ExtensionIfExists $IbcmdPath $Paths $ExtName $Log
-
-  try {
-    Invoke-IbcmdSimple $IbcmdPath (@(
-      "infobase", "config", "extension", "create"
-    ) + (Get-IbcmdDbArgs $Paths) + @(
-      "--name=$ExtName",
-      "--name-prefix=$ExtPrefix",
-      "--purpose=add-on"
-    )) $Log
-  } catch {
-    $msg = $_.Exception.Message
-    if (Test-CompatMismatchMessage $msg) {
-      throw ("COMPAT_MISMATCH: main config on service IB not applied (CompatibilityMode). " +
-        "Ensure-ServiceIb must run with -AllowApply (service IB only). Inner: $msg")
-    }
-    throw
-  }
-
-  $staging = Join-Path $ProjectRoot ".1c\qv-ext-staging"
-  try {
-    $null = New-QueryValidateImportStaging $IbcmdPath $Paths $ExtDir $Log $staging
-
-    Invoke-IbcmdSimple $IbcmdPath (@(
-      "infobase", "config", "import"
-    ) + (Get-IbcmdDbArgs $Paths) + @(
-      "--extension=$ExtName",
-      $staging
-    )) $Log
-  } finally {
-    if (Test-Path -LiteralPath $staging) {
-      Remove-Item -LiteralPath $staging -Recurse -Force -ErrorAction SilentlyContinue
-    }
-  }
-
-  # Runtime HTTP needs DB configuration (extension applied)
-  Invoke-IbcmdSimple $IbcmdPath (@(
-    "infobase", "config", "apply"
-  ) + (Get-IbcmdDbArgs $Paths) + @(
-    "--extension=$ExtName",
-    "--force"
-  )) $Log
-
-  $utf8 = New-Object System.Text.UTF8Encoding $false
-  [IO.File]::WriteAllText($StampPath, $stamp, $utf8)
-  Write-Host "EXTENSION=installed $ExtName"
-}
-
-function Get-StoredHttpPort($State) {
-  if (Test-Path -LiteralPath $State.Port) {
-    $t = (Get-Content -LiteralPath $State.Port -Raw -Encoding UTF8).Trim()
-    $p = 0
-    if ([int]::TryParse($t, [ref]$p) -and $p -gt 0) { return $p }
-  }
-  return 0
-}
-
-function Get-StoredPid($State) {
-  if (Test-Path -LiteralPath $State.Pid) {
-    $t = (Get-Content -LiteralPath $State.Pid -Raw -Encoding UTF8).Trim()
-    $p = 0
-    if ([int]::TryParse($t, [ref]$p) -and $p -gt 0) { return $p }
-  }
-  return 0
-}
-
-function Stop-QvHttp($State) {
-  $pidVal = Get-StoredPid $State
-  if ($pidVal -gt 0) {
-    try {
-      $proc = Get-Process -Id $pidVal -ErrorAction SilentlyContinue
-      if ($proc) {
-        Stop-Process -Id $pidVal -Force -ErrorAction SilentlyContinue
-        Write-Host "HTTP_STOP pid=$pidVal"
-      }
-    } catch {}
-  }
-  Remove-Item -LiteralPath $State.Pid, $State.Port -Force -ErrorAction SilentlyContinue
-}
-
-function Test-QvHealth([int]$Port, [int]$TimeoutSec = 5) {
-  $url = "http://127.0.0.1:$Port/hs/$RootUrl/health"
-  try {
-    $resp = Invoke-WebRequest -Uri $url -Method GET -UseBasicParsing -TimeoutSec $TimeoutSec
-    return ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 300)
-  } catch {
-    return $false
-  }
-}
-
-function Start-QvHttp($Cfg, [string]$ProjectRoot, $Paths, [int]$Port, $State, [string]$Log) {
-  if ((Get-StoredPid $State) -gt 0 -and (Test-QvHealth (Get-StoredHttpPort $State))) {
-    Write-Host "HTTP_READY reuse port=$(Get-StoredHttpPort $State)"
-    return (Get-StoredHttpPort $State)
-  }
-  Stop-QvHttp $State
-
-  $designerExplicit = ""
-  if ($Cfg.designer) { $designerExplicit = [string]$Cfg.designer }
-  $platformVersion = if ($Cfg.platformVersion) { [string]$Cfg.platformVersion } else { "" }
-  $designer = Resolve-Designer $designerExplicit $platformVersion
-
-  $auth = Get-Auth $Cfg
-  $authArgs = Get-DesignerAuthArgs $auth
-
-  $argList = @(
-    "ENTERPRISE",
-    "/F`"$($Paths.DbAbs)`"",
-    "/HTTPPort", "$Port",
-    "/DisableStartupMessages"
-  ) + $authArgs
-
-  Write-Host ">> $designer $($argList -join ' ')"
-  Ensure-LogLine $Log (">> start HTTPPort=$Port db=$($Paths.DbAbs)")
-
-  $p = Start-Process -FilePath $designer -ArgumentList $argList -PassThru -WindowStyle Minimized
-  $utf8 = New-Object System.Text.UTF8Encoding $false
-  [IO.File]::WriteAllText($State.Pid, "$($p.Id)", $utf8)
-  [IO.File]::WriteAllText($State.Port, "$Port", $utf8)
-
-  $deadline = (Get-Date).AddSeconds($ReadyTimeoutSec)
-  while ((Get-Date) -lt $deadline) {
-    if (Test-QvHealth $Port 2) {
-      Write-Host "HTTP_READY port=$Port pid=$($p.Id)"
-      return $Port
-    }
-    Start-Sleep -Seconds 1
-    if ($p.HasExited) {
-      throw "1cv8 exited early (code=$($p.ExitCode)). Check auth / apply / extension. Log: $Log"
-    }
-  }
-  throw "HTTP health timeout after ${ReadyTimeoutSec}s: http://127.0.0.1:$Port/hs/$RootUrl/health"
-}
-
-function Invoke-ValidateRequest([int]$Port, [string]$Text) {
-  $url = "http://127.0.0.1:$Port/hs/$RootUrl/validate"
-  $bodyObj = @{ query = $Text }
-  $json = $bodyObj | ConvertTo-Json -Compress
-  $resp = Invoke-WebRequest -Uri $url -Method POST -Body ([Text.Encoding]::UTF8.GetBytes($json)) `
-    -ContentType "application/json; charset=utf-8" -UseBasicParsing -TimeoutSec 60
-  $parsed = $resp.Content | ConvertFrom-Json
-  return $parsed
 }
 
 function Resolve-QueryText([string]$QueryText, [string]$QueryFile) {
@@ -391,6 +49,48 @@ function Resolve-QueryText([string]$QueryText, [string]$QueryFile) {
   }
   if ($QueryText) { return $QueryText }
   throw "Provide -QueryText or -QueryFile"
+}
+
+function Get-ComErrorMessage([Exception]$Ex) {
+  $cur = $Ex
+  $parts = New-Object System.Collections.Generic.List[string]
+  while ($null -ne $cur) {
+    if ($cur.Message -and -not $parts.Contains($cur.Message)) { $parts.Add($cur.Message) }
+    $cur = $cur.InnerException
+  }
+  $joined = ($parts -join " | ")
+  # Prefer platform {(line,col)} fragment when present
+  if ($joined -match '(\{\([0-9]+,\s*[0-9]+\)\}:[^|]+)') {
+    return $Matches[1].Trim()
+  }
+  return $joined
+}
+
+function Connect-ServiceIbCom($Paths) {
+  $connector = New-Object -ComObject "V83.COMConnector"
+  $connStr = "File=`"$($Paths.DbAbs)`";"
+  Write-Host "COM_CONNECT $connStr"
+  return $connector.Connect($connStr)
+}
+
+function Test-QueryViaCom($Connection, [string]$Text) {
+  $bfInvoke = [System.Reflection.BindingFlags]::InvokeMethod
+  $bfSet = [System.Reflection.BindingFlags]::SetProperty
+  try {
+    $schema = [System.__ComObject].InvokeMember("NewObject", $bfInvoke, $null, $Connection, @("QuerySchema"))
+    [void][System.__ComObject].InvokeMember("SetQueryText", $bfInvoke, $null, $schema, @($Text))
+    $null = [System.__ComObject].InvokeMember("GetQueryText", $bfInvoke, $null, $schema, $null)
+  } catch {
+    return @{ valid = $false; error = (Get-ComErrorMessage $_.Exception) }
+  }
+  try {
+    $q = [System.__ComObject].InvokeMember("NewObject", $bfInvoke, $null, $Connection, @("Query"))
+    [void][System.__ComObject].InvokeMember("Text", $bfSet, $null, $q, @($Text))
+    $null = [System.__ComObject].InvokeMember("FindParameters", $bfInvoke, $null, $q, $null)
+  } catch {
+    return @{ valid = $false; error = (Get-ComErrorMessage $_.Exception) }
+  }
+  return @{ valid = $true; error = "" }
 }
 
 # --- main ---
@@ -403,83 +103,50 @@ if ($null -eq $cfg) { throw "Missing .1c/project.json under $ProjectRoot" }
 
 $state = Get-QvStatePaths $ProjectRoot
 $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-Ensure-LogLine $state.Log "`n=== $ts action=$Action ==="
+Ensure-LogLine $state.Log "`n=== $ts action=$Action engine=Com ==="
 
 if ($Action -eq "stop") {
-  Stop-QvHttp $state
-  Write-Host "OK action=stop"
+  Write-Host "OK action=stop (no-op; COM has no HTTP listener)"
   exit 0
 }
 
 $srcRel = Get-SrcRel $cfg
 $srcAbs = Resolve-UnderRoot $ProjectRoot $srcRel
-$port = Get-QvHttpPort $cfg $HttpPort
 
-# Runtime validate needs applied main config on service IB
+# Applied main config on service IB (metadata for QuerySchema)
 $ctx = Get-ServiceIbCfg $cfg $ProjectRoot $srcAbs `
   -ForceRefresh:$RefreshServiceIb `
   -AllowApply
 
-if ($RefreshServiceIb) {
-  Remove-Item -LiteralPath $state.ExtStamp -Force -ErrorAction SilentlyContinue
-}
-
 if (-not $ctx.Paths) {
-  throw "Service IB disabled (ext.serviceIb.enabled=false). Enable it or point to an IB with QueryValidate."
+  throw "Service IB disabled (ext.serviceIb.enabled=false). Enable it for query validate."
 }
 
-$extDir = Find-QueryValidateXmlDir $ProjectRoot
-try {
-  Install-QueryValidateExtension $ctx.IbcmdPath $ctx.Paths $extDir $state.Log $state.ExtStamp $ProjectRoot `
-    -Force:($RefreshServiceIb -or ($Action -eq "ensure"))
-} catch {
-  $msg = $_.Exception.Message
-  if ($msg -match '^COMPAT_MISMATCH:') {
-    Write-Warning "Compat mismatch on extension create - rebuilding service IB with apply (SERVICE IB ONLY)..."
-    $ctx = Get-ServiceIbCfg $cfg $ProjectRoot $srcAbs -ForceRefresh -AllowApply
-    Remove-Item -LiteralPath $state.ExtStamp -Force -ErrorAction SilentlyContinue
-    Install-QueryValidateExtension $ctx.IbcmdPath $ctx.Paths $extDir $state.Log $state.ExtStamp $ProjectRoot -Force
-  } else {
-    throw
-  }
-}
 if ($Action -eq "ensure") {
-  if (-not $SkipStartHttp) {
-    $null = Start-QvHttp $ctx.Cfg $ProjectRoot $ctx.Paths $port $state $state.Log
-  }
-  Write-Host "OK action=ensure ext=$extDir endpoint=http://127.0.0.1:$port/hs/$RootUrl/validate"
+  Write-Host "OK action=ensure engine=Com db=$($ctx.Paths.DbAbs)"
   exit 0
-}
-
-if (-not $SkipStartHttp) {
-  $port = Start-QvHttp $ctx.Cfg $ProjectRoot $ctx.Paths $port $state $state.Log
-} else {
-  $stored = Get-StoredHttpPort $state
-  if ($stored -gt 0) { $port = $stored }
 }
 
 if ($Action -eq "health") {
-  $ok = Test-QvHealth $port 10
-  if (-not $ok) { throw "health failed: http://127.0.0.1:$port/hs/$RootUrl/health" }
-  Write-Host "OK action=health port=$port"
+  $c = Connect-ServiceIbCom $ctx.Paths
+  $null = $c
+  Write-Host "OK action=health engine=Com"
   exit 0
 }
 
-# validate
 $text = Resolve-QueryText $QueryText $QueryFile
-$result = Invoke-ValidateRequest $port $text
+$conn = Connect-ServiceIbCom $ctx.Paths
+$result = Test-QueryViaCom $conn $text
+$conn = $null
+[GC]::Collect()
+[GC]::WaitForPendingFinalizers()
 
-$valid = [bool]$result.valid
-$err = ""
-if ($result.PSObject.Properties["error"]) { $err = [string]$result.error }
-
-if ($valid) {
+if ($result.valid) {
   Write-Host "VALID=true"
-  Write-Host "OK action=validate"
+  Write-Host "OK action=validate engine=Com"
   exit 0
 }
-
 Write-Host "VALID=false"
-Write-Host "ERROR=$err"
-Write-Host "FAIL action=validate"
+Write-Host "ERROR=$($result.error)"
+Write-Host "FAIL action=validate engine=Com"
 exit 1

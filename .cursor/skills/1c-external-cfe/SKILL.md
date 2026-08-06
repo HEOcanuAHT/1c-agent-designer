@@ -74,15 +74,13 @@ disable-model-invocation: true
 
 ### Проверка языка запросов (служебная ИБ)
 
-Пример расширения: `examples/QueryValidate` (HTTP `/hs/qv/validate`).
+COM на `.1c/ib-ext` (`V83.COMConnector` + `QuerySchema` / `FindParameters`). Без ENTERPRISE / HTTP / расширения.
 
 ```powershell
 …\Invoke-1cValidateQuery.ps1 -Action ensure
 …\Invoke-1cValidateQuery.ps1 -QueryText "ВЫБРАТЬ 1"
-…\Invoke-1cValidateQuery.ps1 -Action stop
+…\Invoke-1cValidateQuery.ps1 -Action health
 ```
-
-См. `examples/QueryValidate/README.md`. На `.1c/ib-ext` — apply + `1cv8 ENTERPRISE /HTTPPort` (Windows; без публикации). Linux/веб-публикация — вне scope.
 
 **Режим агента (opt-in):** rule `1c-query-validate` — по умолчанию выкл.; фраза «проверяй запросы» → `.1c/query-validate.mode=on`, после правок запросов вызывать `Invoke-1cValidateQuery.ps1`. «не проверяй запросы» → `off`.
 

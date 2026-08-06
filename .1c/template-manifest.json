@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.06.4",
+  "version": "2026.08.06.6",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -37,6 +37,14 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.06.6",
+      "summary": "Query validate COM-only (Invoke-1cValidateQuery); HTTP/extension QueryValidate removed."
+    },
+    {
+      "since": "2026.08.06.5",
+      "summary": "QueryValidate default -Engine Com (V83.COMConnector + QuerySchema); Http legacy. Без ENTERPRISE/пользователей ИБ."
+    },
     {
       "since": "2026.08.06.4",
       "summary": "Rule 1c-no-kill-user-1cv8: агент не убивает пользовательские 1cv8/Конфигуратор; ibcmd hang: Hidden+file redirect + stall по 1CD."
