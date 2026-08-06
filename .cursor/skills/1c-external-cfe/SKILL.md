@@ -82,7 +82,7 @@ disable-model-invocation: true
 …\Invoke-1cValidateQuery.ps1 -Action stop
 ```
 
-См. `examples/QueryValidate/README.md`. На `.1c/ib-ext` выполняется apply (нужен runtime HTTP).
+См. `examples/QueryValidate/README.md`. На `.1c/ib-ext` — apply + `1cv8 ENTERPRISE /HTTPPort` (Windows; без публикации). Linux/веб-публикация — вне scope.
 
 **Режим агента (opt-in):** rule `1c-query-validate` — по умолчанию выкл.; фраза «проверяй запросы» → `.1c/query-validate.mode=on`, после правок запросов вызывать `Invoke-1cValidateQuery.ps1`. «не проверяй запросы» → `off`.
 

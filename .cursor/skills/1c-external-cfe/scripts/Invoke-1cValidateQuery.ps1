@@ -6,6 +6,7 @@
   Loads extension QueryValidate into service IB (with config apply — runtime needs DB cfg),
   starts 1cv8 ENTERPRISE with /HTTPPort, POSTs query to /hs/qv/validate.
 
+  Supported scope: Windows + 1cv8 thick client (same bin as Designer). No web publication.
   Extension sources: .cursor/skills/1c-external-cfe/examples/QueryValidate
   (optional override: src/_extensions/QueryValidate).
 

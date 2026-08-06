@@ -38,13 +38,19 @@ powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cVali
 
 Порт по умолчанию: `18088` (или `queryValidate.httpPort` в `project.json`).
 
+## Поддерживаемый сценарий
+
+**Windows + платформа с Конфигуратором** (`1cv8.exe`: DESIGNER и толстый ENTERPRISE в одном bin).  
+HTTP без публикации: `1cv8 ENTERPRISE /F .1c\ib-ext /HTTPPort <port>` — процесс предприятия держит `/hs/qv/...`, пока не `-Action stop`.
+
+Вне scope: Linux/macOS, Apache/IIS-публикация служебной ИБ, тонкий клиент, COM/EPF-обходы.
+
 ## Важно
 
 1. На служебной ИБ скрипт делает **`config apply`** (основная + расширение) — только `.1c/ib-ext`, не боевая ИБ.
-2. HTTP — через недокументированный `/HTTPPort` (Windows). Альтернатива: публикация на Apache/IIS.
-3. Перед import нужен dump основной конфы в `src/` (метаданные для проверки).
-4. `Languages/*.xml`: `ExtendedConfigurationObject` подставляется из базовой конфы при ensure/validate.
-5. Опционально скопировать каталог в `src/_extensions/QueryValidate` — скрипт сначала ищет там.
+2. Перед import нужен dump основной конфы в `src/` (метаданные для проверки).
+3. `Languages/*.xml`: `ExtendedConfigurationObject` подставляется из базовой конфы при ensure/validate.
+4. Опционально скопировать каталог в `src/_extensions/QueryValidate` — скрипт сначала ищет там.
 
 ## Режим агента
 

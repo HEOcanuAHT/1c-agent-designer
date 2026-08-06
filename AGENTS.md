@@ -8,7 +8,7 @@
   - `agent` → skill **`1c-designer-agent`** (load **без** `update-db-cfg`)
 - Внешние обработки (`.epf`): skill **`1c-external-epf`** → `src/_extDataProcessors/`; dump/pack через служебную `.1c/ib-ext` (import конфы без apply)
 - Расширения (`.cfe`): skill **`1c-external-cfe`** → `src/_extensions/`; dump/pack/scaffold через ту же `.1c/ib-ext`; BSL-паттерны — `std-extension-patterns`
-- Проверка языка запросов: `Invoke-1cValidateQuery.ps1` + пример `examples/QueryValidate` (HTTP на `.1c/ib-ext`, apply только служебной ИБ)
+- Проверка языка запросов: `Invoke-1cValidateQuery.ps1` + `examples/QueryValidate` (Windows, `/HTTPPort` на `.1c/ib-ext`, без публикации; apply только служебной ИБ)
 - Режим «проверяй запросы» — rule `1c-query-validate` (флаг `.1c/query-validate.mode`); по умолчанию выкл.
 - Упаковка `.cf`: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdPack.ps1`
 - **Первая настройка** (clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
