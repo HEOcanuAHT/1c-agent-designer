@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.06.1",
+  "version": "2026.08.06.2",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -37,6 +37,10 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.06.2",
+      "summary": "Service IB: named -AllowApply; Invoke-IbcmdSimple без cmd+Hidden + [ERROR]→fail; QueryValidate XML 2.16; HTTP auth через ctx.Cfg; compat-retry."
+    },
     {
       "since": "2026.08.06.1",
       "summary": "QueryValidate: scope Windows+1cv8+/HTTPPort без публикации; Linux/IIS вне scope."

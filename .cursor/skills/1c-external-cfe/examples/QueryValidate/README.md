@@ -48,9 +48,13 @@ HTTP без публикации: `1cv8 ENTERPRISE /F .1c\ib-ext /HTTPPort <port
 ## Важно
 
 1. На служебной ИБ скрипт делает **`config apply`** (основная + расширение) — только `.1c/ib-ext`, не боевая ИБ.
+   Ensure всегда вызывается с `-AllowApply` (named switch; позиционная передача `[switch]` в PowerShell отбрасывается).
 2. Перед import нужен dump основной конфы в `src/` (метаданные для проверки).
-3. `Languages/*.xml`: `ExtendedConfigurationObject` подставляется из базовой конфы при ensure/validate.
-4. Опционально скопировать каталог в `src/_extensions/QueryValidate` — скрипт сначала ищет там.
+3. XML расширения: `version="2.16"` (как dump 8.3.23); `2.17` ibcmd на этой платформе отвергает.
+4. `Languages/*.xml`: `ExtendedConfigurationObject` подставляется из базовой конфы при ensure/validate.
+5. Опционально скопировать каталог в `src/_extensions/QueryValidate` — скрипт сначала ищет там, затем examples рядом со скриптом.
+6. Логи: `.1c/qv-validate.log`, `.1c/ext-service-ib.log` (elapsed/exit ibcmd).
+7. HTTP на служебной ИБ — без auth проекта (`ctx.Cfg`, `auth.required=false`).
 
 ## Режим агента
 

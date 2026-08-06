@@ -68,11 +68,15 @@ function Get-QvHttpPort($Cfg, [int]$Override) {
 function Find-QueryValidateXmlDir([string]$ProjectRoot) {
   $candidates = @(
     (Join-Path $ProjectRoot "src\_extensions\QueryValidate"),
+    # Prefer examples shipped with this script (current tooling), not a stale project copy
+    (Join-Path $ScriptDir "..\examples\QueryValidate"),
     (Join-Path $ProjectRoot ".cursor\skills\1c-external-cfe\examples\QueryValidate")
   )
   foreach ($c in $candidates) {
-    $cfg = Join-Path $c "Configuration.xml"
-    if (Test-Path -LiteralPath $cfg) { return $c }
+    $resolved = $null
+    try { $resolved = (Resolve-Path -LiteralPath $c -ErrorAction Stop).Path } catch { continue }
+    $cfg = Join-Path $resolved "Configuration.xml"
+    if (Test-Path -LiteralPath $cfg) { return $resolved }
   }
   throw "QueryValidate XML not found. Expected examples under .cursor/skills/1c-external-cfe/examples/QueryValidate"
 }
@@ -146,7 +150,87 @@ function Get-ExtSourcesStamp([string]$ExtDir) {
   return ($parts -join "|")
 }
 
-function Install-QueryValidateExtension([string]$IbcmdPath, $Paths, [string]$ExtDir, [string]$Log, [string]$StampPath, [switch]$Force) {
+function Test-CompatMismatchMessage([string]$Message) {
+  if (-not $Message) { return $false }
+  if ($Message -match 'CompatibilityMode|compatibility') { return $true }
+  # Avoid Cyrillic literals in .ps1 (PS 5.1 without BOM breaks parse) - build from codepoints
+  $compatRu = -join ([char[]](0x0441,0x043E,0x0432,0x043C,0x0435,0x0441,0x0442,0x0438,0x043C,0x043E,0x0441,0x0442,0x0438))
+  $mismatchRu = -join ([char[]](0x043D,0x0435,0x0020,0x0441,0x043E,0x043E,0x0442,0x0432,0x0435,0x0442,0x0441,0x0442,0x0432,0x0443,0x0435,0x0442))
+  return ($Message.IndexOf($compatRu, [StringComparison]::Ordinal) -ge 0) -or
+    ($Message.IndexOf($mismatchRu, [StringComparison]::Ordinal) -ge 0)
+}
+
+function New-QueryValidateImportStaging([string]$IbcmdPath, $Paths, [string]$ExtDir, [string]$Log, [string]$StagingRoot) {
+  # create already done: export platform shell, merge HTTPService from examples (keep Configuration uuid)
+  if (Test-Path -LiteralPath $StagingRoot) {
+    Remove-Item -LiteralPath $StagingRoot -Recurse -Force
+  }
+  New-Item -ItemType Directory -Force -Path $StagingRoot | Out-Null
+
+  Invoke-IbcmdSimple $IbcmdPath (@(
+    "infobase", "config", "export"
+  ) + (Get-IbcmdDbArgs $Paths) + @(
+    "--extension=$ExtName",
+    "--force",
+    $StagingRoot
+  )) $Log
+
+  $srcHttp = Join-Path $ExtDir "HTTPServices"
+  if (-not (Test-Path -LiteralPath $srcHttp)) {
+    throw "HTTPServices missing in QueryValidate examples: $srcHttp"
+  }
+  $dstHttp = Join-Path $StagingRoot "HTTPServices"
+  Copy-Item -LiteralPath $srcHttp -Destination $dstHttp -Recurse -Force
+
+  # Platform rejects explicit ObjectBelonging=Own on new extension objects (ibcmd import)
+  Get-ChildItem -LiteralPath $dstHttp -Filter "*.xml" -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+    $raw = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8
+    if ($raw -match '<ObjectBelonging>Own</ObjectBelonging>') {
+      $fixed = [regex]::Replace($raw, '(?m)^\s*<ObjectBelonging>Own</ObjectBelonging>\r?\n', '')
+      $bom = New-Object System.Text.UTF8Encoding $true
+      [IO.File]::WriteAllText($_.FullName, $fixed, $bom)
+    }
+  }
+  $cfgXml = Join-Path $StagingRoot "Configuration.xml"
+  if (-not (Test-Path -LiteralPath $cfgXml)) {
+    throw "Extension export missing Configuration.xml: $cfgXml"
+  }
+
+  $text = Get-Content -LiteralPath $cfgXml -Raw -Encoding UTF8
+  if ($text -match '<NamePrefix/>') {
+    $text = $text.Replace('<NamePrefix/>', "<NamePrefix>$ExtPrefix</NamePrefix>")
+  } elseif ($text -match '<NamePrefix></NamePrefix>') {
+    $text = $text.Replace('<NamePrefix></NamePrefix>', "<NamePrefix>$ExtPrefix</NamePrefix>")
+  } elseif ($text -match '<NamePrefix>[^<]*</NamePrefix>') {
+    $text = [regex]::Replace($text, '<NamePrefix>[^<]*</NamePrefix>', "<NamePrefix>$ExtPrefix</NamePrefix>")
+  }
+
+  $child = @"
+<ChildObjects>
+			<HTTPService>Qv_QueryValidate</HTTPService>
+		</ChildObjects>
+"@
+  if ($text -match '<ChildObjects\s*/>') {
+    $text = [regex]::Replace($text, '<ChildObjects\s*/>', $child)
+  } elseif ($text -match '(?s)<ChildObjects>.*?</ChildObjects>') {
+    $text = [regex]::Replace($text, '(?s)<ChildObjects>.*?</ChildObjects>', $child)
+  } else {
+    throw "Cannot patch ChildObjects in $cfgXml"
+  }
+
+  $utf8Bom = New-Object System.Text.UTF8Encoding $true
+  [IO.File]::WriteAllText($cfgXml, $text, $utf8Bom)
+
+  # Stale dumpinfo blocks import of new objects
+  $dumpInfo = Join-Path $StagingRoot "ConfigDumpInfo.xml"
+  if (Test-Path -LiteralPath $dumpInfo) {
+    Remove-Item -LiteralPath $dumpInfo -Force
+  }
+
+  return $StagingRoot
+}
+
+function Install-QueryValidateExtension([string]$IbcmdPath, $Paths, [string]$ExtDir, [string]$Log, [string]$StampPath, [string]$ProjectRoot, [switch]$Force) {
   $stamp = Get-ExtSourcesStamp $ExtDir
   if (-not $Force -and (Test-Path -LiteralPath $StampPath)) {
     $prev = (Get-Content -LiteralPath $StampPath -Raw -Encoding UTF8).Trim()
@@ -158,20 +242,38 @@ function Install-QueryValidateExtension([string]$IbcmdPath, $Paths, [string]$Ext
 
   Remove-ExtensionIfExists $IbcmdPath $Paths $ExtName $Log
 
-  Invoke-IbcmdSimple $IbcmdPath (@(
-    "infobase", "config", "extension", "create"
-  ) + (Get-IbcmdDbArgs $Paths) + @(
-    "--name=$ExtName",
-    "--name-prefix=$ExtPrefix",
-    "--purpose=add-on"
-  )) $Log
+  try {
+    Invoke-IbcmdSimple $IbcmdPath (@(
+      "infobase", "config", "extension", "create"
+    ) + (Get-IbcmdDbArgs $Paths) + @(
+      "--name=$ExtName",
+      "--name-prefix=$ExtPrefix",
+      "--purpose=add-on"
+    )) $Log
+  } catch {
+    $msg = $_.Exception.Message
+    if (Test-CompatMismatchMessage $msg) {
+      throw ("COMPAT_MISMATCH: main config on service IB not applied (CompatibilityMode). " +
+        "Ensure-ServiceIb must run with -AllowApply (service IB only). Inner: $msg")
+    }
+    throw
+  }
 
-  Invoke-IbcmdSimple $IbcmdPath (@(
-    "infobase", "config", "import"
-  ) + (Get-IbcmdDbArgs $Paths) + @(
-    "--extension=$ExtName",
-    $ExtDir
-  )) $Log
+  $staging = Join-Path $ProjectRoot ".1c\qv-ext-staging"
+  try {
+    $null = New-QueryValidateImportStaging $IbcmdPath $Paths $ExtDir $Log $staging
+
+    Invoke-IbcmdSimple $IbcmdPath (@(
+      "infobase", "config", "import"
+    ) + (Get-IbcmdDbArgs $Paths) + @(
+      "--extension=$ExtName",
+      $staging
+    )) $Log
+  } finally {
+    if (Test-Path -LiteralPath $staging) {
+      Remove-Item -LiteralPath $staging -Recurse -Force -ErrorAction SilentlyContinue
+    }
+  }
 
   # Runtime HTTP needs DB configuration (extension applied)
   Invoke-IbcmdSimple $IbcmdPath (@(
@@ -327,20 +429,30 @@ if (-not $ctx.Paths) {
 }
 
 $extDir = Find-QueryValidateXmlDir $ProjectRoot
-Fix-ExtensionLanguageUuid $extDir $srcAbs
-Install-QueryValidateExtension $ctx.IbcmdPath $ctx.Paths $extDir $state.Log $state.ExtStamp `
-  -Force:($RefreshServiceIb -or ($Action -eq "ensure"))
-
+try {
+  Install-QueryValidateExtension $ctx.IbcmdPath $ctx.Paths $extDir $state.Log $state.ExtStamp $ProjectRoot `
+    -Force:($RefreshServiceIb -or ($Action -eq "ensure"))
+} catch {
+  $msg = $_.Exception.Message
+  if ($msg -match '^COMPAT_MISMATCH:') {
+    Write-Warning "Compat mismatch on extension create - rebuilding service IB with apply (SERVICE IB ONLY)..."
+    $ctx = Get-ServiceIbCfg $cfg $ProjectRoot $srcAbs -ForceRefresh -AllowApply
+    Remove-Item -LiteralPath $state.ExtStamp -Force -ErrorAction SilentlyContinue
+    Install-QueryValidateExtension $ctx.IbcmdPath $ctx.Paths $extDir $state.Log $state.ExtStamp $ProjectRoot -Force
+  } else {
+    throw
+  }
+}
 if ($Action -eq "ensure") {
   if (-not $SkipStartHttp) {
-    $null = Start-QvHttp $cfg $ProjectRoot $ctx.Paths $port $state $state.Log
+    $null = Start-QvHttp $ctx.Cfg $ProjectRoot $ctx.Paths $port $state $state.Log
   }
   Write-Host "OK action=ensure ext=$extDir endpoint=http://127.0.0.1:$port/hs/$RootUrl/validate"
   exit 0
 }
 
 if (-not $SkipStartHttp) {
-  $port = Start-QvHttp $cfg $ProjectRoot $ctx.Paths $port $state $state.Log
+  $port = Start-QvHttp $ctx.Cfg $ProjectRoot $ctx.Paths $port $state $state.Log
 } else {
   $stored = Get-StoredHttpPort $state
   if ($stored -gt 0) { $port = $stored }

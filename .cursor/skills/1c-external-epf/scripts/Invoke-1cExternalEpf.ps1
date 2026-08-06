@@ -272,7 +272,8 @@ switch ($Action) {
     if (-not (Test-Path -LiteralPath $EpfPath)) { throw "EPF not found: $EpfPath" }
     $epfAbs = (Resolve-Path -LiteralPath $EpfPath).Path
     New-Item -ItemType Directory -Force -Path $extAbs | Out-Null
-    $epfCfg = Get-DesignerCfgForEpf $cfg $ProjectRoot $srcAbs $RefreshServiceIb $SkipServiceIbPrepare
+    $epfCfg = Get-DesignerCfgForEpf $cfg $ProjectRoot $srcAbs `
+      -ForceRefresh:$RefreshServiceIb -SkipPrepare:$SkipServiceIbPrepare
     $designerPath = Resolve-Designer $designerExplicit $platformVersion
     Invoke-DesignerBatch -DesignerPath $designerPath -Cfg $epfCfg -ProjectRoot $ProjectRoot -LogName "ext-dump.log" -ExtraArgs @(
       "/DumpExternalDataProcessorOrReportToFiles", $extAbs, $epfAbs, "-Format", "Hierarchical"
@@ -291,7 +292,8 @@ switch ($Action) {
     $baseName = [System.IO.Path]::GetFileNameWithoutExtension($rootAbs)
     New-Item -ItemType Directory -Force -Path $artAbs | Out-Null
     $outEpf = Join-Path $artAbs ($baseName + ".epf")
-    $epfCfg = Get-DesignerCfgForEpf $cfg $ProjectRoot $srcAbs $RefreshServiceIb $SkipServiceIbPrepare
+    $epfCfg = Get-DesignerCfgForEpf $cfg $ProjectRoot $srcAbs `
+      -ForceRefresh:$RefreshServiceIb -SkipPrepare:$SkipServiceIbPrepare
     $designerPath = Resolve-Designer $designerExplicit $platformVersion
     Invoke-DesignerBatch -DesignerPath $designerPath -Cfg $epfCfg -ProjectRoot $ProjectRoot -LogName "ext-pack.log" -ExtraArgs @(
       "/LoadExternalDataProcessorOrReportFromFiles", $rootAbs, $outEpf
