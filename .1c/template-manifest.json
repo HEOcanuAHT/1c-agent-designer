@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.06.6",
+  "version": "2026.08.06.7",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -37,6 +37,10 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.06.7",
+      "summary": "Query validate: -ReuseOnly + -BatchDir (один COM на пачку); ensure отдельно; меньше Cursor Allow."
+    },
     {
       "since": "2026.08.06.6",
       "summary": "Query validate COM-only (Invoke-1cValidateQuery); HTTP/extension QueryValidate removed."

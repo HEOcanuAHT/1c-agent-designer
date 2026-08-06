@@ -14,8 +14,8 @@ alwaysApply: true
 5. Dump/pack/scaffold — служебная `.1c/ib-ext` (общая с EPF): import конфы **без apply**; боевую ИБ не трогать.
 6. Исключения `apply` **только** на `.1c/ib-ext` (никогда на боевую):
    - `-AllowServiceIbApplyOnCompatMismatch` — compat mismatch;
-   - `Invoke-1cValidateQuery.ps1` — COM-проверка запросов (Get-ServiceIbCfg -AllowApply).
+   - `Invoke-1cValidateQuery.ps1 -Action ensure` — COM-проверка (Get-ServiceIbCfg -AllowApply); обычный validate — `-ReuseOnly`.
 7. Имена расширения для ibcmd — предпочтительно ASCII (`FixDbmsType` / `Fix_`).
 8. Adopted XML / protected `.bin` — `reference-adopted.md`; код пишет `/implementer`.
 9. Установку `.cfe` в боевую ИБ не автоматизировать этим skill.
-10. Служебная проверка запросов: `Invoke-1cValidateQuery.ps1` (COM / QuerySchema на `.1c/ib-ext`).
+10. Служебная проверка запросов: `Invoke-1cValidateQuery.ps1 -ReuseOnly` / `-BatchDir` (COM на `.1c/ib-ext`).

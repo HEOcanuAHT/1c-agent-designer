@@ -8,8 +8,8 @@
   - `agent` → skill **`1c-designer-agent`** (load **без** `update-db-cfg`)
 - Внешние обработки (`.epf`): skill **`1c-external-epf`** → `src/_extDataProcessors/`; dump/pack через служебную `.1c/ib-ext` (import конфы без apply)
 - Расширения (`.cfe`): skill **`1c-external-cfe`** → `src/_extensions/`; dump/pack/scaffold через ту же `.1c/ib-ext`; BSL-паттерны — `std-extension-patterns`
-- Проверка языка запросов: `Invoke-1cValidateQuery.ps1` (COM/`QuerySchema` на `.1c/ib-ext`; без HTTP/расширения)
-- Режим «проверяй запросы» — rule `1c-query-validate` (флаг `.1c/query-validate.mode`); по умолчанию выкл.
+- Проверка языка запросов: `Invoke-1cValidateQuery.ps1` (COM/`QuerySchema` на `.1c/ib-ext`; без HTTP/расширения). Агентам: `-ReuseOnly` + пачка `.1c/qv-batch/`; `ensure` только при `NEED_ENSURE`
+- Режим «проверяй запросы» — rule `1c-query-validate` (флаг `.1c/query-validate.mode`); по умолчанию выкл.; validate только оркестратор
 - Упаковка `.cf`: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdPack.ps1`
 - **Первая настройка** (clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
   (интерактивный чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)

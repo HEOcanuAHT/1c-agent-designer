@@ -77,13 +77,17 @@ disable-model-invocation: true
 COM на `.1c/ib-ext` (`V83.COMConnector` + `QuerySchema` / `FindParameters`). Без ENTERPRISE / HTTP / расширения.
 
 ```powershell
+# редко (ibcmd) — раз за сессию / после обновления src
 …\Invoke-1cValidateQuery.ps1 -Action ensure
-…\Invoke-1cValidateQuery.ps1 -QueryText "ВЫБРАТЬ 1"
-…\Invoke-1cValidateQuery.ps1 -Action health
+# часто: без ibcmd, пачка в одном COM
+…\Invoke-1cValidateQuery.ps1 -ReuseOnly -BatchDir .1c/qv-batch
+…\Invoke-1cValidateQuery.ps1 -ReuseOnly -QueryFile .1c/qv-batch/01.txt
+…\Invoke-1cValidateQuery.ps1 -Action health   # или -ReuseOnly -Action health
 ```
 
-**Режим агента (opt-in):** rule `1c-query-validate` — по умолчанию выкл.; фраза «проверяй запросы» → `.1c/query-validate.mode=on`, после правок запросов вызывать `Invoke-1cValidateQuery.ps1`. «не проверяй запросы» → `off`.
+Без `-ExecutionPolicy Bypass`. Exit `2` / `NEED_ENSURE=true` → сначала ensure.
 
+**Режим агента (opt-in):** rule `1c-query-validate` — по умолчанию выкл.; «проверяй запросы» → `.1c/query-validate.mode=on`; validate только оркестратор, пачкой с `-ReuseOnly`.
 | Action | Параметры | Результат |
 |--------|-----------|-----------|
 | `scaffold` | `-Name` [`-Prefix`] [`-Synonym`] [`-Purpose`] | `src/_extensions/<Name>/` + явный `NamePrefix` |

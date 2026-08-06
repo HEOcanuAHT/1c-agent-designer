@@ -29,25 +29,59 @@ Linux/macOS — вне scope.
 Если файла нет — режим **выключен**.  
 Разовые просьбы «проверь этот запрос» / «validate this query» — один вызов скрипта **без** обязательного включения режима.
 
+## Кто запускает
+
+Только **основной агент** (оркестратор).  
+`/implementer` и прочие субагенты — **только пишут** тексты запросов в файлы; **не** вызывают `Invoke-1c*.ps1`.
+
+## Как вызывать (меньше Allow в Cursor)
+
+Два шага; **не** мешать prepare и validate в одной команде без нужды.
+
+### 1) Ensure — редко (раз за сессию / после обновления `src/`)
+
+Может дергать ibcmd → Cursor часто просит Allow — **нормально один раз**:
+
+```powershell
+powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cValidateQuery.ps1 -Action ensure
+```
+
+Не добавляй `-ExecutionPolicy Bypass`, не ищи/не убивай процессы вокруг validate.
+
+### 2) Validate — всегда с `-ReuseOnly` (без ibcmd)
+
+Один COM-коннект на пачку:
+
+```powershell
+# записать изменённые запросы в .1c/qv-batch/*.txt (UTF-8), затем:
+powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cValidateQuery.ps1 -ReuseOnly -BatchDir .1c/qv-batch
+```
+
+Один запрос:
+
+```powershell
+powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cValidateQuery.ps1 -ReuseOnly -QueryFile .1c/qv-batch/01.txt
+```
+
+| Exit | Смысл |
+|------|--------|
+| `0` | все ок (`VALID=true` / `SUMMARY fail=0`) |
+| `1` | ошибка языка запроса (`VALID=false`) |
+| `2` | `NEED_ENSURE=true` — сначала `-Action ensure`, потом снова `-ReuseOnly` |
+
+Не вызывать validate **без** `-ReuseOnly` в цикле агента (это снова гоняет Ensure/ibcmd и плодит Allow).
+
 ## Когда режим `on`
 
-После того как агент (или implementer) записал/существенно изменил текст запроса 1С в коде или СКД:
+После того как implementer (или ты) существенно изменил текст запроса в коде/СКД:
 
-1. Один раз за сессию работы при необходимости: `-Action ensure` (или просто validate — сам поднимет служебную ИБ).
-2. Для **каждого** нового/изменённого существенного текста запроса:
-   ```powershell
-   powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cValidateQuery.ps1 -QueryText "…"
-   ```
-   или `-QueryFile` на временный UTF-8 файл.
-3. При `VALID=false` — исправить запрос и повторить, пока не `VALID=true` (или явно спросить пользователя).
-4. Не валидировать заново неизменённые куски; не гонять на каждый чих по стилю/комментариям.
+1. Собрать **все** новые/изменённые тексты в `.1c/qv-batch/` (не по одному вызову на каждый чих).
+2. Один `-ReuseOnly -BatchDir` (если `NEED_ENSURE` → ensure → повтор).
+3. При `VALID=false` — исправить и повторить пачку, пока `fail=0` (или спросить пользователя).
+4. Не валидировать неизменённые куски; не гонять на стиль/комментарии.
 5. Apply только на `.1c/ib-ext`. Пользовательские `1cv8` не убивать (rule `1c-no-kill-user-1cv8`).
 
 ## Когда режим `off` (или файла нет)
 
 - Не вызывать validate «на всякий случай».
 - Skills `std-queries` / coding-standards — как обычно, без runtime-проверки.
-
-## Кто запускает
-
-Только **основной агент** (оркестратор), не `/implementer`. Implementer пишет текст запроса; validate — после его правок, если режим `on` или разовая просьба.
