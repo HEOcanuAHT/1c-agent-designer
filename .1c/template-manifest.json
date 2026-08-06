@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.06.2",
+  "version": "2026.08.06.4",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -37,6 +37,14 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.06.4",
+      "summary": "Rule 1c-no-kill-user-1cv8: агент не убивает пользовательские 1cv8/Конфигуратор; ibcmd hang: Hidden+file redirect + stall по 1CD."
+    },
+    {
+      "since": "2026.08.06.3",
+      "summary": "Invoke-IbcmdSimple: stall по 1CD; kill orphan ibcmd перед Ensure (не 1cv8)."
+    },
     {
       "since": "2026.08.06.2",
       "summary": "Service IB: named -AllowApply; Invoke-IbcmdSimple без cmd+Hidden + [ERROR]→fail; QueryValidate XML 2.16; HTTP auth через ctx.Cfg; compat-retry."

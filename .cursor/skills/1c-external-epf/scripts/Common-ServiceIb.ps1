@@ -140,71 +140,92 @@ function Invoke-IbcmdSimple(
   [string]$IbcmdPath,
   [string[]]$IbcmdArgs,
   [string]$LogPath,
-  [int]$StallSec = 300,
-  [int]$HardTimeoutSec = 0
+  [int]$StallSec = 90,
+  [int]$HardTimeoutSec = 900
 ) {
-  # Direct Start-Process (no cmd /c + Hidden + stdin NUL). The cmd+redirect wrapper
-  # intermittently hung ibcmd config import (CPU≈0, 1CD not growing).
+  # Redirect to temp FILES (not console / not cmd). Under Cursor the agent console is a
+  # pipe: ibcmd config import can block on WARN writes (CPU≈0, 1CD stuck). File redirect
+  # + Hidden avoids that. Do not use cmd /c … <NUL (also hang-prone).
   $safe = ($IbcmdArgs | ForEach-Object {
     if ($_ -match '^--password=' -or $_ -match '^--db-pwd=') { ($_ -replace '=.*$', '=***') } else { $_ }
   }) -join ' '
   Write-Host ">> $IbcmdPath $safe"
   if ($LogPath) { Add-Content -LiteralPath $LogPath -Value ">> $IbcmdPath $safe" -Encoding UTF8 }
 
+  $argLine = ($IbcmdArgs | ForEach-Object {
+    if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
+  }) -join ' '
+
+  $dbPath = $null
+  foreach ($a in $IbcmdArgs) {
+    if ($a -match '^--db-path=(.+)$') { $dbPath = $Matches[1].Trim('"'); break }
+  }
+  $cdFile = $null
+  if ($dbPath) { $cdFile = Join-Path $dbPath "1Cv8.1CD" }
+
   $outFile = [IO.Path]::GetTempFileName()
   $errFile = [IO.Path]::GetTempFileName()
   $proc = $null
   try {
-    # Quote args for Start-Process (array binding is lossy with spaces)
-    $argLine = ($IbcmdArgs | ForEach-Object {
-      if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
-    }) -join ' '
-
     $proc = Start-Process -FilePath $IbcmdPath -ArgumentList $argLine `
       -RedirectStandardOutput $outFile -RedirectStandardError $errFile `
-      -NoNewWindow -PassThru
+      -WindowStyle Hidden -PassThru
 
     $started = Get-Date
     $lastCpuMs = -1.0
+    $lastCdSize = -1L
     $stallSince = $null
     $pollSec = 2
 
     while (-not $proc.HasExited) {
       Start-Sleep -Seconds $pollSec
-      if ($HardTimeoutSec -gt 0 -and ((Get-Date) - $started).TotalSeconds -ge $HardTimeoutSec) {
+      $elapsedNow = ((Get-Date) - $started).TotalSeconds
+      if ($HardTimeoutSec -gt 0 -and $elapsedNow -ge $HardTimeoutSec) {
         try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch {}
         throw "ibcmd hard timeout after ${HardTimeoutSec}s (pid=$($proc.Id)). See $LogPath"
       }
       if ($StallSec -le 0) { continue }
+
+      $cpuMs = -1.0
       try {
         $live = Get-Process -Id $proc.Id -ErrorAction Stop
         $cpuMs = $live.TotalProcessorTime.TotalMilliseconds
-        if ($lastCpuMs -ge 0 -and [math]::Abs($cpuMs - $lastCpuMs) -lt 0.5) {
-          if ($null -eq $stallSince) { $stallSince = Get-Date }
-          elseif (((Get-Date) - $stallSince).TotalSeconds -ge $StallSec) {
-            try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch {}
-            throw ("ibcmd stalled (CPU idle ~{0}s, pid={1}). Killed. See {2}" -f $StallSec, $proc.Id, $LogPath)
-          }
-        } else {
-          $stallSince = $null
-        }
-        $lastCpuMs = $cpuMs
       } catch {
-        # process exited between HasExited check and Get-Process
         break
       }
+
+      $cdSize = -1L
+      $cdProgress = $false
+      if ($cdFile -and (Test-Path -LiteralPath $cdFile)) {
+        $cdSize = (Get-Item -LiteralPath $cdFile).Length
+        if ($lastCdSize -ge 0 -and $cdSize -gt $lastCdSize) { $cdProgress = $true }
+      }
+
+      $cpuIdle = ($lastCpuMs -ge 0 -and [math]::Abs($cpuMs - $lastCpuMs) -lt 0.5)
+      if ($cdProgress) {
+        $stallSince = $null
+      } elseif ($cpuIdle) {
+        if ($null -eq $stallSince) { $stallSince = Get-Date }
+        elseif (((Get-Date) - $stallSince).TotalSeconds -ge $StallSec) {
+          try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch {}
+          throw ("ibcmd stalled (CPU idle / 1CD not growing ~{0}s, pid={1}, 1CD={2}). Killed. See {3}" -f `
+            $StallSec, $proc.Id, $cdSize, $LogPath)
+        }
+      } else {
+        $stallSince = $null
+      }
+      $lastCpuMs = $cpuMs
+      if ($cdSize -ge 0) { $lastCdSize = $cdSize }
     }
 
     if (-not $proc.HasExited) {
       $null = $proc.WaitForExit()
     } else {
-      # Ensure ExitCode is populated after async exit
       $null = $proc.WaitForExit(0)
     }
     $proc.Refresh()
     $exitCode = $proc.ExitCode
     if ($null -eq $exitCode) {
-      # Start-Process can leave ExitCode null briefly; treat missing code after exit as failure signal only if HasExited is false
       if ($proc.HasExited) { $exitCode = 0 } else { $exitCode = -1 }
     }
 
@@ -224,7 +245,6 @@ function Invoke-IbcmdSimple(
       Add-Content -LiteralPath $LogPath -Value ("ibcmd exit={0} elapsedSec={1}" -f $exitCode, $elapsed) -Encoding UTF8
     }
     Write-Host ("ibcmd exit={0} elapsedSec={1}" -f $exitCode, $elapsed)
-    # ibcmd sometimes prints [ERROR] but still exits 0
     if ($combined -match '(?m)^\[ERROR\]') {
       throw "ibcmd reported ERROR (exit $exitCode). See $LogPath"
     }
@@ -234,6 +254,17 @@ function Invoke-IbcmdSimple(
   } finally {
     Remove-Item -LiteralPath $outFile, $errFile -Force -ErrorAction SilentlyContinue
   }
+}
+
+function Stop-OrphanIbcmdForDb([string]$DbAbs) {
+  if (-not $DbAbs) { return }
+  $needle = $DbAbs -replace '\\', '/'
+  Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -eq 'ibcmd.exe' -and $_.CommandLine -and ($_.CommandLine -replace '\\', '/') -like "*$needle*" } |
+    ForEach-Object {
+      Write-Warning "Killing orphan ibcmd pid=$($_.ProcessId) for $DbAbs"
+      Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Get-ConfigImportStamp([string]$SrcAbs) {
@@ -277,6 +308,9 @@ function Ensure-ServiceIb($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$
   $log = Join-Path $logDir "ext-service-ib.log"
   $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
   Add-Content -LiteralPath $log -Value "`n=== $ts Ensure-ServiceIb force=$Force allowApply=$AllowApply ===" -Encoding UTF8
+
+  # Leftover hung ibcmd keeps directory lock ("process NNNN")
+  Stop-OrphanIbcmdForDb $paths.DbAbs
 
   if ($AllowApply) {
     Write-Host "SERVICE_IB=prepare wipe+create+import+apply (SERVICE IB ONLY) path=$($paths.DbAbs)"
