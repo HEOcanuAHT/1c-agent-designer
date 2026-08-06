@@ -136,23 +136,103 @@ function Resolve-Ibcmd([string]$Explicit, [string]$PlatformVersion) {
   throw "ibcmd.exe not found. Set platformVersion or 1C_IBCMD."
 }
 
-function Invoke-IbcmdSimple([string]$IbcmdPath, [string[]]$IbcmdArgs, [string]$LogPath) {
+function Invoke-IbcmdSimple(
+  [string]$IbcmdPath,
+  [string[]]$IbcmdArgs,
+  [string]$LogPath,
+  [int]$StallSec = 90,
+  [int]$HardTimeoutSec = 900
+) {
+  # Redirect to temp FILES (not console / not cmd). Under Cursor the agent console is a
+  # pipe: ibcmd config import can block on WARN writes (CPU≈0, 1CD stuck). File redirect
+  # + Hidden avoids that. Do not use cmd /c … <NUL (also hang-prone).
   $safe = ($IbcmdArgs | ForEach-Object {
     if ($_ -match '^--password=' -or $_ -match '^--db-pwd=') { ($_ -replace '=.*$', '=***') } else { $_ }
   }) -join ' '
   Write-Host ">> $IbcmdPath $safe"
   if ($LogPath) { Add-Content -LiteralPath $LogPath -Value ">> $IbcmdPath $safe" -Encoding UTF8 }
 
-  $argStr = ($IbcmdArgs | ForEach-Object {
+  $argLine = ($IbcmdArgs | ForEach-Object {
     if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
   }) -join ' '
+
+  $dbPath = $null
+  foreach ($a in $IbcmdArgs) {
+    if ($a -match '^--db-path=(.+)$') { $dbPath = $Matches[1].Trim('"'); break }
+  }
+  $cdFile = $null
+  if ($dbPath) { $cdFile = Join-Path $dbPath "1Cv8.1CD" }
+
   $outFile = [IO.Path]::GetTempFileName()
   $errFile = [IO.Path]::GetTempFileName()
+  $proc = $null
   try {
-    $cmdInner = "`"$IbcmdPath`" $argStr < NUL > `"$outFile`" 2> `"$errFile`""
-    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$cmdInner`"" -WindowStyle Hidden -PassThru -Wait
-    $stdout = if (Test-Path $outFile) { Get-Content -LiteralPath $outFile -Raw -Encoding Default } else { "" }
-    $stderr = if (Test-Path $errFile) { Get-Content -LiteralPath $errFile -Raw -Encoding Default } else { "" }
+    $proc = Start-Process -FilePath $IbcmdPath -ArgumentList $argLine `
+      -RedirectStandardOutput $outFile -RedirectStandardError $errFile `
+      -WindowStyle Hidden -PassThru
+
+    $started = Get-Date
+    $lastCpuMs = -1.0
+    $lastCdSize = -1L
+    $stallSince = $null
+    $pollSec = 2
+
+    while (-not $proc.HasExited) {
+      Start-Sleep -Seconds $pollSec
+      $elapsedNow = ((Get-Date) - $started).TotalSeconds
+      if ($HardTimeoutSec -gt 0 -and $elapsedNow -ge $HardTimeoutSec) {
+        try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch {}
+        throw "ibcmd hard timeout after ${HardTimeoutSec}s (pid=$($proc.Id)). See $LogPath"
+      }
+      if ($StallSec -le 0) { continue }
+
+      $cpuMs = -1.0
+      try {
+        $live = Get-Process -Id $proc.Id -ErrorAction Stop
+        $cpuMs = $live.TotalProcessorTime.TotalMilliseconds
+      } catch {
+        break
+      }
+
+      $cdSize = -1L
+      $cdProgress = $false
+      if ($cdFile -and (Test-Path -LiteralPath $cdFile)) {
+        $cdSize = (Get-Item -LiteralPath $cdFile).Length
+        if ($lastCdSize -ge 0 -and $cdSize -gt $lastCdSize) { $cdProgress = $true }
+      }
+
+      $cpuIdle = ($lastCpuMs -ge 0 -and [math]::Abs($cpuMs - $lastCpuMs) -lt 0.5)
+      if ($cdProgress) {
+        $stallSince = $null
+      } elseif ($cpuIdle) {
+        if ($null -eq $stallSince) { $stallSince = Get-Date }
+        elseif (((Get-Date) - $stallSince).TotalSeconds -ge $StallSec) {
+          try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch {}
+          throw ("ibcmd stalled (CPU idle / 1CD not growing ~{0}s, pid={1}, 1CD={2}). Killed. See {3}" -f `
+            $StallSec, $proc.Id, $cdSize, $LogPath)
+        }
+      } else {
+        $stallSince = $null
+      }
+      $lastCpuMs = $cpuMs
+      if ($cdSize -ge 0) { $lastCdSize = $cdSize }
+    }
+
+    if (-not $proc.HasExited) {
+      $null = $proc.WaitForExit()
+    } else {
+      $null = $proc.WaitForExit(0)
+    }
+    $proc.Refresh()
+    $exitCode = $proc.ExitCode
+    if ($null -eq $exitCode) {
+      if ($proc.HasExited) { $exitCode = 0 } else { $exitCode = -1 }
+    }
+
+    $stdout = if (Test-Path -LiteralPath $outFile) { Get-Content -LiteralPath $outFile -Raw -Encoding Default } else { "" }
+    $stderr = if (Test-Path -LiteralPath $errFile) { Get-Content -LiteralPath $errFile -Raw -Encoding Default } else { "" }
+    if ($null -eq $stdout) { $stdout = "" }
+    if ($null -eq $stderr) { $stderr = "" }
     $combined = ($stdout + "`n" + $stderr).Trim()
     if ($combined.Length -gt 1200) {
       Write-Host ($combined.Substring(0, 600) + "`n...[truncated]...`n" + $combined.Substring($combined.Length - 400))
@@ -160,12 +240,31 @@ function Invoke-IbcmdSimple([string]$IbcmdPath, [string[]]$IbcmdArgs, [string]$L
       Write-Host $combined
     }
     if ($LogPath -and $combined) { Add-Content -LiteralPath $LogPath -Value $combined -Encoding UTF8 }
-    if ($p.ExitCode -ne 0) {
-      throw "ibcmd exit $($p.ExitCode). See $LogPath"
+    $elapsed = [int]((Get-Date) - $started).TotalSeconds
+    if ($LogPath) {
+      Add-Content -LiteralPath $LogPath -Value ("ibcmd exit={0} elapsedSec={1}" -f $exitCode, $elapsed) -Encoding UTF8
+    }
+    Write-Host ("ibcmd exit={0} elapsedSec={1}" -f $exitCode, $elapsed)
+    if ($combined -match '(?m)^\[ERROR\]') {
+      throw "ibcmd reported ERROR (exit $exitCode). See $LogPath"
+    }
+    if ([int]$exitCode -ne 0) {
+      throw "ibcmd exit $exitCode. See $LogPath"
     }
   } finally {
     Remove-Item -LiteralPath $outFile, $errFile -Force -ErrorAction SilentlyContinue
   }
+}
+
+function Stop-OrphanIbcmdForDb([string]$DbAbs) {
+  if (-not $DbAbs) { return }
+  $needle = $DbAbs -replace '\\', '/'
+  Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -eq 'ibcmd.exe' -and $_.CommandLine -and ($_.CommandLine -replace '\\', '/') -like "*$needle*" } |
+    ForEach-Object {
+      Write-Warning "Killing orphan ibcmd pid=$($_.ProcessId) for $DbAbs"
+      Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Get-ConfigImportStamp([string]$SrcAbs) {
@@ -210,6 +309,9 @@ function Ensure-ServiceIb($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$
   $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
   Add-Content -LiteralPath $log -Value "`n=== $ts Ensure-ServiceIb force=$Force allowApply=$AllowApply ===" -Encoding UTF8
 
+  # Leftover hung ibcmd keeps directory lock ("process NNNN")
+  Stop-OrphanIbcmdForDb $paths.DbAbs
+
   if ($AllowApply) {
     Write-Host "SERVICE_IB=prepare wipe+create+import+apply (SERVICE IB ONLY) path=$($paths.DbAbs)"
   } else {
@@ -253,7 +355,8 @@ function Get-ServiceIbCfg($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$
     Write-Host "SERVICE_IB=skipped (using project infobase from project.json)"
     return @{ Cfg = $Cfg; Paths = $null; IbcmdPath = $null }
   }
-  $paths = Ensure-ServiceIb $Cfg $ProjectRoot $SrcAbs $ForceRefresh $AllowApply
+  # Named switches required: positional SwitchParameter binding drops -AllowApply / -Force
+  $paths = Ensure-ServiceIb $Cfg $ProjectRoot $SrcAbs -Force:$ForceRefresh -AllowApply:$AllowApply
   $svcCfg = $Cfg | ConvertTo-Json -Depth 20 | ConvertFrom-Json
   $svcCfg.infobase = [pscustomobject]@{
     type = "file"
@@ -271,7 +374,7 @@ function Get-ServiceIbCfg($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$
 
 # Back-compat alias used by EPF script
 function Get-DesignerCfgForEpf($Cfg, [string]$ProjectRoot, [string]$SrcAbs, [switch]$ForceRefresh, [switch]$SkipPrepare) {
-  return (Get-ServiceIbCfg $Cfg $ProjectRoot $SrcAbs $ForceRefresh $SkipPrepare).Cfg
+  return (Get-ServiceIbCfg $Cfg $ProjectRoot $SrcAbs -ForceRefresh:$ForceRefresh -SkipPrepare:$SkipPrepare).Cfg
 }
 
 function Resolve-UnderRoot([string]$ProjectRoot, [string]$RelOrAbs) {
