@@ -79,8 +79,10 @@ Dump/pack внешек требуют ИБ с **метаданными осно�
 
 ## Команды
 
+`SkillHome` = каталог этого SKILL.md. `-ProjectRoot` = workspace.
+
 ```powershell
-…\Invoke-1cExternalEpf.ps1 -Action scaffold -Name "СписокЗависшихЗадач" -ProjectRoot "<repo>"
+…\Invoke-1cExternalEpf.ps1 -Action scaffold -Name "СписокЗависшихЗадач" -ProjectRoot "<workspace>"
 …\Invoke-1cExternalEpf.ps1 -Action dump -EpfPath "C:\path\file.epf"
 …\Invoke-1cExternalEpf.ps1 -Action extract-from-config -Name "ИмяИзКонфы"
 …\Invoke-1cExternalEpf.ps1 -Action pack -Name "СписокЗависшихЗадач"

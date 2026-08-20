@@ -1,6 +1,6 @@
 # Шаблон проекта конфигурации 1С
 
-Переиспользуемый каркас Git-репозитория для разработки конфигурации 1С в Cursor:
+Переиспользуемый каркас и **Cursor Plugin** для разработки конфигурации 1С:
 
 - иерархическая выгрузка в `src/`
 - skills стандартов ИТС (`coding-standards`, `std-*`)
@@ -8,42 +8,54 @@
 - внешние обработки через `1c-external-epf` (`src/_extDataProcessors`)
 - расширения через `1c-external-cfe` (`src/_extensions` → `.cfe`)
 - упаковка `.cf` через `1c-ibcmd-pack`
-- обновление шаблона в живых проектах: `1c-template-sync` (без `src/`)
 - субагент `/implementer` (только файлы; сборка и ИБ — основной агент)
 
-## Правки самого шаблона
+Предпочтительно: skills/rules живут в **плагине**, репозиторий конфы — `src/` + `.1c/`.  
+Клоны шаблона с `.cursor/skills` в git по-прежнему работают (`1c-template-sync`).
+
+## Правки самого шаблона / плагина
 
 Отдельное окно Cursor с клоном `1c-agent-designer`. Процесс: [docs/TEMPLATE_MAINTENANCE.md](docs/TEMPLATE_MAINTENANCE.md).
 
-Репозиторий конкретной конфигурации на базе шаблона — **отдельный** clone/workspace, не смешивать с правками шаблона.
+Репозиторий конкретной конфигурации — **отдельный** workspace, не смешивать с правками шаблона.
 
 ## Репозиторий
 
 - GitHub: https://github.com/HEOcanuAHT/1c-agent-designer
 - Clone: `https://github.com/HEOcanuAHT/1c-agent-designer.git`
 
+## Локальная установка плагина
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
+cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "D:\path\to\1c-agent-designer"
+```
+
+Подставь путь к клону шаблона. Затем в Cursor: **Developer: Reload Window**.  
+Customize → skills/rules `1c-agent-designer`. Rule `template-maintenance` в плагин не входит.
+
 ## Быстрый старт новой конфигурации
+
+**Плагин (предпочтительно):** пустая папка в Cursor → Reload после установки плагина → «настрой окружение».  
+Агент копирует каркас из плагина и спрашивает ИБ (`1c-project-bootstrap`).
+
+**Клон шаблона (legacy):**
 
 ```powershell
 git clone https://github.com/HEOcanuAHT/1c-agent-designer.git my-config
 cd my-config
 # открыть папку в Cursor и попросить агента: «настрой окружение» / bootstrap
-# либо вручную:
-Copy-Item .1c\project.json.example .1c\project.json
-Copy-Item .1c\project.local.json.example .1c\project.local.json
-# заполнить platformVersion, infobase (file|server|ibname), auth в local
 ```
-
-Агент следует skill **`1c-project-bootstrap`**: Todo-чеклист и короткие вопросы (тип ИБ → auth → ibcmd или agent → доступ к SQL), затем `.1c/project*.json` (`tools.preferredDump`).
 
 Дальше: [docs/INITIAL_DUMP.md](docs/INITIAL_DUMP.md), [docs/WORKFLOW.md](docs/WORKFLOW.md), [AGENTS.md](AGENTS.md).
 
 ## Структура
 
 ```text
+.cursor-plugin/plugin.json   # манифест Cursor Plugin
 .cursor/
   agents/implementer.md
-  rules/                 # bootstrap, load без БД, git/XML
+  rules/                 # bootstrap, plugin-paths, load без БД, git/XML
   skills/                # bootstrap, template-sync, coding-standards, std-*, designer-agent, …
 .1c/                     # project.json.example, template-manifest.json, secrets example
 docs/

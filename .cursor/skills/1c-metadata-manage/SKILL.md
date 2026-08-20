@@ -39,14 +39,14 @@ disable-model-invocation: true
 
 ## Пути скриптов
 
-Относительно корня репозитория:
+`SkillHome` = каталог **этого** SKILL.md (плагин или `.cursor/skills/1c-metadata-manage` в клоне). Tools рядом с skill, не обязательно в репо проекта. `-ProjectRoot` / пути XML — workspace (`src/…`).
 
-`.cursor/skills/1c-metadata-manage/tools/<tool>/scripts/...`
+`<SkillHome>/tools/<tool>/scripts/...`
 
 Пример:
 
 ```powershell
-powershell.exe -NoProfile -File .cursor/skills/1c-metadata-manage/tools/1c-meta-validate/scripts/meta-validate.ps1 ...
+powershell.exe -NoProfile -File "<SkillHome>/tools/1c-meta-validate/scripts/meta-validate.ps1" ...
 ```
 
 Расширения: XML-исходники в `src/_extensions/<Name>/` (не корень `src/` как у upstream).  

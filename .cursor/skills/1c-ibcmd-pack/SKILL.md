@@ -81,11 +81,15 @@ description: >-
 10. `config save` без `--db` — основная; `save --db` — КБД.  
    `export`/`--sync` также видит правки **основной** без прожатия бочки (совпало с designer `dump-update`).
 
+## Пути скриптов
+
+`SkillHome` = каталог этого SKILL.md (плагин или `.cursor/skills/1c-ibcmd-pack` в клоне). `-ProjectRoot` = workspace.
+
 ## Dump / export
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<repo>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1" `
-  -Action dump-full -ProjectRoot "<repo>"
+powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdDump.ps1" `
+  -Action dump-full -ProjectRoot "<workspace>"
 ```
 
 | Action | ibcmd | Аналог designer-agent |
@@ -115,8 +119,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "<repo>/.cursor/skills/1c-ib
 ## Load / import (только основная)
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<repo>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdDump.ps1" `
-  -Action load-files -ProjectRoot "<repo>" -ListFile ".1c/load-list.txt"
+powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdDump.ps1" `
+  -Action load-files -ProjectRoot "<workspace>" -ListFile ".1c/load-list.txt"
 ```
 
 `-ListFile` — пути **относительно** каталога XML (`src` / `-OutDir`), по одному на строку.  
@@ -168,7 +172,7 @@ ibcmd infobase config export ^
 Служебная ИБ может быть пустой файловой без пользователя — тогда auth **не** спрашивать.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<repo>/.cursor/skills/1c-ibcmd-pack/scripts/Invoke-1cIbcmdPack.ps1" -Action pack
+powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdPack.ps1" -Action pack -ProjectRoot "<workspace>"
 ```
 
 | Action | Что |

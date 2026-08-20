@@ -24,7 +24,7 @@ alwaysApply: false
 
 ## Перед запуском implementer
 
-1. Каркас при необходимости: `Invoke-1cExternalEpf.ps1 -Action scaffold|extract-from-config`, `Invoke-1cExternalCfe.ps1 -Action scaffold` — **сам**.
+1. Каркас при необходимости: `<SkillHome-epf>/scripts/Invoke-1cExternalEpf.ps1 -Action scaffold|extract-from-config`, `<SkillHome-cfe>/scripts/Invoke-1cExternalCfe.ps1 -Action scaffold` — **сам**. `-ProjectRoot` = workspace.
 2. ТЗ в промпт субагента:
    - точные пути файлов;
    - что изменить (поведение, сигнатуры, форма);

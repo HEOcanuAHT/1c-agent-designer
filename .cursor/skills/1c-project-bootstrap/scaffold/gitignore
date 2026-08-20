@@ -1,0 +1,100 @@
+# 1C / EDT / Designer
+*.cfe
+*.cf
+*.dt
+*.epf
+*.erf
+*.log
+*.lgf
+*.lgp
+*.lgx
+DumpFiles/
+ConfigDumpInfo.xml.bak
+
+# Local IB / pack / secrets / runtime
+.1c/ib-pack/
+.1c/ib-pack-delta/
+.1c/ib-dev/
+.1c/ib-ext/
+.1c/ib-ext-data/
+.1c/ib-kb-file-test/
+.1c/ibcmd-data-filetest/
+.1c/delta-src/
+.1c/project.json
+.1c/project.local.json
+.1c/*.log
+.1c/*-out.txt
+.1c/*-result.txt
+.1c/last-agent-error.txt
+.1c/agent-dump/
+.1c/load-changed-list.txt
+.1c/agent.pid
+.1c/query-validate.mode
+.1c/qv-validate.log
+.1c/qv-batch/
+.1c/qv-tmp-*
+
+.1c/incoming/
+.1c/ext-*.log
+.1c/test-*.ps1
+# Сравнения dump: agent vs ibcmd (содержимое локально; README — в git)
+.1c/dump-test/**
+!.1c/dump-test/README.md
+.1c/ibcmd-data/
+.1c/ibcmd-dump-staging/
+.1c/ibcmd-dump-park/
+.1c/bench-*.log
+.1c/bench-*.out.txt
+.1c/bench-*.err.txt
+logs/
+artifacts/
+agent-dump-test/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE / editors
+.idea/
+*.sublime-*
+*.swp
+*~
+
+# Cursor local overrides
+.cursor/*.local.*
+
+# Designer AgentMode workdir (AgentBaseDir/<user>)
+/0/
+/agentbasedir.json
+
+# Build / temp
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+credentials*.json
+
+__pycache__/
+*.pyc
+
+# Local Python venv (optional paramiko for agent SSH)
+.venv/
+
+.1c/_ibcmd-help-config.txt
+.1c/load-bench-*.txt
+.1c/bench-*.txt
+.1c/bench-incr-files.txt
+.1c/probe*.txt
+.1c/*-err.txt
+
+# Локальная помойка для проб/бенчей/хвостов (не коммитить)
+.1c/scratch/*
+!.1c/scratch/README.md

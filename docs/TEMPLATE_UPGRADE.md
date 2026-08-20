@@ -3,6 +3,8 @@
 После `Sync-1cTemplate.ps1 -Action sync` сверь конфиг с актуальным шаблоном.  
 `project.json` / `project.local.json` sync **не перезаписывает** (кроме `template.version`).
 
+Проекты **без** `.cursor/skills` в git: не sync, а обновление плагина (`git pull` шаблона + Reload Window).
+
 ## Порядок
 
 1. `check` → `sync` (сначала `-DryRun` по желанию).

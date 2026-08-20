@@ -43,7 +43,7 @@ Linux/macOS — вне scope.
 Может дергать ibcmd → Cursor часто просит Allow — **нормально один раз**:
 
 ```powershell
-powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cValidateQuery.ps1 -Action ensure
+powershell -NoProfile -File "<SkillHome-1c-external-cfe>/scripts/Invoke-1cValidateQuery.ps1" -Action ensure -ProjectRoot "<workspace>"
 ```
 
 Не добавляй `-ExecutionPolicy Bypass`, не ищи/не убивай процессы вокруг validate.
@@ -54,13 +54,13 @@ powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cVali
 
 ```powershell
 # записать изменённые запросы в .1c/qv-batch/*.txt (UTF-8), затем:
-powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cValidateQuery.ps1 -ReuseOnly -BatchDir .1c/qv-batch
+powershell -NoProfile -File "<SkillHome-1c-external-cfe>/scripts/Invoke-1cValidateQuery.ps1" -ReuseOnly -BatchDir .1c/qv-batch -ProjectRoot "<workspace>"
 ```
 
 Один запрос:
 
 ```powershell
-powershell -NoProfile -File .cursor/skills/1c-external-cfe/scripts/Invoke-1cValidateQuery.ps1 -ReuseOnly -QueryFile .1c/qv-batch/01.txt
+powershell -NoProfile -File "<SkillHome-1c-external-cfe>/scripts/Invoke-1cValidateQuery.ps1" -ReuseOnly -QueryFile .1c/qv-batch/01.txt -ProjectRoot "<workspace>"
 ```
 
 | Exit | Смысл |

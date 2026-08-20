@@ -1,29 +1,31 @@
 ---
 name: 1c-project-bootstrap
 description: >-
-  Первичная настройка репозитория конфигурации 1С после clone/копии шаблона:
-  интерактивный чеклист (короткие вопросы), предпочтение ibcmd, fallback
-  designer-agent, зависимости, .1c/project.json и project.local.json, тип ИБ.
-  Use when user clones template, asks setup/инициализация/настройка окружения,
-  or .1c/project.json is missing.
+  Первичная настройка репозитория конфигурации 1С: каркас папок из плагина,
+  интерактивный чеклист, .1c/project.json и project.local.json, тип ИБ.
+  Use when user asks setup/инициализация/настройка окружения/bootstrap,
+  opens an empty 1C folder, clones the template, or .1c/project.json is missing.
 ---
 
 # Bootstrap проекта конфигурации 1С
 
 ## Когда запускать
 
-- Клон/копия шаблона без рабочего `.1c/project.json`
-- Пользователь: настройка окружения / инициализация / bootstrap / «подключи ИБ»
-- Правило `1c-project-bootstrap` предложило setup — только после согласия
+- Пустая папка / новый репо: пользователь сказал «настрой», bootstrap, «это конфа 1С»
+- Клон шаблона без рабочего `.1c/project.json`
+- Пользователь: настройка окружения / инициализация / «подключи ИБ»
+- Есть `.1c/` без `project.json` или `src/Configuration.xml` без заполненного `.1c/project.json`
 
+Не предлагать setup на чужих (не-1С) репозиториях.  
 Не запускать повторно, если `.1c/project.json` уже заполнен и пользователь не просит перенастроить.
 
 ## Цель
 
-1. Интерактивный мини-опрос (один короткий вопрос за раз) + Todo-чеклист.
-2. Записать `.1c/project.json` / `project.local.json`.
-3. **Предпочтительный dump/load = ibcmd**; designer-agent — запасной путь.
-4. Опционально ping / первый dump ([docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md)).
+1. Каркас папок из плагина (если репо пустой / нет `.1c/*.example`).
+2. Интерактивный мини-опрос (один короткий вопрос за раз) + Todo-чеклист.
+3. Записать `.1c/project.json` / `project.local.json`.
+4. **Предпочтительный dump/load = ibcmd**; designer-agent — запасной путь.
+5. Опционально ping / первый dump ([docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md)).
 
 ## Поведение агента (обязательно)
 
@@ -37,6 +39,7 @@ description: >-
 
 | id | content |
 |----|---------|
+| `boot-scaffold` | Каркас папок из плагина (`.1c/`, `src/`, docs, gitignore) |
 | `boot-env` | Проверка окружения (платформа / ibcmd / Python) |
 | `boot-ib-type` | Тип ИБ (file / server / ibname) |
 | `boot-ib-conn` | Параметры подключения ИБ |
@@ -50,14 +53,28 @@ description: >-
 
 ---
 
-## Шаг 0 — корень
+## Шаг 0 — два корня
 
-Каталог с `.cursor/skills` и `.1c/`. Пути относительно него.
+- **ProjectRoot** = workspace (куда пишем `.1c/` и `src/`)
+- **SkillHome** = каталог этого SKILL.md (плагин или `.cursor/skills/1c-project-bootstrap` в клоне)
+
+Скрипты: `<SkillHome>/scripts/….ps1 -ProjectRoot "<workspace>"`. Не копируй skills в проект.
+
+## Шаг 0.5 — каркас (`boot-scaffold`)
+
+Если нет `.1c/project.json.example` (пустой репо / только плагин) — скопируй каркас **из плагина**, не из workspace:
+
+```powershell
+…\Copy-1cProjectScaffold.ps1 -ProjectRoot "<workspace>"
+```
+
+Копирует `.1c/*.example`, `src/**/README.md`, `docs/WORKFLOW|INITIAL_DUMP|TEMPLATE_UPGRADE|ATTRIBUTION.md`, `AGENTS.md`, GitLab MR-шаблон, **project** `.gitignore` (без игнора `src/**`).  
+Не копирует `.cursor/skills|rules|agents`. Существующие файлы не перезаписывает (без `-Force`).
 
 ## Шаг 1 — окружение (`boot-env`)
 
 ```powershell
-…\.cursor\skills\1c-project-bootstrap\scripts\Check-1cDevEnv.ps1 -ProjectRoot "<repo>"
+…\Check-1cDevEnv.ps1 -ProjectRoot "<workspace>"
 ```
 
 | Компонент | Зачем |
@@ -102,7 +119,7 @@ description: >-
 2. В терминале (пароль не в чат):
 
 ```powershell
-…\1c-project-bootstrap\scripts\Set-1cIbCredential.ps1 -ProjectRoot "<repo>"
+…\Set-1cIbCredential.ps1 -ProjectRoot "<workspace>"
 ```
 
 3. В JSON только `"credentialTarget"` — без пароля.

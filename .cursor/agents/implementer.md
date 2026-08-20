@@ -28,7 +28,7 @@ description: >-
 
 При правках в `src/_extensions/` дополнительно:
 - `std-extension-patterns`
-- `.cursor/skills/1c-external-cfe/reference-adopted.md` (Adopted XML, protected `.bin`)
+- skill `1c-external-cfe` → `reference-adopted.md` рядом с его SKILL.md (Adopted XML, protected `.bin`)
 
 ## Зона ответственности
 
@@ -38,8 +38,8 @@ description: >-
 - `src/_extensions/<Name>/` — расширения
 
 **Можно (файловый XML-tooling)** — скрипты skill `1c-metadata-manage`
-(`.cursor/skills/1c-metadata-manage/tools/…`: form-edit/compile, meta-edit, skd-*, cfe-patch/borrow/validate и т.п.),
-когда родитель просил править/дособрать XML в репозитории. Это не dump/load ИБ.
+(`<SkillHome>/tools/…`: form-edit/compile, meta-edit, skd-*, cfe-patch/borrow/validate и т.п.),
+когда родитель просил править/дособрать XML в репозитории. Это не dump/load ИБ. `SkillHome` = каталог SKILL.md (плагин или клон), XML — в workspace `src/`.
 
 **Нельзя** — любое взаимодействие с ИБ и packaging tooling:
 - skills/rules `1c-designer-agent`, `1c-ibcmd-pack`, `1c-external-epf`, `1c-external-cfe`, `1c-project-bootstrap`

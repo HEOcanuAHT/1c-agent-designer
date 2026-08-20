@@ -7,6 +7,10 @@ alwaysApply: true
 
 Если это **проект конфигурации на базе шаблона** (есть `.1c/project.json` и/или `src/` с XML), а не разработка самого шаблона:
 
+**Плагин-only** (нет `.cursor/skills` в репо): «обнови шаблон» → git pull клона `1c-agent-designer` + Reload Window. Skills в проект **не** копировать.
+
+**Клон с `.cursor/skills` в git:**
+
 1. При просьбе «обнови шаблон / подтяни skills» — следуй skill **`1c-template-sync`**.
 2. Если видишь, что tooling устарел (нет `.1c/template-manifest.json`, или пользователь жалуется на старые скрипты dump/epf) — **кратко предложи** sync, не запускай без согласия.
 3. Sync **только** allowlist (skills/rules/docs/examples). **Не** трогать `src/`, `project.json` (кроме `template.*`), `project.local.json`.

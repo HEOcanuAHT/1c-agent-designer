@@ -1,5 +1,6 @@
 # Agent notes — шаблон конфигурации 1С
 
+- **Пути скриптов:** `SkillHome` = каталог `SKILL.md` (плагин или `.cursor/skills/<name>` в клоне); `-ProjectRoot` = workspace. Rule `1c-plugin-paths`.
 - Стандарты кода: skills `coding-standards`, `std-*` (в т.ч. формы/`1c-forms`, антипаттерны, СКД, расширения)
 - **XML метаданных** (создать/править/validate Form/СКД/роли/CFE borrow): skill **`1c-metadata-manage`** — не заменяет dump/load
 - **Dump/load XML** — смотри `tools.preferredDump` в `.1c/project.json`:
@@ -11,9 +12,9 @@
 - Проверка языка запросов: `Invoke-1cValidateQuery.ps1` (COM/`QuerySchema` на `.1c/ib-ext`; без HTTP/расширения). Агентам: `-ReuseOnly` + пачка `.1c/qv-batch/`; `ensure` только при `NEED_ENSURE`
 - Режим «проверяй запросы» — rule `1c-query-validate` (флаг `.1c/query-validate.mode`); по умолчанию выкл.; validate только оркестратор
 - Упаковка `.cf`: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdPack.ps1`
-- **Первая настройка** (clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
-  (интерактивный чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)
-- **Обновление tooling** — skill `1c-template-sync`; после sync см. `docs/TEMPLATE_UPGRADE.md` (актуальная форма `project.json`, без истории версий)
+- **Первая настройка** (пустая папка + плагин / clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
+  (каркас из плагина, затем чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)
+- **Обновление tooling** — плагин: git pull шаблона + Reload Window. Клоны с `.cursor/skills` в репо — skill `1c-template-sync`; после sync см. `docs/TEMPLATE_UPGRADE.md`
 Scaffold, pack/dump, load конфы — **основной агент** (rule `1c-orchestrator` при работе с кодом/артефактами, `docs/WORKFLOW.md`).
 
 Секреты пользователя **1С** (не SQL) — Windows Credential Manager (`auth.credentialTarget`, `Set-1cIbCredential.ps1`);  

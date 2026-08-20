@@ -65,8 +65,10 @@ disable-model-invocation: true
 
 ## Команды
 
+`SkillHome` = каталог этого SKILL.md. `-ProjectRoot` = workspace.
+
 ```powershell
-…\Invoke-1cExternalCfe.ps1 -Action scaffold -Name "FixDbmsType" -Prefix "Fix_" -Synonym "Фикс типа СУБД"
+…\Invoke-1cExternalCfe.ps1 -Action scaffold -Name "FixDbmsType" -Prefix "Fix_" -Synonym "Фикс типа СУБД" -ProjectRoot "<workspace>"
 …\Invoke-1cExternalCfe.ps1 -Action dump -CfePath "C:\path\file.cfe" -Name "FixDbmsType"
 …\Invoke-1cExternalCfe.ps1 -Action pack -Name "FixDbmsType"
 …\Invoke-1cExternalCfe.ps1 -Action pack -Name "…" -AllowServiceIbApplyOnCompatMismatch -RefreshServiceIb

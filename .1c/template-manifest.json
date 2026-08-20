@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.06.7",
+  "version": "2026.08.17.1",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -37,6 +37,10 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.17.1",
+      "summary": "Cursor Plugin MVP: skills/rules из плагина; bootstrap копирует каркас в пустой проект. Клоны с .cursor/skills — dual-mode."
+    },
     {
       "since": "2026.08.06.7",
       "summary": "Query validate: -ReuseOnly + -BatchDir (один COM на пачку); ensure отдельно; меньше Cursor Allow."

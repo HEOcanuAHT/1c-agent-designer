@@ -14,6 +14,16 @@ description: >-
 - Правило предложило обновление — только после согласия
 - После clone шаблона давно; манифест отсутствует или версия отстаёт
 
+## Плагин без `.cursor/skills` в репо
+
+Если в проекте есть `.1c/project.json` (или каркас bootstrap), но **нет** `.cursor/skills/` — tooling живёт в плагине `1c-agent-designer`.
+
+- «обнови шаблон» → **не** копируй skills в проект.
+- Скажи: `git pull` в клоне шаблона (или обнови junction) → **Developer: Reload Window**.
+- `Sync-1cTemplate.ps1` — только для клонов, где `.cursor/skills` уже в git.
+
+Скрипт sync по-прежнему: `<SkillHome>/scripts/Sync-1cTemplate.ps1` (`SkillHome` = каталог этого SKILL.md).
+
 ## Жёсткие границы
 
 **Никогда не трогать:**

@@ -42,9 +42,11 @@ AgentMode+SSH — experimental (`designerAgent.transport: agent` или `-UseAge
 
 ## Команды
 
+`SkillHome` = каталог этого SKILL.md. `-ProjectRoot` = workspace.
+
 ```powershell
-…\Invoke-1cDesignerAgent.ps1 -Action dump-full -ProjectRoot "<repo>"
-…\Invoke-1cDesignerAgent.ps1 -Action load-changed -BaseRef main
+…\Invoke-1cDesignerAgent.ps1 -Action dump-full -ProjectRoot "<workspace>"
+…\Invoke-1cDesignerAgent.ps1 -Action load-changed -ProjectRoot "<workspace>" -BaseRef main
 ```
 
 | Action | Что |
