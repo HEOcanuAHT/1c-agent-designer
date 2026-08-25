@@ -14,3 +14,6 @@ jobs:
       - name: UTF-8 BOM, no typographics, Parser (PS 5.1)
         shell: powershell
         run: powershell -NoProfile -File .github/scripts/Test-Ps1Encoding.ps1
+      - name: dump-objects path convert / ConfigDumpInfo invalidate
+        shell: powershell
+        run: powershell -NoProfile -File .github/scripts/Test-DumpObjectListConvert.ps1

@@ -28,6 +28,8 @@ ConfigDumpInfo.xml.bak
 .1c/last-agent-error.txt
 .1c/agent-dump/
 .1c/load-changed-list.txt
+.1c/dump-objects-list.txt
+.1c/ConfigDumpInfo.dump-objects.bak
 .1c/agent.pid
 .1c/query-validate.mode
 .1c/qv-validate.log

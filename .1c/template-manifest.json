@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.25.1",
+  "version": "2026.08.25.2",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -39,6 +39,10 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.25.2",
+      "summary": "dump-objects: точечная выгрузка/откат файлов объекта из ИБ (ibcmd --sync после invalidate ConfigDumpInfo; designer -listFile)."
+    },
     {
       "since": "2026.08.25.1",
       "summary": "Skill *.ps1: UTF-8 BOM + ASCII punctuation (PS 5.1 -File). Dump/ibcmd behavior unchanged."

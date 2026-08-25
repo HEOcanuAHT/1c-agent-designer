@@ -14,6 +14,7 @@
 ## Dump / load (Designer Agent)
 
 - `dump-full` / `dump-update` → XML в `src/`.
+- Откат файлов объекта к ИБ без git: `dump-objects` (`-ListFile` / `-Objects`). `dump-update` правки на диске не видит.
 - Правки в git → `load-changed` (или `-ListFile`) → **только основная конфигурация**.
 - **Не** вызывать `update-db-cfg` / `/UpdateDBCfg` из автоматизации.
 - Принятие в конфигурацию БД — вручную в Конфигураторе.

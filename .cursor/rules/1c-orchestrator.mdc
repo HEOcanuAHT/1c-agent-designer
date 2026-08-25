@@ -38,6 +38,7 @@ alwaysApply: false
 ## После implementer
 
 - По запросу: `pack` → `artifacts/ext` или `artifacts/cfe`; при необходимости `load-changed` / ibcmd import **основной** конфы (без apply/КБД).
+- Откат правок на диске **без load** (нет git или не коммитили): `dump-update` не поможет. `dump-objects` (`1c-ibcmd-pack` / `1c-designer-agent`) со списком файлов/объектов, которые менял агент. **Спроси** пользователя: файлы перезапишутся из основной конфы ИБ. Не `dump-full` ради одного объекта.
 - Если `.1c/query-validate.mode` = `on` (или разовая просьба) и в правках есть тексты запросов — **сам** пачкой: `.1c/qv-batch/` + `Invoke-1cValidateQuery.ps1 -ReuseOnly -BatchDir` (rule `1c-query-validate`); ensure только при `NEED_ENSURE`. Не отдавать validate implementer’у.
 - Принятие в КБД и установка `.cfe` в боевую ИБ — пользователю вручную.
 

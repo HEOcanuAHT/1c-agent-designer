@@ -4,7 +4,7 @@
 #>
 [CmdletBinding()]
 param(
-  [ValidateSet("start", "stop", "dump-full", "dump-update", "load-changed", "ping")]
+  [ValidateSet("start", "stop", "dump-full", "dump-update", "dump-objects", "load-changed", "ping")]
   [string]$Action = "ping",
   [string]$ProjectRoot = (Get-Location).Path,
   [string]$BaseRef = "",
@@ -12,12 +12,15 @@ param(
   [switch]$NoAutoStart,
   [switch]$UseAgent,
   [switch]$ClearAgentPort,
-  # Optional list of paths relative to src/ (one per line). Skips git diff when set.
-  [string]$ListFile = ""
+  # load-changed: paths relative to src/. dump-objects: those paths and/or metadata names.
+  [string]$ListFile = "",
+  # dump-objects: comma-separated metadata names (Catalog.Name, Catalog.Name.Form.FormName)
+  [string]$Objects = ""
 )
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+. (Join-Path $ScriptDir "..\..\1c-ibcmd-pack\scripts\Convert-1cDumpObjectList.ps1")
 
 function Read-JsonFile([string]$Path) {
   if (-not (Test-Path -LiteralPath $Path)) { return $null }
@@ -774,6 +777,37 @@ switch ($Action) {
     } else {
       Invoke-DesignerBatch -DesignerPath $designerPath -Cfg $cfg -ProjectRoot $ProjectRoot -LogName "dump-update.log" -ExtraArgs @(
         "/DumpConfigToFiles", $srcAbs, "-update", "-force"
+      )
+    }
+    Write-Host "DUMP_DIR=$srcAbs"
+  }
+  "dump-objects" {
+    $srcAbs = Join-Path $ProjectRoot $srcRel
+    $anchors = Read-1cDumpObjectList -ListFile $ListFile -Objects $Objects -SrcRel $srcRel -DumpAbs $srcAbs -ProjectRoot $ProjectRoot
+    Write-Host "OBJECTS=$($anchors -join ', ')"
+    $listPath = Join-Path $ProjectRoot ".1c\dump-objects-list.txt"
+    New-Item -ItemType Directory -Force -Path (Split-Path $listPath) | Out-Null
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllLines($listPath, $anchors, $utf8NoBom)
+    Write-Host "LIST_FILE=$listPath ($($anchors.Count))"
+    $marker = Join-Path $srcAbs "ConfigDumpInfo.xml"
+    if ($transport -eq "agent") {
+      try {
+        Ensure-AgentReady $cfg $designerPath $ProjectRoot
+        $agentDir = Get-AgentRepoRel $srcRel
+        $listRel = Get-AgentRepoRel ".1c/dump-objects-list.txt"
+        Write-Host "agent --dir=$agentDir --list-file=$listRel"
+        Invoke-AgentCommands $cfg @(
+          "common connect-ib",
+          "config dump-config-to-files --dir=$agentDir --format=$format --list-file=$listRel --force",
+          "common disconnect-ib"
+        ) "dump-objects" -SuccessMarkerFile $marker
+      } finally {
+        Stop-DesignerAgentAfterOp $cfg "dump-objects"
+      }
+    } else {
+      Invoke-DesignerBatch -DesignerPath $designerPath -Cfg $cfg -ProjectRoot $ProjectRoot -LogName "dump-objects.log" -ExtraArgs @(
+        "/DumpConfigToFiles", $srcAbs, "-listFile", $listPath, "-force"
       )
     }
     Write-Host "DUMP_DIR=$srcAbs"

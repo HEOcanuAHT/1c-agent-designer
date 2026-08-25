@@ -30,6 +30,7 @@ AgentMode+SSH — experimental (`designerAgent.transport: agent` или `-UseAge
 | Режим | Сравнивает |
 |--------|------------|
 | `dump-update` (`-update`) | ИБ ↔ `ConfigDumpInfo.xml` |
+| `dump-objects` | список объектов → выгрузка из ИБ в `src/` |
 | `load-changed` | `git diff BaseRef..HeadRef` под `src/` |
 
 ## Конфиг
@@ -53,6 +54,7 @@ AgentMode+SSH — experimental (`designerAgent.transport: agent` или `-UseAge
 |--------|-----|
 | `dump-full` | полная выгрузка |
 | `dump-update` | инкремент vs ConfigDumpInfo |
+| `dump-objects` | точечная выгрузка / откат файлов объекта из ИБ (`-ListFile` / `-Objects`) |
 | `load-changed` | git → `-listFile` → load |
 | `ping` | проверить designer + auth |
 
@@ -92,6 +94,8 @@ AgentMode всегда работает из `AgentBaseDir\<userDir>` (част�
 После операции агент гасится по `.1c/agent.pid` (вторая SSH-сессия shutdown больше не используется).
 
 `load-changed -ListFile <path>` — явный список путей относительно `src/` (удобно для незакоммиченных файлов).
+
+`dump-objects` — выгрузить из ИБ только указанные объекты (откат правок агента на диске без git). Список: пути относительно `src/` и/или имена (`Catalog.Name`). Designer: `/DumpConfigToFiles -listFile`. Не путать с `dump-update`: инкремент не видит правки файлов, пока `configVersion` совпадает с ИБ. Спрашивай пользователя перед перезаписью.
 
 Пути под `src/_extDataProcessors/` и `src/_extensions/` (старый layout) **исключаются** из list-file. Актуальные внешки/расширения лежат в `ext/` и `cfe/` — в `src/` их нет.
 

@@ -12,7 +12,7 @@
 #>
 [CmdletBinding()]
 param(
-  [ValidateSet("dump-full", "dump-update", "load-files", "ping")]
+  [ValidateSet("dump-full", "dump-update", "dump-objects", "load-files", "ping")]
   [string]$Action = "dump-full",
 
   [string]$ProjectRoot = (Get-Location).Path,
@@ -20,8 +20,11 @@ param(
   # XML dir for dump out / load base-dir (default: project src)
   [string]$OutDir = "",
 
-  # For load-files: paths relative to OutDir/src, one per line (UTF-8)
+  # load-files: paths relative to OutDir/src. dump-objects: those paths and/or metadata names.
   [string]$ListFile = "",
+
+  # dump-objects: comma-separated metadata names (Catalog.Name, Catalog.Name.Form.FormName)
+  [string]$Objects = "",
 
   # dump-full into a non-empty OutDir: delete XML there, then export in-place (no staging copy).
   # Agent must ask the user first; do not pass this switch without an explicit yes.
@@ -32,6 +35,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "Convert-1cDumpObjectList.ps1")
 
 function Read-JsonFile([string]$Path) {
   if (-not (Test-Path -LiteralPath $Path)) { return $null }
@@ -426,7 +430,7 @@ if ($OutDir) {
 New-Item -ItemType Directory -Force -Path $dumpAbs | Out-Null
 $preserveRels = Get-PreserveRels $cfg $outRel
 $parkDir = Get-ParkDir $cfg $ProjectRoot
-$parkPreserve = (-not $NoStaging) -and ($Action -eq "dump-update") -and (Test-NeedsPreservePark $dumpAbs $preserveRels)
+$parkPreserve = (-not $NoStaging) -and ($Action -eq "dump-update" -or $Action -eq "dump-objects") -and (Test-NeedsPreservePark $dumpAbs $preserveRels)
 
 $log = Join-Path $ProjectRoot ".1c\ibcmd-dump.log"
 $common = @("infobase", "config") + $conn.Args + @("--data=$dataDir") + $authArgs
@@ -488,6 +492,39 @@ switch ($Action) {
       Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $dumpAbs)) $log
     }
   }
+  "dump-objects" {
+    $cdi = Join-Path $dumpAbs "ConfigDumpInfo.xml"
+    if (-not (Test-Path -LiteralPath $cdi)) {
+      throw "need ConfigDumpInfo.xml in $dumpAbs - run dump-full first"
+    }
+    $anchors = Read-1cDumpObjectList -ListFile $ListFile -Objects $Objects -SrcRel $outRel -DumpAbs $dumpAbs -ProjectRoot $ProjectRoot
+    Write-Host "OBJECTS=$($anchors -join ', ')"
+    $bak = Join-Path $ProjectRoot ".1c\ConfigDumpInfo.dump-objects.bak"
+    New-Item -ItemType Directory -Force -Path (Split-Path $bak) | Out-Null
+    Copy-Item -LiteralPath $cdi -Destination $bak -Force
+    try {
+      [void](Invalidate-1cConfigDumpInfoVersions -CdiPath $cdi -Anchors $anchors)
+      try {
+        if ($parkPreserve) {
+          $moved = Move-PreserveAside $dumpAbs $parkDir $preserveRels
+          if ($moved.Count -gt 0) { Write-Host "parked=$($moved -join ', ')" }
+          try {
+            Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $dumpAbs)) $log
+          } finally {
+            Restore-PreserveFromPark $parkDir $dumpAbs
+          }
+        } else {
+          Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", "--sync", $dumpAbs)) $log
+        }
+      } catch {
+        Copy-Item -LiteralPath $bak -Destination $cdi -Force
+        Write-Host "RESTORED ConfigDumpInfo.xml after failed dump-objects"
+        throw
+      }
+    } finally {
+      Remove-Item -LiteralPath $bak -Force -ErrorAction SilentlyContinue
+    }
+  }
   "load-files" {
     if (-not $ListFile) { throw "load-files requires -ListFile (paths relative to xml dir)" }
     $listPath = if ([System.IO.Path]::IsPathRooted($ListFile)) { $ListFile } else { Join-Path $ProjectRoot $ListFile }
@@ -510,7 +547,7 @@ switch ($Action) {
 }
 
 $sw.Stop()
-if ($Action -eq "dump-full" -or $Action -eq "dump-update") {
+if ($Action -eq "dump-full" -or $Action -eq "dump-update" -or $Action -eq "dump-objects") {
   $cfgXml = Join-Path $dumpAbs "Configuration.xml"
   $marker = Join-Path $dumpAbs "ConfigDumpInfo.xml"
   if (-not (Test-Path -LiteralPath $cfgXml)) { throw "${Action}: missing $cfgXml" }

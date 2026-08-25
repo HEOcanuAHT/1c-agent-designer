@@ -97,6 +97,7 @@ powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdDump.ps1" `
 |--------|-------|------------------------|
 | `dump-full` | `export <dir>` | `dump-full` |
 | `dump-update` | `export --sync` | `dump-update` |
+| `dump-objects` | invalidate `ConfigDumpInfo` + `--sync` | `dump-objects` (`-listFile`) |
 | `load-files` | `import files` (+ list) | `load-changed` |
 | `ping` | `export info` | проверка связи |
 
@@ -116,6 +117,7 @@ powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdDump.ps1" `
 | `dump-full` | `src/` не пуст | **стоп**, если нет `-WipeOutDir`. Агент спрашивает пользователя. С флагом: park хвостов старого layout → очистить `src/` → `export` в `src/` → вернуть хвосты. **Без** копии всего дампа через staging |
 | `dump-update` | в `src/` есть preserve-хвосты | **Move** в `.1c/ibcmd-dump-park/` → `--sync` в `src/` → вернуть |
 | `dump-update` | `src/` чистый | `--sync` сразу в `src/` |
+| `dump-objects` | как `dump-update` | сменить `configVersion` в `ConfigDumpInfo` → `--sync` |
 
 `-WipeOutDir` **только** после явного «да» в чате (не `Read-Host`). `-NoStaging` на инкременте пропускает park (может упасть, если в `src/` ещё README/`_ext*`). Designer-agent park не нужен.
 
@@ -168,6 +170,25 @@ ibcmd infobase config export ^
 ```
 
 Инкремент: `--sync` (нужен `ConfigDumpInfo.xml` в `<outDir>`).
+
+### Точечная выгрузка / откат файлов (`dump-objects`)
+
+`dump-update` сравнивает ИБ с `configVersion` в `ConfigDumpInfo.xml`, не содержимое файлов. Правки агента на диске без load инкремент **не** затрёт.
+
+Откатить объекты к основной конфигурации ИБ (без полного dump и без git):
+
+```powershell
+powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdDump.ps1" `
+  -Action dump-objects -ProjectRoot "<workspace>" `
+  -ListFile ".1c/dump-objects-list.txt"
+# или: -Objects "Catalog.Name,Catalog.Name.Form.FormName"
+```
+
+`-ListFile` / `-Objects`: пути относительно `src/` (как у load) **или** имена метаданных (`Catalog.Name`, `Catalog.Name.Form.FormName`). Модуль/Form.xml сводятся к содержащему объекту (весь справочник или вся форма).
+
+Как устроено: скрипт меняет `configVersion` перечисленных узлов в `ConfigDumpInfo.xml`, затем тот же `export --sync`, что и `dump-update` (основная конфа, не КБД). При ошибке маркер восстанавливается из `.1c/ConfigDumpInfo.dump-objects.bak`.
+
+Не запускать без явной просьбы откатить: файлы объекта перезапишутся из ИБ.
 
 ## Pack (XML → .cf)
 
