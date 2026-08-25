@@ -1,6 +1,6 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 # Plugin root: каталог с .cursor-plugin/plugin.json (skills/rules/scaffold).
-# ProjectRoot — другой путь: workspace конфигурации.
+# ProjectRoot - другой путь: workspace конфигурации.
 
 function Get-1cPluginRoot {
   param(

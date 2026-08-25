@@ -1,4 +1,4 @@
-﻿# cf-info v1.2 — Compact summary of 1C configuration root
+﻿# cf-info v1.2 - Compact summary of 1C configuration root
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory=$true)][Alias('Path')][string]$ConfigPath,
@@ -354,7 +354,7 @@ if ($Section -eq "home-page") {
 		foreach ($side in @(@("LeftColumn","left"), @("RightColumn","right"))) {
 			$items = $script:homePage[$side[1]]
 			$lbl = $side[0]
-			if ($items.Count -eq 0) { Out "${lbl}: —"; Out ""; continue }
+			if ($items.Count -eq 0) { Out "${lbl}: -"; Out ""; continue }
 			Out "${lbl} ($($items.Count)):"
 			foreach ($it in $items) {
 				Out (Format-HomePageItem $it $true)
@@ -448,7 +448,7 @@ if ($Mode -eq "full" -and -not $Section) {
 			if ($slots.Count -gt 0) {
 				Out "  $($s.PadRight(7)) $(Format-LayoutSlots $slots)"
 			} else {
-				Out "  $($s.PadRight(7)) —"
+				Out "  $($s.PadRight(7)) -"
 			}
 		}
 		if ($script:panelLayout.declared.Count -gt 0) {

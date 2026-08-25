@@ -1,0 +1,16 @@
+name: ps1-encoding
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: UTF-8 BOM, no typographics, Parser (PS 5.1)
+        shell: powershell
+        run: powershell -NoProfile -File .github/scripts/Test-Ps1Encoding.ps1

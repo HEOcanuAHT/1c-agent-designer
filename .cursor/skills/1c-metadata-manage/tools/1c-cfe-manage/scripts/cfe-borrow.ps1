@@ -1,4 +1,4 @@
-﻿# cfe-borrow v1.3 — Borrow objects from configuration into extension (CFE)
+﻿# cfe-borrow v1.3 - Borrow objects from configuration into extension (CFE)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)][string]$ExtensionPath,
@@ -570,7 +570,7 @@ function Borrow-Form {
 		$childItemsXml = [regex]::Replace($childItemsXml, '<CommandName>[^<]*</CommandName>', '<CommandName>0</CommandName>')
 		# Strip DataPath, TitleDataPath, RowPictureDataPath
 		if ($BorrowMainAttr) {
-			# Keep only Объект.* DataPaths — strip form-attribute DataPaths (not borrowed)
+			# Keep only Объект.* DataPaths - strip form-attribute DataPaths (not borrowed)
 			$childItemsXml = [regex]::Replace($childItemsXml, '\s*<DataPath>(?!Объект\.)[^<]*</DataPath>', '')
 			$childItemsXml = [regex]::Replace($childItemsXml, '\s*<TitleDataPath>(?!Объект\.)[^<]*</TitleDataPath>', '')
 			$childItemsXml = [regex]::Replace($childItemsXml, '\s*<RowPictureDataPath>[^<]*</RowPictureDataPath>', '')
@@ -581,7 +581,7 @@ function Borrow-Form {
 		}
 		# Strip ExcludedCommand in nested AutoCommandBars (references to standard commands invalid in extension)
 		$childItemsXml = [regex]::Replace($childItemsXml, '\s*<ExcludedCommand>[^<]*</ExcludedCommand>', '')
-		# Strip TypeLink blocks with human-readable DataPath (Items.XXX — can't convert to UUID)
+		# Strip TypeLink blocks with human-readable DataPath (Items.XXX - can't convert to UUID)
 		$childItemsXml = [regex]::Replace($childItemsXml, '(?s)\s*<TypeLink>\s*<xr:DataPath>Items\.[^<]*</xr:DataPath>.*?</TypeLink>', '')
 		# Strip element-level Events (base form handlers not in extension)
 		$childItemsXml = [regex]::Replace($childItemsXml, '(?s)\s*<Events>.*?</Events>', '')
@@ -615,7 +615,7 @@ function Borrow-Form {
 					$script:borrowedFiles += $targetFile
 					Info "  Auto-borrowed: CommonPicture.${picName}"
 				} else {
-					Warn "  CommonPicture.${picName} not found in source config — will strip from form"
+					Warn "  CommonPicture.${picName} not found in source config - will strip from form"
 				}
 			}
 		}
@@ -878,7 +878,7 @@ function Register-FormInObject {
 	$objFile = Join-Path (Join-Path $extDir $dirName) "${objName}.xml"
 
 	if (-not (Test-Path $objFile)) {
-		Warn "Parent object file not found: $objFile — form not registered in ChildObjects"
+		Warn "Parent object file not found: $objFile - form not registered in ChildObjects"
 		return
 	}
 
@@ -895,7 +895,7 @@ function Register-FormInObject {
 		if ($c.NodeType -eq 'Element') { $objEl = $c; break }
 	}
 	if (-not $objEl) {
-		Warn "No type element in $objFile — form not registered"
+		Warn "No type element in $objFile - form not registered"
 		return
 	}
 
@@ -1684,7 +1684,7 @@ foreach ($item in $items) {
 
 		# Auto-borrow parent object if not yet borrowed
 		if (-not (Test-ObjectBorrowed $typeName $objName)) {
-			Info "  Parent object ${typeName}.${objName} not yet borrowed — borrowing first..."
+			Info "  Parent object ${typeName}.${objName} not yet borrowed - borrowing first..."
 
 			$src = Read-SourceObject $typeName $objName
 			Info "  Source UUID: $($src.Uuid)"

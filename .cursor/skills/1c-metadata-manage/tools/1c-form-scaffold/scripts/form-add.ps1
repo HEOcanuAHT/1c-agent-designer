@@ -1,4 +1,4 @@
-﻿# form-add v1.5 — Add managed form to 1C config object
+﻿# form-add v1.5 - Add managed form to 1C config object
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -172,7 +172,7 @@ $encBom = New-Object System.Text.UTF8Encoding($true)
 
 $formUuid = [guid]::NewGuid().ToString()
 
-# ExtendedPresentation — only for DataProcessor, Report, ExternalDataProcessor, ExternalReport forms
+# ExtendedPresentation - only for DataProcessor, Report, ExternalDataProcessor, ExternalReport forms
 $extPresentationLine = ""
 if ($objectType -in $processorLikeTypes) {
 	$extPresentationLine = "`n`t`t`t<ExtendedPresentation/>"
@@ -259,7 +259,7 @@ if ($Purpose -eq "List" -or $Purpose -eq "Choice") {
 </Form>
 "@
 } else {
-	# Object — форма объекта
+	# Object - форма объекта
 	$mainAttrName = "Объект"
 
 	# Маппинг типа объекта на тип реквизита
@@ -307,7 +307,7 @@ if ($Purpose -eq "List" -or $Purpose -eq "Choice") {
 }
 
 if (Test-Path $formXmlPath) {
-	Write-Host "[SKIP] Form.xml already exists: $formXmlPath — not overwriting"
+	Write-Host "[SKIP] Form.xml already exists: $formXmlPath - not overwriting"
 } else {
 	[System.IO.File]::WriteAllText($formXmlPath, $formXml, $encBom)
 }
@@ -339,7 +339,7 @@ $moduleBsl = @"
 "@
 
 if (Test-Path $modulePath) {
-	Write-Host "[SKIP] Module.bsl already exists: $modulePath — not overwriting"
+	Write-Host "[SKIP] Module.bsl already exists: $modulePath - not overwriting"
 } else {
 	[System.IO.File]::WriteAllText($modulePath, $moduleBsl, $encBom)
 }
@@ -374,7 +374,7 @@ if ($insertBefore) {
 	$whitespace = $xmlDoc.CreateWhitespace("`n`t`t`t")
 	$childObjects.InsertBefore($formElem, $insertBefore) | Out-Null
 	$childObjects.InsertBefore($whitespace, $formElem) | Out-Null
-	# Переставляем: whitespace перед formElem — неправильный порядок
+	# Переставляем: whitespace перед formElem - неправильный порядок
 	# Правильно: formElem, затем whitespace перед insertBefore
 	# InsertBefore возвращает вставленный узел, порядок: ... formElem whitespace insertBefore ...
 	# На самом деле нам нужно: ... \n\t\t\tformElem \n\t\t\tinsertBefore

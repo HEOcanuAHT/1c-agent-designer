@@ -1,4 +1,4 @@
-﻿# mxl-compile v1.1 — Compile 1C spreadsheet from JSON
+﻿# mxl-compile v1.1 - Compile 1C spreadsheet from JSON
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -410,7 +410,7 @@ foreach ($col in ($colFormatMap.Keys | Sort-Object)) {
 
 X "`t</columns>"
 
-# 7d. Rows — main generation loop
+# 7d. Rows - main generation loop
 $globalRow = 0
 $merges = @()
 $namedItems = @()
@@ -535,7 +535,7 @@ foreach ($area in $def.areas) {
 			$rowCells = $rowCells | Sort-Object { $_.Col }
 
 		} elseif ($row.rowStyle) {
-			# Row with only rowStyle, no explicit cells — fill non-rowspan columns
+			# Row with only rowStyle, no explicit cells - fill non-rowspan columns
 			$rowHasContent = $true
 			$gapFmtIdx = Register-CellFormat -styleName $row.rowStyle -fillType ""
 			for ($c = 1; $c -le $totalColumns; $c++) {

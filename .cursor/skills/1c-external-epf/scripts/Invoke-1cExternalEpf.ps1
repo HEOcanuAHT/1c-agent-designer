@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   External data processors: scaffold / dump (.epf→XML) / pack (XML→.epf) / extract-from-config.
 #>

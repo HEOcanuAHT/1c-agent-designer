@@ -3,9 +3,9 @@
   Sync template tooling into a 1C config project without touching src/ or IB secrets.
 
 .PARAMETER Action
-  check  — compare local vs template version (no writes)
-  sync   — copy allowlisted paths from template
-  status — show local template version / url
+  check  - compare local vs template version (no writes)
+  sync   - copy allowlisted paths from template
+  status - show local template version / url
 
 .PARAMETER ProjectRoot
   Target config repo (default: current directory).
@@ -129,7 +129,7 @@ function Write-UpgradeNotes {
   } else {
     Write-Host "UPGRADE details: will appear after sync (docs/TEMPLATE_UPGRADE.md)"
   }
-  Write-Host "UPGRADE project.json is manual — sync does not rewrite infobase/auth"
+  Write-Host "UPGRADE project.json is manual - sync does not rewrite infobase/auth"
 }
 
 function Test-ProjectSkip([string]$Rel, [string[]]$Skip) {
@@ -179,7 +179,7 @@ function Copy-TemplatePath {
     return
   }
 
-  # .cursor/skills — dirs; .cursor/rules — files. Keep project-only extras.
+  # .cursor/skills - dirs; .cursor/rules - files. Keep project-only extras.
   $leaf = Split-Path $relNorm -Leaf
   $parent = Split-Path $relNorm -Parent
   if ($leaf -eq "skills" -and $parent -eq ".cursor") {

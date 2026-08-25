@@ -1,14 +1,14 @@
-<#
+﻿<#
 .SYNOPSIS
   Dump / incremental dump / partial load via ibcmd (infobase config export|import).
 
 .NOTES
-  - Always `ibcmd infobase config …` (not bare `config`) — otherwise auth hang on stdin.
+  - Always `ibcmd infobase config ...` (not bare `config`) - otherwise auth hang on stdin.
   - No /IBName / cluster: --db-path or --dbms/--db-server/--db-name.
   - MSSQL Windows auth: omit --db-user/--db-pwd.
   - import files → MAIN config only; NEVER config apply (no update-db-cfg / КБД).
   - export/--sync also reads MAIN (verified: sees edits without applying DB cfg).
-  - File IB + open Designer: exclusive lock error — tell user to close Configurator on that IB.
+  - File IB + open Designer: exclusive lock error - tell user to close Configurator on that IB.
 #>
 [CmdletBinding()]
 param(
@@ -88,7 +88,7 @@ function Get-IbAuthArgs($Cfg, [string]$ProjectRoot = "") {
 }
 
 function Test-DbmsWindowsAuth($Dbms) {
-  # Default: Windows/Integrated to SQL. Do not use [bool]$string — [bool]"false" is $true in PS.
+  # Default: Windows/Integrated to SQL. Do not use [bool]$string - [bool]"false" is $true in PS.
   if ($null -eq $Dbms -or $null -eq $Dbms.windowsAuth) { return $true }
   $v = $Dbms.windowsAuth
   if ($v -is [bool]) { return $v }
@@ -174,7 +174,7 @@ Fill infobase.dbms { kind, server, name } or use designer-agent (tools.preferred
     if ($dbms.user) { $dbUser = [string]$dbms.user; $sqlSource = "json" }
     if ($dbms.password) { $dbPwd = [string]$dbms.password; if ($sqlSource -eq "env") { $sqlSource = "json" } }
     if (-not $dbUser) {
-      throw "infobase.dbms.windowsAuth=false but SQL user missing (dbms.credentialTarget / dbms.user / 1C_DB_USER). Do NOT use auth.credentialTarget — that is 1C IB only."
+      throw "infobase.dbms.windowsAuth=false but SQL user missing (dbms.credentialTarget / dbms.user / 1C_DB_USER). Do NOT use auth.credentialTarget - that is 1C IB only."
     }
     $args += "--db-user=$dbUser"
     if ($null -ne $dbPwd -and $dbPwd -ne "") { $args += "--db-pwd=$dbPwd" }

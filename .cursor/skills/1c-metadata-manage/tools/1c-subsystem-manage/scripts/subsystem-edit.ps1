@@ -1,4 +1,4 @@
-﻿# subsystem-edit v1.2 — Edit existing 1C subsystem XML
+﻿# subsystem-edit v1.2 - Edit existing 1C subsystem XML
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)][Alias('Path')][string]$SubsystemPath,
@@ -108,7 +108,7 @@ if (Test-Path $SubsystemPath -PathType Container) {
 	elseif (Test-Path $sibling) { $SubsystemPath = $sibling }
 	else { Write-Error "No $dirName.xml found in directory or as sibling"; exit 1 }
 }
-# File not found — check Dir/Name/Name.xml → Dir/Name.xml
+# File not found - check Dir/Name/Name.xml → Dir/Name.xml
 if (-not (Test-Path $SubsystemPath)) {
 	$fn = [System.IO.Path]::GetFileNameWithoutExtension($SubsystemPath)
 	$pd = Split-Path $SubsystemPath

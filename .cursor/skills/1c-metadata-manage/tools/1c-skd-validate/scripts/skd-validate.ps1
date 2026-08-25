@@ -1,4 +1,4 @@
-﻿# skd-validate v1.2 — Validate 1C DCS structure
+﻿# skd-validate v1.2 - Validate 1C DCS structure
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -438,7 +438,7 @@ if ($script:stopped) { & $finalize; exit 1 }
 if ($calcFieldNodes.Count -gt 0) {
 	$cfOk = $true
 	$cfSeen = @{}
-	# Collect totalField dataPaths — an empty calculatedField is legitimate if a
+	# Collect totalField dataPaths - an empty calculatedField is legitimate if a
 	# totalField with the same dataPath provides the expression (real-world
 	# pattern in vendor ERP/БП reports for fields visible only in totals).
 	$tfPaths = @{}
@@ -560,7 +560,7 @@ if ($templateNodes.Count -gt 0) {
 		}
 		$tName = $nameNode.InnerText
 		if ($tplSeen.ContainsKey($tName)) {
-			# Vendor configs (ERP/БП) ship templates with repeating names — the
+			# Vendor configs (ERP/БП) ship templates with repeating names - the
 			# platform identifies them by position/context, not by <name>. Demote
 			# to warning so the check still surfaces the collision without failing.
 			Report-Warn "Duplicate template name: $tName (allowed by platform but ambiguous)"
@@ -696,7 +696,7 @@ function Check-Settings {
 			if ($field -and $field.InnerText -and $field.InnerText -ne "SystemFields.Number") {
 				$basePath = ($field.InnerText -split '\.')[0]
 				if (-not $knownFields.ContainsKey($field.InnerText) -and -not $knownFields.ContainsKey($basePath)) {
-					# Soft check — autoFillFields may add fields not listed explicitly
+					# Soft check - autoFillFields may add fields not listed explicitly
 				}
 			}
 		}
@@ -820,10 +820,10 @@ foreach ($vt in $valueTypeNodes) {
 							Report-Error "valueType: ref type '$t' must look like '<prefix>:<Kind>.<Name>' (e.g. d5p1:CatalogRef.X)"
 							$vtOk = $false
 						} else {
-							$types += ''   # ref — no qualifier needed
+							$types += ''   # ref - no qualifier needed
 						}
 					} elseif ($prefixNs -eq 'http://v8.1c.ru/8.1/data/enterprise') {
-						# System types: AccumulationRecordType etc. — no qualifiers
+						# System types: AccumulationRecordType etc. - no qualifiers
 						if (-not ($localT -match '^[A-Za-z][A-Za-z0-9]*$')) {
 							Report-Error "valueType: system type '$t' has unexpected local-name shape"
 							$vtOk = $false
@@ -836,7 +836,7 @@ foreach ($vt in $valueTypeNodes) {
 					}
 				}
 			} else {
-				Report-Error "valueType: type '$t' has no namespace prefix (expected xs:/v8:/d5p1: — e.g. xs:decimal not decimal)"
+				Report-Error "valueType: type '$t' has no namespace prefix (expected xs:/v8:/d5p1: - e.g. xs:decimal not decimal)"
 				$vtOk = $false
 			}
 		} elseif ($localName -match 'Qualifiers$') {
@@ -856,7 +856,7 @@ foreach ($vt in $valueTypeNodes) {
 					$vtOk = $false
 				}
 				if ($sign -and $sign.InnerText -and $sign.InnerText -notin $validSign) {
-					Report-Error "v8:NumberQualifiers: <v8:AllowedSign>$($sign.InnerText)</v8:AllowedSign> — must be one of: $($validSign -join ', ')"
+					Report-Error "v8:NumberQualifiers: <v8:AllowedSign>$($sign.InnerText)</v8:AllowedSign> - must be one of: $($validSign -join ', ')"
 					$vtOk = $false
 				}
 			} elseif ($qName -eq 'v8:StringQualifiers') {
@@ -867,13 +867,13 @@ foreach ($vt in $valueTypeNodes) {
 					$vtOk = $false
 				}
 				if ($al -and $al.InnerText -and $al.InnerText -notin $validLength) {
-					Report-Error "v8:StringQualifiers: <v8:AllowedLength>$($al.InnerText)</v8:AllowedLength> — must be one of: $($validLength -join ', ')"
+					Report-Error "v8:StringQualifiers: <v8:AllowedLength>$($al.InnerText)</v8:AllowedLength> - must be one of: $($validLength -join ', ')"
 					$vtOk = $false
 				}
 			} elseif ($qName -eq 'v8:DateQualifiers') {
 				$df = $child.SelectSingleNode("v8:DateFractions", $ns)
 				if ($df -and $df.InnerText -and $df.InnerText -notin $validFractions) {
-					Report-Error "v8:DateQualifiers: <v8:DateFractions>$($df.InnerText)</v8:DateFractions> — must be one of: $($validFractions -join ', ')"
+					Report-Error "v8:DateQualifiers: <v8:DateFractions>$($df.InnerText)</v8:DateFractions> - must be one of: $($validFractions -join ', ')"
 					$vtOk = $false
 				}
 			}
@@ -912,10 +912,10 @@ foreach ($vn in $valueNodes) {
 	$text = $vn.InnerText
 	if ($xsiType -eq 'dcscor:DesignTimeValue') {
 		if (-not $text -or $text.Trim() -eq '' -or $text.Trim() -eq '_') {
-			Report-Error "<value xsi:type=`"dcscor:DesignTimeValue`">$text</value> — DesignTimeValue must be a reference path (e.g. Перечисление.X.Y), not '$text'"
+			Report-Error "<value xsi:type=`"dcscor:DesignTimeValue`">$text</value> - DesignTimeValue must be a reference path (e.g. Перечисление.X.Y), not '$text'"
 			$vOk = $false
 		} elseif (-not ($text -match '^[A-Za-zА-Яа-яЁё]+\.[A-Za-zА-Яа-яЁё0-9_]+')) {
-			Report-Warn "<value xsi:type=`"dcscor:DesignTimeValue`">$text</value> — doesn't look like a typical ref path"
+			Report-Warn "<value xsi:type=`"dcscor:DesignTimeValue`">$text</value> - doesn't look like a typical ref path"
 		}
 	}
 }

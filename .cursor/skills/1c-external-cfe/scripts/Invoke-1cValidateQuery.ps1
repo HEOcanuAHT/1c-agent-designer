@@ -1,9 +1,9 @@
-<#
+﻿<#
 .SYNOPSIS
   Validate 1C query text via COM on service IB (.1c/ib-ext).
 
 .DESCRIPTION
-  V83.COMConnector — QuerySchema + Query.FindParameters.
+  V83.COMConnector - QuerySchema + Query.FindParameters.
   No ENTERPRISE / HTTP / extension.
 
   Agent-friendly path (fewer Cursor Allow prompts):
@@ -11,10 +11,10 @@
     2) validate with -ReuseOnly (no ibcmd wipe/import/apply) + optional -BatchDir
 
 .PARAMETER Action
-  validate — check query (default)
-  ensure   — prepare service IB (import + apply)
-  stop     — no-op (back-compat)
-  health   — COM connect smoke test
+  validate - check query (default)
+  ensure   - prepare service IB (import + apply)
+  stop     - no-op (back-compat)
+  health   - COM connect smoke test
 
 .PARAMETER ReuseOnly
   Do not call Ensure/ibcmd. Fail with NEED_ENSURE=true (exit 2) if .1c/ib-ext is missing/stale.

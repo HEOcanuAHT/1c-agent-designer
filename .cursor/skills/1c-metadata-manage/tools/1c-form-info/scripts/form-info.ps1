@@ -1,4 +1,4 @@
-﻿# form-info v1.3 — Analyze 1C managed form structure
+﻿# form-info v1.3 - Analyze 1C managed form structure
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory=$true)]
@@ -307,7 +307,7 @@ function Build-Tree($childItemsNode, [string]$prefix, [bool]$isLast) {
 		$line = "$prefix$connector $tag $name$binding$flags$titleStr$events"
 		$treeLines.Add($line)
 
-		# Recurse into containers (but not Page — show summary unless expanded)
+		# Recurse into containers (but not Page - show summary unless expanded)
 		$localName = $child.LocalName
 		if ($localName -eq "Page") {
 			$ci = $child.SelectSingleNode("d:ChildItems", $ns)
@@ -372,7 +372,7 @@ if ($formsIdx -ge 0 -and ($formsIdx + 1) -lt $parts.Count) {
 
 $lines = @()
 
-# Header — include Title if present
+# Header - include Title if present
 $titleNode = $root.SelectSingleNode("d:Title", $ns)
 $formTitle = $null
 if ($titleNode) {
@@ -381,12 +381,12 @@ if ($titleNode) {
 }
 $extMarker = if ($isExtension) { " [EXTENSION]" } else { "" }
 $header = "=== Form: $formName$extMarker"
-if ($formTitle) { $header += " — `"$formTitle`"" }
+if ($formTitle) { $header += " - `"$formTitle`"" }
 if ($objectContext) { $header += " ($objectContext)" }
 $header += " ==="
 $lines += $header
 
-# --- Form properties (Title excluded — shown in header) ---
+# --- Form properties (Title excluded - shown in header) ---
 
 $propNames = @(
 	"Width", "Height", "Group",
@@ -469,7 +469,7 @@ function Format-MainAcb($acbNode) {
 		}
 	}
 	if ($buttons.Count -eq 0 -and $autofill -and -not $halignNode) {
-		# Default empty panel — terse one-liner
+		# Default empty panel - terse one-liner
 		return @("AutoCommandBar [autofill]")
 	}
 	$result += $header

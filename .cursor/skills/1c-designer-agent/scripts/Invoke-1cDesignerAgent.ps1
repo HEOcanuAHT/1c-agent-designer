@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   1C dump/load via Designer batch (default) or AgentMode+plink (transport=agent).
 #>
@@ -551,7 +551,7 @@ function Invoke-AgentCommands {
     $errText = $_ | Out-String
     $errText | Set-Content -LiteralPath $errFile -Encoding UTF8
     Write-Host "AGENT_ERROR=$($_.Exception.Message)"
-    # Storage capture lock — ASCII-safe (WinPS5 may misread Cyrillic literals in .ps1)
+    # Storage capture lock - ASCII-safe (WinPS5 may misread Cyrillic literals in .ps1)
     $metaRe = '(Catalog|Document|DataProcessor|Report|CommonModule|InformationRegister|Enum|ChartOfCharacteristicTypes)\.[\p{L}\w]+'
     $lockPhrase = -join ([int[]](0x043D,0x0435,0x0020,0x0437,0x0430,0x0445,0x0432,0x0430,0x0447,0x0435,0x043D) | ForEach-Object { [char]$_ })
     $isStorageLock = $errText.Contains($lockPhrase) -or ($errText -match 'ConfigFilesError' -and $errText -match $metaRe)
@@ -560,9 +560,9 @@ function Invoke-AgentCommands {
       $m = [regex]::Match($errText, $metaRe)
       if ($m.Success) { $obj = $m.Value.TrimEnd('!','.',',') }
       if ($obj) {
-        Write-Host "STORAGE_LOCK: object $obj is not captured in configuration storage — capture it and retry load."
+        Write-Host "STORAGE_LOCK: object $obj is not captured in configuration storage - capture it and retry load."
       } else {
-        Write-Host "STORAGE_LOCK: object is not captured in configuration storage — capture required objects and retry load."
+        Write-Host "STORAGE_LOCK: object is not captured in configuration storage - capture required objects and retry load."
       }
     }
     Write-Host "Details: $errFile"
@@ -663,7 +663,7 @@ function Write-LoadListFile {
 }
 
 # Agent cwd = AgentBaseDir\<userDir> (часто 0\ по agentbasedir.json).
-# Пути к репо — на уровень выше: ../src, ../.1c/...
+# Пути к репо - на уровень выше: ../src, ../.1c/...
 function Get-AgentRepoRel {
   param([string]$ProjectRel)
   $p = ($ProjectRel -replace "\\", "/")

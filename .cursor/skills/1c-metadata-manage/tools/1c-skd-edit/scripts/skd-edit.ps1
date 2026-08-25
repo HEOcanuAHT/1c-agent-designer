@@ -1,4 +1,4 @@
-﻿# skd-edit v1.24 — Atomic 1C DCS editor
+﻿# skd-edit v1.24 - Atomic 1C DCS editor
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -28,7 +28,7 @@ param(
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-# Dirty flag — set to $true by every successful mutation. If still $false at save time,
+# Dirty flag - set to $true by every successful mutation. If still $false at save time,
 # the file is left untouched (NO-OP operations like [WARN] not found don't rewrite).
 $script:Dirty = $false
 
@@ -193,13 +193,13 @@ function Read-FieldProperties($fieldEl) {
 			"dataPath" { $props.dataPath = $ch.InnerText.Trim() }
 			"field" { $props.field = $ch.InnerText.Trim() }
 			"title" {
-				# Preserve full multi-lang title OuterXml — used to keep en/uk/etc.
+				# Preserve full multi-lang title OuterXml - used to keep en/uk/etc.
 				# siblings when shorthand overrides only the ru content. Strip xmlns
 				# redeclarations that OuterXml adds for sub-elements.
 				$raw = $ch.OuterXml
 				$raw = [regex]::Replace($raw, ' xmlns(?::\w+)?="[^"]*"', '')
 				$props._rawTitle = $raw
-				# Also extract ru content as plain string (backward compat — used by
+				# Also extract ru content as plain string (backward compat - used by
 				# external consumers reading $existing.title).
 				foreach ($item in $ch.ChildNodes) {
 					if ($item.NodeType -eq 'Element' -and $item.LocalName -eq 'item') {
@@ -284,7 +284,7 @@ function Parse-TotalShorthand {
 		# Short: Func → Func(DataPath)
 		return @{ dataPath = $dataPath; expression = "$funcPart($dataPath)" }
 	} else {
-		# Identity or custom expression — use as-is
+		# Identity or custom expression - use as-is
 		return @{ dataPath = $dataPath; expression = $funcPart }
 	}
 }
@@ -295,7 +295,7 @@ function Parse-CalcShorthand {
 	# Pattern: "Name [Title]: type = Expression #noField #noFilter ...".
 	# - `[Title]` is extracted only from the LHS of '=' so that `[...]` inside
 	#   an expression (e.g. index access) isn't interpreted as a title.
-	# - `#restrict` flags use a known-names pattern and are extracted globally —
+	# - `#restrict` flags use a known-names pattern and are extracted globally -
 	#   the docs put them after `=`, and the closed flag set avoids matching
 	#   `#word` that happens to appear inside a string literal.
 	$restrictPattern = '#(noField|noFilter|noCondition|noGroup|noOrder)\b'
@@ -339,7 +339,7 @@ function Parse-ParamShorthand {
 
 	$result = @{ name = ""; type = ""; value = $null; autoDates = $false; title = $null; hidden = $false; always = $false; availableValues = @(); valueListAllowed = $false }
 
-	# Extract availableValue=... (must be before main parse — captures to end of string)
+	# Extract availableValue=... (must be before main parse - captures to end of string)
 	if ($s -match '\s*availableValue=(.+)$') {
 		$result.availableValues = Parse-AvailableValueList $Matches[1].Trim()
 		$s = ($s -replace '\s*availableValue=.+$', '').Trim()
@@ -371,7 +371,7 @@ function Parse-ParamShorthand {
 		$s = ($s -replace '\s*\[[^\]]*\]\s*', ' ').Trim()
 	}
 
-	# Split "Name: Type = Value" — RHS may be empty (`= ` / `=`) → treated as empty-value sentinel
+	# Split "Name: Type = Value" - RHS may be empty (`= ` / `=`) → treated as empty-value sentinel
 	if ($s -match '^([^:]+):\s*(\S+)(\s*=\s*(.*))?$') {
 		$result.name = $Matches[1].Trim()
 		$result.type = Resolve-TypeStr ($Matches[2].Trim())
@@ -503,7 +503,7 @@ function Parse-DataParamShorthand {
 		$valStr = $Matches[2].Trim()
 
 		$periodVariants = @("Custom","Today","ThisWeek","ThisTenDays","ThisMonth","ThisQuarter","ThisHalfYear","ThisYear","FromBeginningOfThisWeek","FromBeginningOfThisTenDays","FromBeginningOfThisMonth","FromBeginningOfThisQuarter","FromBeginningOfThisHalfYear","FromBeginningOfThisYear","LastWeek","LastTenDays","LastMonth","LastQuarter","LastHalfYear","LastYear","NextDay","NextWeek","NextTenDays","NextMonth","NextQuarter","NextHalfYear","NextYear","TillEndOfThisWeek","TillEndOfThisTenDays","TillEndOfThisMonth","TillEndOfThisQuarter","TillEndOfThisHalfYear","TillEndOfThisYear")
-		# Empty / sentinel — record as "" so caller emits xsi:nil
+		# Empty / sentinel - record as "" so caller emits xsi:nil
 		if ($valStr -eq "" -or $valStr -eq "_" -or $valStr.ToLowerInvariant() -eq "null") {
 			$result.value = ""
 		} elseif ($periodVariants -contains $valStr) {
@@ -560,7 +560,7 @@ function Parse-DataSetShorthand {
 	param([string]$s)
 
 	$s = $s.Trim()
-	# "Name: QUERY" — split on first ": " only if prefix is a single word (no spaces)
+	# "Name: QUERY" - split on first ": " only if prefix is a single word (no spaces)
 	if ($s -match '^(\S+):\s(.+)$') {
 		return @{ name = $Matches[1]; query = $Matches[2] }
 	}
@@ -585,7 +585,7 @@ function Parse-ConditionalAppearanceShorthand {
 
 	$result = @{ param = ""; value = ""; filter = $null; fields = @() }
 
-	# Extract " when ..." — condition part
+	# Extract " when ..." - condition part
 	$whenIdx = $s.IndexOf(' when ')
 	$forIdx = $s.IndexOf(' for ')
 
@@ -755,7 +755,7 @@ function Build-ValueTypeXml {
 
 	if (-not $typeStr) { return "" }
 
-	# Composite: array of types — concatenate per-type fragments
+	# Composite: array of types - concatenate per-type fragments
 	if ($typeStr -is [array] -or $typeStr -is [System.Collections.IList]) {
 		$parts = @()
 		foreach ($t in $typeStr) {
@@ -773,7 +773,7 @@ function Build-ValueTypeXml {
 		return $lines -join "`n"
 	}
 
-	# string, string(N), string(N,fix) — fix → AllowedLength=Fixed
+	# string, string(N), string(N,fix) - fix → AllowedLength=Fixed
 	if ($typeStr -match '^string(\((\d+)(,(fix|fixed))?\))?$') {
 		$len = if ($Matches[2]) { $Matches[2] } else { "0" }
 		$al  = if ($Matches[4]) { "Fixed" } else { "Variable" }
@@ -785,7 +785,7 @@ function Build-ValueTypeXml {
 		return $lines -join "`n"
 	}
 
-	# decimal forms — bare decimal = money 10,2; decimal(N) = integer N,0
+	# decimal forms - bare decimal = money 10,2; decimal(N) = integer N,0
 	if ($typeStr -match '^decimal(\((\d+)(,(\d+))?(,nonneg)?\))?$') {
 		if (-not $Matches[1]) {
 			$digits = "10"; $fraction = "2"; $sign = "Any"
@@ -803,7 +803,7 @@ function Build-ValueTypeXml {
 		return $lines -join "`n"
 	}
 
-	# date / dateTime / time — all xs:dateTime, differ only in DateFractions
+	# date / dateTime / time - all xs:dateTime, differ only in DateFractions
 	if ($typeStr -match '^(date|dateTime|time)$') {
 		$fractions = switch ($typeStr) {
 			"date"     { "Date" }
@@ -836,7 +836,7 @@ function Build-ValueTypeXml {
 	return $lines -join "`n"
 }
 
-# Sentinel-normalized empty check — null / "" / "_" / "null" (case-insensitive).
+# Sentinel-normalized empty check - null / "" / "_" / "null" (case-insensitive).
 function Test-EmptyValue {
 	param($v)
 	if ($null -eq $v) { return $true }
@@ -876,7 +876,7 @@ function Build-EmptyValueXml {
 	} elseif ($t -eq "boolean") {
 		$lines += "$indent<${pf}${tn} xsi:type=`"xs:boolean`">false</${pf}${tn}>"
 	} else {
-		# Ref types or unknown — safe nil
+		# Ref types or unknown - safe nil
 		$lines += "$indent<${pf}${tn} xsi:nil=`"true`"/>"
 	}
 	return $lines -join "`n"
@@ -905,13 +905,13 @@ function Patch-MLTextRu {
 	if ([regex]::IsMatch($rawOuterXml, $ruItemPat)) {
 		return [regex]::Replace($rawOuterXml, $ruItemPat, { param($m) $m.Groups[1].Value + $escaped + $m.Groups[2].Value })
 	}
-	# No ru item — prepend one inside the title element, before first <v8:item>.
+	# No ru item - prepend one inside the title element, before first <v8:item>.
 	$prep = "$indent`t<v8:item>`n$indent`t`t<v8:lang>ru</v8:lang>`n$indent`t`t<v8:content>$escaped</v8:content>`n$indent`t</v8:item>"
 	if ($rawOuterXml -match '<v8:item>') {
 		$re = New-Object System.Text.RegularExpressions.Regex('(\s*)<v8:item>')
 		return $re.Replace($rawOuterXml, "`n$prep`$1<v8:item>", 1)
 	}
-	# Empty title — inject after opening tag.
+	# Empty title - inject after opening tag.
 	$re2 = New-Object System.Text.RegularExpressions.Regex('(<(?:\w+:)?title[^>]*>)')
 	return $re2.Replace($rawOuterXml, "`$1`n$prep`n$indent", 1)
 }
@@ -987,8 +987,8 @@ function Build-FieldFragment {
 	if ($roleXml) { $lines += $roleXml }
 
 	if ($parsed.rawValueType) {
-		# Preserve original <valueType> verbatim — keeps qualifiers (StringQualifiers,
-		# NumberQualifiers, DateQualifiers, …) that aren't expressible via shorthand.
+		# Preserve original <valueType> verbatim - keeps qualifiers (StringQualifiers,
+		# NumberQualifiers, DateQualifiers, ...) that aren't expressible via shorthand.
 		$lines += "$i`t" + $parsed.rawValueType
 	} elseif ($parsed.type) {
 		$lines += "$i`t<valueType>"
@@ -1075,7 +1075,7 @@ function Build-ParamValueXml {
 		$xsi = "dcscor:DesignTimeValue"
 	}
 	else {
-		# Type unknown or empty — guess from value
+		# Type unknown or empty - guess from value
 		if ($valStr -match '^\d{4}-\d{2}-\d{2}T') { $xsi = "xs:dateTime" }
 		elseif ($valStr -eq "true" -or $valStr -eq "false") { $xsi = "xs:boolean" }
 		elseif ($valStr -match '^(Перечисление|Справочник|ПланСчетов|Документ|ПланВидовХарактеристик|ПланВидовРасчета|БизнесПроцесс|Задача|РегистрСведений|ПланОбмена)\.' -or
@@ -1595,7 +1595,7 @@ function Get-ChildIndent($container) {
 }
 
 function Insert-BeforeElement($container, $newNode, $refNode, $childIndent) {
-	# LF line endings — 1С DCS files use LF consistently; CRLF causes idempotency
+	# LF line endings - 1С DCS files use LF consistently; CRLF causes idempotency
 	# leaks when modify-* removes one whitespace and inserts a different-style one.
 	$ws = $xmlDoc.CreateWhitespace("`n$childIndent")
 	if ($refNode) {
@@ -1763,12 +1763,12 @@ function Escape-Whitespace([string]$s) {
 }
 
 function Collapse-Whitespace([string]$s) {
-	return ([regex]::Replace($s, "[\s ]+", " ")).Trim()
+	return ([regex]::Replace($s, "[\s ]+", " ")).Trim()
 }
 
 function Find-LongestPrefixMatch([string]$haystack, [string]$needle) {
 	# Binary search: largest L such that needle.Substring(0, L) is a substring of haystack.
-	# Monotonic — if length L matches at position P, then length L-1 (prefix) also matches at P.
+	# Monotonic - if length L matches at position P, then length L-1 (prefix) also matches at P.
 	if ($needle.Length -eq 0 -or $haystack.Length -eq 0) {
 		return @{ Length = 0; Offset = -1 }
 	}
@@ -1790,7 +1790,7 @@ function Format-PatchQueryNotFound([string]$oldStr, [string]$queryText, $current
 	$schNs = "http://v8.1c.ru/8.1/data-composition-system/schema"
 	$lines = @("Substring not found in query of dataset '$dsName'.")
 
-	# Step 1 — cross-dataset probe
+	# Step 1 - cross-dataset probe
 	foreach ($ds in (Get-AllDataSets)) {
 		if ($ds -eq $currentDsNode) { continue }
 		$q = Find-FirstElement $ds @("query") $schNs
@@ -1798,17 +1798,17 @@ function Format-PatchQueryNotFound([string]$oldStr, [string]$queryText, $current
 		$qt = Normalize-LineEndings $q.InnerText
 		if ($qt.Contains($oldStr)) {
 			$otherName = Get-DataSetName $ds
-			$lines += "Found in dataset '$otherName' instead — wrong -DataSet?"
+			$lines += "Found in dataset '$otherName' instead - wrong -DataSet?"
 			return ($lines -join "`n")
 		}
 	}
 
-	# Step 2 — tolerant probe (whitespace + NBSP collapsed)
+	# Step 2 - tolerant probe (whitespace + NBSP collapsed)
 	$normNeedle = Collapse-Whitespace $oldStr
 	$normHay = Collapse-Whitespace $queryText
 	$tolerant = ($normNeedle.Length -gt 0 -and $normHay.Contains($normNeedle))
 
-	# Step 3 — prefix divergence (used by both Step 2 reporting and standalone Step 3)
+	# Step 3 - prefix divergence (used by both Step 2 reporting and standalone Step 3)
 	$prefix = Find-LongestPrefixMatch -haystack $queryText -needle $oldStr
 	$divergence = $null
 	if ($prefix.Length -gt 0 -and $prefix.Length -lt $oldStr.Length) {
@@ -2006,7 +2006,7 @@ function Get-ContainerChildIndent($container) {
 
 # --- 6. Load XML ---
 
-# Capture raw original BEFORE DOM parse — needed at save time to:
+# Capture raw original BEFORE DOM parse - needed at save time to:
 #   (a) restore exact root <DataCompositionSchema xmlns=...> opening tag (DOM serializer
 #       collapses multi-line xmlns into a single line);
 #   (b) detect NO-OP via byte-equality as an extra safety net.
@@ -2056,7 +2056,7 @@ switch ($Operation) {
 			# Duplicate check
 			$existing = Find-ElementByChildValue $dsNode "field" "dataPath" $parsed.dataPath $schNs
 			if ($existing) {
-				Write-Host "[WARN] Field `"$($parsed.dataPath)`" already exists in dataset `"$dsName`" — skipped"
+				Write-Host "[WARN] Field `"$($parsed.dataPath)`" already exists in dataset `"$dsName`" - skipped"
 				continue
 			}
 
@@ -2076,7 +2076,7 @@ switch ($Operation) {
 				$selection = Ensure-SettingsChild $settings "selection" @()
 				$existingSel = Find-ElementByChildValue $selection "item" "field" $parsed.dataPath $setNs
 				if ($existingSel) {
-					Write-Host "[INFO] Field `"$($parsed.dataPath)`" already in selection — skipped"
+					Write-Host "[INFO] Field `"$($parsed.dataPath)`" already in selection - skipped"
 				} else {
 					$selIndent = Get-ContainerChildIndent $selection
 					$selXml = Build-SelectionItemFragment -fieldName $parsed.dataPath -indent $selIndent
@@ -2098,7 +2098,7 @@ switch ($Operation) {
 			# Duplicate check
 			$existing = Find-ElementByChildValue $xmlDoc.DocumentElement "totalField" "dataPath" $parsed.dataPath $schNs
 			if ($existing) {
-				Write-Host "[WARN] TotalField `"$($parsed.dataPath)`" already exists — skipped"
+				Write-Host "[WARN] TotalField `"$($parsed.dataPath)`" already exists - skipped"
 				continue
 			}
 
@@ -2132,7 +2132,7 @@ switch ($Operation) {
 			# Duplicate check
 			$existing = Find-ElementByChildValue $xmlDoc.DocumentElement "calculatedField" "dataPath" $parsed.dataPath $schNs
 			if ($existing) {
-				Write-Host "[WARN] CalculatedField `"$($parsed.dataPath)`" already exists — skipped"
+				Write-Host "[WARN] CalculatedField `"$($parsed.dataPath)`" already exists - skipped"
 				continue
 			}
 
@@ -2162,7 +2162,7 @@ switch ($Operation) {
 				$selection = Ensure-SettingsChild $settings "selection" @()
 				$existingSel = Find-ElementByChildValue $selection "item" "field" $parsed.dataPath $setNs
 				if ($existingSel) {
-					Write-Host "[INFO] Field `"$($parsed.dataPath)`" already in selection — skipped"
+					Write-Host "[INFO] Field `"$($parsed.dataPath)`" already in selection - skipped"
 				} else {
 					$selIndent = Get-ContainerChildIndent $selection
 					$selXml = Build-SelectionItemFragment -fieldName $parsed.dataPath -indent $selIndent
@@ -2184,7 +2184,7 @@ switch ($Operation) {
 			# Duplicate check
 			$existing = Find-ElementByChildValue $xmlDoc.DocumentElement "parameter" "name" $parsed.name $schNs
 			if ($existing) {
-				Write-Host "[WARN] Parameter `"$($parsed.name)`" already exists — skipped"
+				Write-Host "[WARN] Parameter `"$($parsed.name)`" already exists - skipped"
 				continue
 			}
 
@@ -2238,7 +2238,7 @@ switch ($Operation) {
 			# Find parameter element
 			$paramEl = Find-ElementByChildValue $xmlDoc.DocumentElement "parameter" "name" $paramName $schNs
 			if (-not $paramEl) {
-				Write-Host "[WARN] Parameter `"$paramName`" not found — skipped"
+				Write-Host "[WARN] Parameter `"$paramName`" not found - skipped"
 				continue
 			}
 
@@ -2252,14 +2252,14 @@ switch ($Operation) {
 						$existingTitle = $ch; break
 					}
 				}
-				# If the existing title has multiple <v8:item> (multi-language: ru + en + …),
+				# If the existing title has multiple <v8:item> (multi-language: ru + en + ...),
 				# patch only the ru <v8:content> via raw-string surgery to preserve other langs.
 				# Otherwise rebuild as ru-only fragment.
 				$titleFrag = $null
 				if ($existingTitle) {
 					$rawTitle = $existingTitle.OuterXml
 					$rawTitle = [regex]::Replace($rawTitle, ' xmlns(?::\w+)?="[^"]*"', '')
-					# Count <v8:item> occurrences — if >1, treat as multi-lang.
+					# Count <v8:item> occurrences - if >1, treat as multi-lang.
 					$itemCount = ([regex]::Matches($rawTitle, '<v8:item>')).Count
 					if ($itemCount -gt 1) {
 						$titleFrag = $childIndent + (Patch-MLTextRu $rawTitle $titleVal $childIndent)
@@ -2322,7 +2322,7 @@ switch ($Operation) {
 								}
 							}
 						}
-						# Detect valueListAllowed flag on the parameter — empty value should be omitted
+						# Detect valueListAllowed flag on the parameter - empty value should be omitted
 						$vlaSet = $false
 						foreach ($ch in $paramEl.ChildNodes) {
 							if ($ch.NodeType -eq 'Element' -and $ch.LocalName -eq 'valueListAllowed' -and $ch.NamespaceURI -eq $schNs) {
@@ -2385,7 +2385,7 @@ switch ($Operation) {
 				}
 			}
 
-			# Process availableValue — replace whole list with new items
+			# Process availableValue - replace whole list with new items
 			if ($avPart) {
 				$avRest = ($avPart -replace '^availableValue=', '').Trim()
 				$avItems = Parse-AvailableValueList $avRest
@@ -2496,7 +2496,7 @@ switch ($Operation) {
 			$newName = $Matches[2].Trim()
 
 			if ($oldName -eq $newName) {
-				Write-Host "[WARN] rename-parameter: old and new names are equal — skipped"
+				Write-Host "[WARN] rename-parameter: old and new names are equal - skipped"
 				continue
 			}
 
@@ -2504,7 +2504,7 @@ switch ($Operation) {
 			$root = $xmlDoc.DocumentElement
 			$paramEl = Find-ElementByChildValue $root "parameter" "name" $oldName $schNs
 			if (-not $paramEl) {
-				Write-Host "[WARN] Parameter `"$oldName`" not found — skipped"
+				Write-Host "[WARN] Parameter `"$oldName`" not found - skipped"
 				continue
 			}
 			foreach ($ch in $paramEl.ChildNodes) {
@@ -2536,7 +2536,7 @@ switch ($Operation) {
 
 			# 3. Update <dcscor:parameter>OldName</dcscor:parameter> in dataParameters of all variants.
 			# Note: <settingsVariant> is in schNs, but <settings> and <dataParameters> are in setNs.
-			# IMPORTANT: don't use $variant — it collides with script parameter [string]$Variant
+			# IMPORTANT: don't use $variant - it collides with script parameter [string]$Variant
 			# (PowerShell vars are case-insensitive, and the [string] type would coerce XmlNode to "").
 			$dpUpdated = 0
 			foreach ($variantNode in $root.ChildNodes) {
@@ -2564,10 +2564,10 @@ switch ($Operation) {
 
 	"reorder-parameters" {
 		foreach ($val in $values) {
-			# Shorthand: "Name1, Name2, Name3" — partial list, listed names go first in order, rest preserve original order
+			# Shorthand: "Name1, Name2, Name3" - partial list, listed names go first in order, rest preserve original order
 			$order = @($val -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 			if ($order.Count -eq 0) {
-				Write-Host "[WARN] reorder-parameters: empty list — skipped"
+				Write-Host "[WARN] reorder-parameters: empty list - skipped"
 				continue
 			}
 
@@ -2606,7 +2606,7 @@ switch ($Operation) {
 					$newOrder += $byName[$name]
 					$used[$name] = $true
 				} else {
-					Write-Host "[WARN] reorder-parameters: parameter `"$name`" not found — skipped"
+					Write-Host "[WARN] reorder-parameters: parameter `"$name`" not found - skipped"
 				}
 			}
 			foreach ($pe in $allParams) {
@@ -2699,13 +2699,13 @@ switch ($Operation) {
 					}
 				}
 				if ($isDup) {
-					Write-Host "[WARN] OrderItemAuto already exists in variant `"$varName`" — skipped"
+					Write-Host "[WARN] OrderItemAuto already exists in variant `"$varName`" - skipped"
 					continue
 				}
 			} else {
 				$existingOrd = Find-ElementByChildValue $orderEl "item" "field" $parsed.field $setNs
 				if ($existingOrd) {
-					Write-Host "[WARN] Order `"$($parsed.field)`" already exists in variant `"$varName`" — skipped"
+					Write-Host "[WARN] Order `"$($parsed.field)`" already exists in variant `"$varName`" - skipped"
 					continue
 				}
 			}
@@ -2744,7 +2744,7 @@ switch ($Operation) {
 				$nsMgr.AddNamespace("xsi", $xsiNs)
 				$groupEl = $settings.SelectSingleNode(".//dcsset:item[@xsi:type='dcsset:StructureItemGroup'][dcsset:name='$groupName']", $nsMgr)
 				if (-not $groupEl) {
-					Write-Host "[WARN] StructureItemGroup `"$groupName`" not found — adding to variant level"
+					Write-Host "[WARN] StructureItemGroup `"$groupName`" not found - adding to variant level"
 					$targetEl = $settings
 				} else {
 					$targetEl = $groupEl
@@ -2766,7 +2766,7 @@ switch ($Operation) {
 				}
 				if ($isDup) {
 					$target = if ($groupName) { "group `"$groupName`"" } else { "variant `"$varName`"" }
-					Write-Host "[WARN] SelectedItemAuto already exists in $target — skipped"
+					Write-Host "[WARN] SelectedItemAuto already exists in $target - skipped"
 					continue
 				}
 			}
@@ -2889,7 +2889,7 @@ switch ($Operation) {
 		$structItems = Parse-StructureShorthand $Value
 		$settingsIndent = Get-ChildIndent $settings
 
-		# Find insertion point — before outputParameters/dataParameters/conditionalAppearance/order/filter/selection or at end
+		# Find insertion point - before outputParameters/dataParameters/conditionalAppearance/order/filter/selection or at end
 		$refNode = Find-FirstElement $settings @("outputParameters","dataParameters","conditionalAppearance","order","filter","selection","item") $setNs
 		if (-not $refNode) { $refNode = $null }
 
@@ -2936,7 +2936,7 @@ switch ($Operation) {
 		foreach ($t in $targets) {
 			$groupEl = $settings.SelectSingleNode(".//dcsset:item[@xsi:type='dcsset:StructureItemGroup'][dcsset:name='$($t.name)']", $nsMgr)
 			if (-not $groupEl) {
-				Write-Host "[WARN] Group with @name=`"$($t.name)`" not found — skipped"
+				Write-Host "[WARN] Group with @name=`"$($t.name)`" not found - skipped"
 				continue
 			}
 
@@ -3049,7 +3049,7 @@ switch ($Operation) {
 		# Duplicate check
 		$existing = Find-ElementByChildValue $root "dataSet" "name" $parsed.name $schNs
 		if ($existing) {
-			Write-Host "[WARN] DataSet `"$($parsed.name)`" already exists — skipped"
+			Write-Host "[WARN] DataSet `"$($parsed.name)`" already exists - skipped"
 		} else {
 			# Get dataSource name from first existing <dataSource>
 			$dsSourceEl = Find-FirstElement $root @("dataSource") $schNs
@@ -3089,7 +3089,7 @@ switch ($Operation) {
 		foreach ($val in $values) {
 			$parsed = Parse-VariantShorthand $val
 
-			# Duplicate check — search for settingsVariant with matching dcsset:name
+			# Duplicate check - search for settingsVariant with matching dcsset:name
 			$isDup = $false
 			foreach ($ch in $root.ChildNodes) {
 				if ($ch.NodeType -eq 'Element' -and $ch.LocalName -eq 'settingsVariant' -and $ch.NamespaceURI -eq $schNs) {
@@ -3102,7 +3102,7 @@ switch ($Operation) {
 				}
 			}
 			if ($isDup) {
-				Write-Host "[WARN] Variant `"$($parsed.name)`" already exists — skipped"
+				Write-Host "[WARN] Variant `"$($parsed.name)`" already exists - skipped"
 				continue
 			}
 
@@ -3375,7 +3375,7 @@ switch ($Operation) {
 				type = if ($parsed.type) { $parsed.type } else { $existing.type }
 				roles = if ($parsed.roles -and $parsed.roles.Count -gt 0) { $parsed.roles } else { $existing.roles }
 				restrict = if ($parsed.restrict -and $parsed.restrict.Count -gt 0) { $parsed.restrict } else { $existing.restrict }
-				# Preserve raw <valueType> only when user did NOT override type via shorthand —
+				# Preserve raw <valueType> only when user did NOT override type via shorthand -
 				# otherwise the override path rebuilds valueType from $parsed.type.
 				rawValueType = if ($parsed.type) { $null } else { $existing._rawValueType }
 				# Preserve raw multi-lang title; pass existing ru content for change detection.
@@ -3442,7 +3442,7 @@ switch ($Operation) {
 
 			$fieldIndent = Get-ChildIndent $fieldEl
 
-			# Remove existing <role> — but first capture OuterXml of any sub-children that
+			# Remove existing <role> - but first capture OuterXml of any sub-children that
 			# Build-RoleXml won't re-emit (e.g. <dcscom:addition>, <dcscom:groupFields>,
 			# custom extension elements). Preserved across rebuild.
 			$oldRole = $null
@@ -3455,7 +3455,7 @@ switch ($Operation) {
 				foreach ($gc in $oldRole.ChildNodes) {
 					if ($gc.NodeType -ne 'Element') { continue }
 					if ($knownRoleChildren -contains $gc.LocalName) { continue }
-					# kv keys override the same-named sub-element on rebuild — don't preserve
+					# kv keys override the same-named sub-element on rebuild - don't preserve
 					# what the user explicitly set.
 					if ($kv.Contains($gc.LocalName)) { continue }
 					$raw = $gc.OuterXml
@@ -3465,7 +3465,7 @@ switch ($Operation) {
 				Remove-NodeWithWhitespace $oldRole
 			}
 
-			# Empty spec — remove only
+			# Empty spec - remove only
 			if ($flags.Count -eq 0 -and $kv.Count -eq 0) {
 				$script:Dirty = $true; Write-Host "[OK] Field `"$dataPath`" role cleared"
 				continue
@@ -3537,7 +3537,7 @@ switch ($Operation) {
 					}
 				}
 			} catch {
-				# No variant — that's fine
+				# No variant - that's fine
 			}
 		}
 	}
@@ -3629,7 +3629,7 @@ switch ($Operation) {
 	}
 
 	"add-drilldown" {
-		# String-based manipulation — templates use dcsat namespace with inline xmlns
+		# String-based manipulation - templates use dcsat namespace with inline xmlns
 		$rawText = [System.IO.File]::ReadAllText($resolvedPath, [System.Text.Encoding]::UTF8)
 		$nl = "`r`n"
 		$dcsatNsDecl = 'xmlns:dcsat="http://v8.1c.ru/8.1/data-composition-system/area-template"'
@@ -3668,7 +3668,7 @@ switch ($Operation) {
 			Write-Host "[WARN] No named templates found in schema"
 		}
 
-		# Collect all insertions as (position, text) — apply in reverse order
+		# Collect all insertions as (position, text) - apply in reverse order
 		$insertions = [System.Collections.ArrayList]::new()
 
 		foreach ($tplBlock in $tplBlocks) {
@@ -3690,7 +3690,7 @@ switch ($Operation) {
 
 				# Idempotency: check if already exists
 				if ($tplText.Contains($drillName)) {
-					Write-Host "[INFO] $drillName already exists in $tplName — skipped"
+					Write-Host "[INFO] $drillName already exists in $tplName - skipped"
 					continue
 				}
 
@@ -3699,7 +3699,7 @@ switch ($Operation) {
 				if ($exprMap.ContainsKey($resource)) {
 					$paramName = $exprMap[$resource]
 				} else {
-					Write-Host "[WARN] Expression `"$resource`" not found in template $tplName — skipped"
+					Write-Host "[WARN] Expression `"$resource`" not found in template $tplName - skipped"
 					continue
 				}
 
@@ -3738,7 +3738,7 @@ switch ($Operation) {
 					$appEnd = $tplText.LastIndexOf("</dcsat:appearance>", $cellEnd)
 					if ($appEnd -lt $cellIdx) { $searchStart = $cellEnd + 1; continue }
 
-					# Detect indent for appearance items — insert after \n, before indent of </dcsat:appearance>
+					# Detect indent for appearance items - insert after \n, before indent of </dcsat:appearance>
 					$appPrevNl = $tplText.LastIndexOf("`n", $appEnd)
 					$appIndent = "`t`t`t`t`t`t"
 					if ($appPrevNl -ge 0) {
@@ -3770,7 +3770,7 @@ switch ($Operation) {
 			$rawText = $rawText.Insert($ins.pos, $ins.text)
 		}
 
-		# Write directly — skip DOM save
+		# Write directly - skip DOM save
 		$enc = New-Object System.Text.UTF8Encoding($true)
 		[System.IO.File]::WriteAllText($resolvedPath, $rawText, $enc)
 		$script:Dirty = $true; Write-Host "[OK] Saved $resolvedPath"
@@ -3789,7 +3789,7 @@ $content = $xmlDoc.OuterXml
 $content = $content -replace '(?<=<\?xml[^?]*encoding=")utf-8(?=")', 'UTF-8'
 
 # Format-preserve post-processing:
-#   (1) restore the original raw <DataCompositionSchema ...> opening tag — DOM collapses
+#   (1) restore the original raw <DataCompositionSchema ...> opening tag - DOM collapses
 #       multi-line xmlns declarations into one line.
 if ($script:RawRootOpening) {
 	$content = [regex]::Replace($content, '<DataCompositionSchema\b[^>]*>', { param($m) $script:RawRootOpening })
@@ -3799,7 +3799,7 @@ if ($script:RawRootOpening) {
 #       (`<foo bar="x" />`) but 1C-Designer writes `<foo bar="x"/>`. Strip the space.
 $content = [regex]::Replace($content, '(?<=\S) />', '/>')
 
-#   (3) normalize line endings to match source — operations may mix LF (from new
+#   (3) normalize line endings to match source - operations may mix LF (from new
 #       fragments) with whatever the source used (CRLF on Windows, LF on Linux/git).
 if ($script:LineEnding -eq "`r`n") {
 	$content = $content -replace '(?<!\r)\n', "`r`n"

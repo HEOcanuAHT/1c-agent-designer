@@ -67,3 +67,4 @@ cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "<аб�
 - [ ] Примеры в `.1c/*.example`, не `project.local.json`
 - [ ] README/docs обновлены, если менялся процесс
 - [ ] При изменении tooling поднят `version` в `template-manifest.json`, `plugin.json` (+ example)
+- [ ] `*.ps1` — UTF-8 BOM, без `—`/`…` (rule `ps1-encoding`; lint `.github/scripts/Test-Ps1Encoding.ps1`)
