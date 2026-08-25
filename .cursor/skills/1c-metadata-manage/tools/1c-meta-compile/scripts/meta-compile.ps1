@@ -1,4 +1,4 @@
-﻿# meta-compile v1.12 — Compile 1C metadata object from JSON
+﻿# meta-compile v1.12 - Compile 1C metadata object from JSON
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -79,7 +79,7 @@ $script:objectTypeSynonyms = @{
 	"ОпределяемыйТип"         = "DefinedType"
 }
 
-# Enum property value synonyms — model often gets these slightly wrong
+# Enum property value synonyms - model often gets these slightly wrong
 $script:enumValueAliases = @{
 	# RegisterType (AccumulationRegister)
 	"Balances"  = "Balance";  "Остатки" = "Balance";  "Обороты" = "Turnovers"
@@ -143,21 +143,21 @@ $script:validEnumValues = @{
 
 function Normalize-EnumValue {
 	param([string]$propName, [string]$value)
-	# 1. Check alias dictionary — silent auto-correct
+	# 1. Check alias dictionary - silent auto-correct
 	if ($script:enumValueAliases.ContainsKey($value)) {
 		return $script:enumValueAliases[$value]
 	}
-	# 2. Case-insensitive match against valid values — silent
+	# 2. Case-insensitive match against valid values - silent
 	$valid = $script:validEnumValues[$propName]
 	if ($valid) {
 		foreach ($v in $valid) {
 			if ($v -ieq $value) { return $v }
 		}
-		# 3. Known property, unknown value — error with hint
+		# 3. Known property, unknown value - error with hint
 		Write-Error "Invalid value '$value' for property '$propName'. Valid values: $($valid -join ', ')"
 		exit 1
 	}
-	# 4. Unknown property — pass-through (no validation data)
+	# 4. Unknown property - pass-through (no validation data)
 	return $value
 }
 
@@ -396,13 +396,13 @@ function Emit-TypeContent {
 		return
 	}
 
-	# Reference types — use local xmlns declaration for 1C compatibility
+	# Reference types - use local xmlns declaration for 1C compatibility
 	if ($typeStr -match '^(CatalogRef|DocumentRef|EnumRef|ChartOfAccountsRef|ChartOfCharacteristicTypesRef|ChartOfCalculationTypesRef|ExchangePlanRef|BusinessProcessRef|TaskRef)\.(.+)$') {
 		X "$indent<v8:Type xmlns:d5p1=`"http://v8.1c.ru/8.1/data/enterprise/current-config`">d5p1:$typeStr</v8:Type>"
 		return
 	}
 
-	# Fallback — emit as-is
+	# Fallback - emit as-is
 	X "$indent<v8:Type>$typeStr</v8:Type>"
 }
 
@@ -799,13 +799,13 @@ function Emit-Attribute {
 	X "$indent`t`t<MinValue xsi:nil=`"true`"/>"
 	X "$indent`t`t<MaxValue xsi:nil=`"true`"/>"
 
-	# FillFromFillingValue — not for tabular/processor/chart/register-other
+	# FillFromFillingValue - not for tabular/processor/chart/register-other
 	# (Chart*, AccumulationRegister/AccountingRegister/CalculationRegister don't support these)
 	if ($context -notin @("tabular", "processor", "chart", "register-other")) {
 		X "$indent`t`t<FillFromFillingValue>false</FillFromFillingValue>"
 	}
 
-	# FillValue — same restriction
+	# FillValue - same restriction
 	if ($context -notin @("tabular", "processor", "chart", "register-other")) {
 		Emit-FillValue "$indent`t`t" $typeStr
 	}
@@ -826,12 +826,12 @@ function Emit-Attribute {
 	$chi = if ($parsed.choiceHistoryOnInput) { $parsed.choiceHistoryOnInput } else { "Auto" }
 	X "$indent`t`t<ChoiceHistoryOnInput>$chi</ChoiceHistoryOnInput>"
 
-	# Use — only for catalog top-level attributes
+	# Use - only for catalog top-level attributes
 	if ($context -eq "catalog") {
 		X "$indent`t`t<Use>ForItem</Use>"
 	}
 
-	# Indexing/FullTextSearch/DataHistory — not for non-stored objects (processor, processor-tabular)
+	# Indexing/FullTextSearch/DataHistory - not for non-stored objects (processor, processor-tabular)
 	if ($context -notin @("processor", "processor-tabular")) {
 		$indexing = "DontIndex"
 		if ($parsed.flags -contains "index") { $indexing = "Index" }
@@ -840,7 +840,7 @@ function Emit-Attribute {
 		X "$indent`t`t<Indexing>$indexing</Indexing>"
 
 		X "$indent`t`t<FullTextSearch>Use</FullTextSearch>"
-		# DataHistory — not for Chart* types and non-InformationRegister register family
+		# DataHistory - not for Chart* types and non-InformationRegister register family
 		if ($context -notin @("chart", "register-other")) {
 			X "$indent`t`t<DataHistory>Use</DataHistory>"
 		}
@@ -1442,7 +1442,7 @@ function Emit-DefinedTypeProperties {
 	Emit-MLText $i "Synonym" $synonym
 	X "$i<Comment/>"
 
-	# Type — composite type with multiple v8:Type entries (accept both valueType and valueTypes)
+	# Type - composite type with multiple v8:Type entries (accept both valueType and valueTypes)
 	$valueTypes = @()
 	if ($def.valueTypes) {
 		$valueTypes = @($def.valueTypes)
@@ -1556,7 +1556,7 @@ function Emit-EventSubscriptionProperties {
 	Emit-MLText $i "Synonym" $synonym
 	X "$i<Comment/>"
 
-	# Source — array of v8:Type
+	# Source - array of v8:Type
 	$sources = @()
 	if ($def.source) { $sources = @($def.source) }
 	if ($sources.Count -gt 0) {
@@ -1730,7 +1730,7 @@ function Emit-ChartOfCharacteristicTypesProperties {
 	if ($charExtValues) { X "$i<CharacteristicExtValues>$charExtValues</CharacteristicExtValues>" }
 	else { X "$i<CharacteristicExtValues/>" }
 
-	# Type — composite type of allowed characteristic value types
+	# Type - composite type of allowed characteristic value types
 	$valueTypes = @()
 	if ($def.valueTypes) { $valueTypes = @($def.valueTypes) }
 	if ($valueTypes.Count -gt 0) {
@@ -1897,7 +1897,7 @@ function Emit-ChartOfAccountsProperties {
 
 	Emit-StandardAttributes $i "ChartOfAccounts"
 
-	# StandardTabularSections — ExtDimensionTypes
+	# StandardTabularSections - ExtDimensionTypes
 	X "$i<StandardTabularSections>"
 	X "$i`t<xr:StandardTabularSection name=`"ExtDimensionTypes`">"
 	X "$i`t`t<xr:StandardAttributes>"
@@ -3022,7 +3022,7 @@ if (Test-Path $configXmlPath) {
 				$childObjects.InsertAfter($newWs, $lastElem) | Out-Null
 				$childObjects.InsertAfter($newElem, $newWs) | Out-Null
 			} else {
-				# No existing elements of this type — insert before closing whitespace
+				# No existing elements of this type - insert before closing whitespace
 				$lastChild = $childObjects.LastChild
 				if ($lastChild.NodeType -eq [System.Xml.XmlNodeType]::Whitespace) {
 					$newWs = $configDoc.CreateWhitespace("`n`t`t`t")

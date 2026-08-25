@@ -1,4 +1,4 @@
-﻿# meta-remove v1.1 — Remove metadata object from 1C configuration dump
+﻿# meta-remove v1.1 - Remove metadata object from 1C configuration dump
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -253,7 +253,7 @@ foreach ($ext in $searchExtensions) {
 	}
 }
 
-# Also check for Type.Name references (subsystem content, doc journal, etc.) — but NOT in own files
+# Also check for Type.Name references (subsystem content, doc journal, etc.) - but NOT in own files
 $typeNameRef = "${objType}.${objName}"
 $files = @(Get-ChildItem $ConfigDir -Filter "*.xml" -Recurse -File -ErrorAction SilentlyContinue)
 foreach ($file in $files) {
@@ -265,7 +265,7 @@ foreach ($file in $files) {
 		}
 		if ($skip) { continue }
 	}
-	# Skip Configuration.xml and Subsystems — they will be cleaned automatically
+	# Skip Configuration.xml and Subsystems - they will be cleaned automatically
 	$relPath = $file.FullName.Substring($ConfigDir.Length + 1)
 	if ($relPath -eq "Configuration.xml") { continue }
 	if ($relPath -eq "ConfigDumpInfo.xml") { continue }

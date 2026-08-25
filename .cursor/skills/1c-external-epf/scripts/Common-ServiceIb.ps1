@@ -1,4 +1,4 @@
-# Shared helpers: project.json merge, ibcmd, service IB (.1c/ib-ext) for EPF/CFE pack.
+﻿# Shared helpers: project.json merge, ibcmd, service IB (.1c/ib-ext) for EPF/CFE pack.
 # Dot-source from Invoke-1cExternalEpf.ps1 / Invoke-1cExternalCfe.ps1.
 
 function Read-JsonFile([string]$Path) {
@@ -145,7 +145,7 @@ function Invoke-IbcmdSimple(
 ) {
   # Redirect to temp FILES (not console / not cmd). Under Cursor the agent console is a
   # pipe: ibcmd config import can block on WARN writes (CPU≈0, 1CD stuck). File redirect
-  # + Hidden avoids that. Do not use cmd /c … <NUL (also hang-prone).
+  # + Hidden avoids that. Do not use cmd /c ... <NUL (also hang-prone).
   $safe = ($IbcmdArgs | ForEach-Object {
     if ($_ -match '^--password=' -or $_ -match '^--db-pwd=') { ($_ -replace '=.*$', '=***') } else { $_ }
   }) -join ' '

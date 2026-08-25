@@ -1,6 +1,7 @@
 # Agent notes — шаблон конфигурации 1С
 
 - **Пути скриптов:** `SkillHome` = каталог `SKILL.md` (плагин или `.cursor/skills/<name>` в клоне); `-ProjectRoot` = workspace. Rule `1c-plugin-paths`.
+- **`.ps1` skills:** UTF-8 **с BOM**, пунктуация ASCII (`-` / `...`). Windows PowerShell 5.1, не pwsh. Rule `ps1-encoding`.
 - Стандарты кода: skills `coding-standards`, `std-*` (в т.ч. формы/`1c-forms`, антипаттерны, СКД, расширения)
 - **XML метаданных** (создать/править/validate Form/СКД/роли/CFE borrow): skill **`1c-metadata-manage`** — не заменяет dump/load
 - **Dump/load XML** — смотри `tools.preferredDump` в `.1c/project.json`:

@@ -1,4 +1,4 @@
-﻿# cfe-validate v1.4 — Validate 1C configuration extension structure (CFE)
+﻿# cfe-validate v1.4 - Validate 1C configuration extension structure (CFE)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -382,7 +382,7 @@ if ($propsNode) {
 
 if ($script:stopped) { & $finalize; exit 1 }
 
-# --- Check 5: ChildObjects — valid types, no duplicates, order ---
+# --- Check 5: ChildObjects - valid types, no duplicates, order ---
 $childObjNode = $cfgNode.SelectSingleNode("md:ChildObjects", $ns)
 
 if (-not $childObjNode) {

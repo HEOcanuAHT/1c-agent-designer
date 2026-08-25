@@ -1,0 +1,34 @@
+---
+description: Кодировка PowerShell-скриптов плагина — UTF-8 BOM, без типографских символов (PS 5.1)
+globs: "**/*.ps1"
+alwaysApply: false
+---
+
+# PowerShell 5.1: кодировка `.ps1`
+
+Скрипты вызываются как `powershell.exe -NoProfile -File …` (Windows PowerShell **5.1**, не pwsh).
+
+## Обязательно
+
+1. Файл = **UTF-8 с BOM** (`EF BB BF`). Без BOM 5.1 читает ANSI (cp1251) → парсер падает на UTF-8 многобайтовых символах.
+2. В исходнике только ASCII-пунктуация: `-` и `...`. Запрещены `—` `–` `…` `«»` `“”`.
+3. Кириллица в строках/`throw` — только если файл уже с BOM. Иначе собирать из codepoints:
+   `-join ([char[]](0x0441, 0x043E, ...))`
+
+## Как писать файл
+
+```powershell
+[IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding $true))
+```
+
+Не `Set-Content` без `-Encoding utf8` (в 5.1 `utf8` = с BOM; в 7 — без). Не сохранять из редактора как «UTF-8» без BOM.
+
+Проверка: первые 3 байта `EF BB BF`; затем `Parser::ParseFile(path, [ref]$null, [ref]$errs)` — `$errs` пустой.
+
+Lint в репо шаблона: `.github/scripts/Test-Ps1Encoding.ps1` (CI: `.github/workflows/ps1-encoding.yml`).
+
+## Почему
+
+`—` в строке `throw "... Target — that is ..."` без BOM даёт ParserError на токене `that` и каскад «нет }» до конца файла. Логика скрипта при этом не виновата.
+
+Не полагаться на pwsh: у пользователей часто только 5.1.

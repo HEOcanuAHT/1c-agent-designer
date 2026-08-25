@@ -1,4 +1,4 @@
-﻿# role-compile v1.5 — Compile 1C role from JSON
+﻿# role-compile v1.5 - Compile 1C role from JSON
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -701,7 +701,7 @@ if (Test-Path $configXmlPath) {
 				$childObjects.InsertAfter($newWs, $lastRole) | Out-Null
 				$childObjects.InsertAfter($roleElem, $newWs) | Out-Null
 			} else {
-				# No existing roles — insert before closing whitespace
+				# No existing roles - insert before closing whitespace
 				$lastChild = $childObjects.LastChild
 				if ($lastChild.NodeType -eq [System.Xml.XmlNodeType]::Whitespace) {
 					$newWs = $configDoc.CreateWhitespace("`n`t`t`t")
@@ -744,5 +744,5 @@ switch ($regResult) {
 	"added"       { Write-Host "     Configuration.xml: <Role>$roleName</Role> added to ChildObjects" }
 	"already"     { Write-Host "     Configuration.xml: <Role>$roleName</Role> already registered" }
 	"no-childobj" { Write-Warning "Configuration.xml found but <ChildObjects> not found" }
-	"no-config"   { Write-Warning "Configuration.xml not found at $configXmlPath — register manually" }
+	"no-config"   { Write-Warning "Configuration.xml not found at $configXmlPath - register manually" }
 }

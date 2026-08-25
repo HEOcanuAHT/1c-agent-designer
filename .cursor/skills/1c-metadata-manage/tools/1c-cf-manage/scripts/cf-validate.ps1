@@ -1,4 +1,4 @@
-﻿# cf-validate v1.3 — Validate 1C configuration root structure
+﻿# cf-validate v1.3 - Validate 1C configuration root structure
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -302,7 +302,7 @@ if (-not $internalInfo) {
 
 if ($script:stopped) { & $finalize; exit 1 }
 
-# --- Check 3: Properties — Name, Synonym, DefaultLanguage, DefaultRunMode ---
+# --- Check 3: Properties - Name, Synonym, DefaultLanguage, DefaultRunMode ---
 if (-not $propsNode) {
 	Report-Error "3. Properties block missing"
 } else {
@@ -353,7 +353,7 @@ if (-not $propsNode) {
 
 if ($script:stopped) { & $finalize; exit 1 }
 
-# --- Check 4: Property values — enum properties ---
+# --- Check 4: Property values - enum properties ---
 if ($propsNode) {
 	$enumChecked = 0
 	$check4Ok = $true
@@ -380,7 +380,7 @@ if ($propsNode) {
 
 if ($script:stopped) { & $finalize; exit 1 }
 
-# --- Check 5: ChildObjects — valid types, no duplicates, order ---
+# --- Check 5: ChildObjects - valid types, no duplicates, order ---
 $childObjNode = $cfgNode.SelectSingleNode("md:ChildObjects", $ns)
 
 if (-not $childObjNode) {
@@ -539,7 +539,7 @@ if ($childObjNode) {
 # --- Check 9: Form references (HomePageWorkArea + Properties) ---
 function Test-FormRef([string]$ref) {
 	if (-not $ref) { return $true }
-	# UUID — cannot verify without scanning all forms; skip
+	# UUID - cannot verify without scanning all forms; skip
 	if ($ref -match $guidPattern) { return $true }
 	$parts = $ref.Split(".")
 	if ($parts.Count -eq 2 -and $parts[0] -eq "CommonForm") {
@@ -571,11 +571,11 @@ if (Test-Path $hpPath) {
 			if (-not $ref) { continue }
 			$formRefsChecked++
 			if (-not (Test-FormRef $ref)) {
-				$formRefErrors += "HomePageWorkArea.Form '$ref' — file not found"
+				$formRefErrors += "HomePageWorkArea.Form '$ref' - file not found"
 			}
 		}
 	} catch {
-		$formRefErrors += "HomePageWorkArea.xml: parse error — $($_.Exception.Message)"
+		$formRefErrors += "HomePageWorkArea.xml: parse error - $($_.Exception.Message)"
 	}
 }
 
@@ -588,7 +588,7 @@ if ($propsNode) {
 			$ref = $node.InnerText.Trim()
 			$formRefsChecked++
 			if (-not (Test-FormRef $ref)) {
-				$formRefErrors += "Properties.$pn '$ref' — form not found"
+				$formRefErrors += "Properties.$pn '$ref' - form not found"
 			}
 		}
 	}

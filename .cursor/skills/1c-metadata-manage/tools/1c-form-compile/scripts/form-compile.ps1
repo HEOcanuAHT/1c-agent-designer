@@ -1,4 +1,4 @@
-﻿# form-compile v1.23 — Compile 1C managed form from JSON or object metadata
+﻿# form-compile v1.23 - Compile 1C managed form from JSON or object metadata
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[string]$JsonPath,
@@ -356,7 +356,7 @@ function Load-Preset([string]$PresetName, [string]$ScriptDir) {
 }
 
 # --- Helper: build a field element DSL entry ---
-# Non-displayable types — cannot be bound to form elements
+# Non-displayable types - cannot be bound to form elements
 $script:nonDisplayableTypes = @('v8:ValueStorage', 'ValueStorage', 'ХранилищеЗначения')
 
 function Test-DisplayableType([string]$typeStr) {
@@ -871,7 +871,7 @@ function Generate-DocumentItemDSL($meta, [hashtable]$p, [hashtable]$fd) {
 	$rootElements = @()
 
 	if ($visibleTS.Count -eq 0) {
-		# Simple form — no Pages
+		# Simple form - no Pages
 		$rootElements += $headerGroup
 		if ($footerElements.Count -gt 0) { $rootElements += $footerElements }
 		if ($addBspGroup -and $addPos -ne "none") {
@@ -1085,7 +1085,7 @@ function Generate-AccumulationRegisterListDSL($meta, [hashtable]$p) {
 
 function Generate-ChartOfCharacteristicTypesDSL {
 	param($meta, [hashtable]$presetData, [string]$purpose)
-	# Delegate to Catalog generators — meta already has CodeLength, DescriptionLength, etc.
+	# Delegate to Catalog generators - meta already has CodeLength, DescriptionLength, etc.
 	$dsl = Generate-CatalogDSL -meta $meta -presetData $presetData -purpose $purpose
 
 	# Post-patch: replace Catalog types with ChartOfCharacteristicTypes types
@@ -1722,7 +1722,7 @@ function Emit-SingleType {
 	if ($typeStr.Contains('.')) {
 		X "$indent<v8:Type>cfg:$typeStr</v8:Type>"
 	} else {
-		Write-Warning "Unrecognized bare type '$typeStr' — will be emitted without namespace prefix"
+		Write-Warning "Unrecognized bare type '$typeStr' - will be emitted without namespace prefix"
 		X "$indent<v8:Type>$typeStr</v8:Type>"
 	}
 }
@@ -1890,7 +1890,7 @@ function Emit-Element {
 		return
 	}
 
-	# Validate known keys — warn about typos and unknown properties
+	# Validate known keys - warn about typos and unknown properties
 	$knownKeys = @{
 		# type keys
 		"group"=1;"columnGroup"=1;"input"=1;"check"=1;"radio"=1;"label"=1;"labelField"=1;"table"=1;"pages"=1;"page"=1
@@ -1935,7 +1935,7 @@ function Emit-Element {
 	}
 	foreach ($p in $el.PSObject.Properties) {
 		if (-not $knownKeys.ContainsKey($p.Name)) {
-			Write-Warning "Element '$($el.$typeKey)': unknown key '$($p.Name)' — ignored. Check SKILL.md for valid keys."
+			Write-Warning "Element '$($el.$typeKey)': unknown key '$($p.Name)' - ignored. Check SKILL.md for valid keys."
 		}
 	}
 
@@ -2074,7 +2074,7 @@ function Emit-ColumnGroup {
 
 	Emit-Title -el $el -name $name -indent $inner
 
-	# Group orientation (horizontal / vertical / inCell — последнее только здесь)
+	# Group orientation (horizontal / vertical / inCell - последнее только здесь)
 	$groupVal = "$($el.columnGroup)"
 	$orientation = switch ($groupVal) {
 		"horizontal" { "Horizontal" }
@@ -2244,12 +2244,12 @@ function Normalize-ChoiceValue {
 
 			if ($canonRoot -eq "Enum") {
 				if ($parts.Count -eq 2) {
-					# "Enum.X" alone — not a value, treat as string
+					# "Enum.X" alone - not a value, treat as string
 				} elseif ($parts.Count -eq 3) {
-					# "Enum.X.Y" — insert .EnumValue.
+					# "Enum.X.Y" - insert .EnumValue.
 					$normalized = "Enum.$typeName.EnumValue.$($parts[2])"
 				} else {
-					# "Enum.X.<member>.Y..."  — replace member with EnumValue (handles ЗначениеПеречисления too)
+					# "Enum.X.<member>.Y..."  - replace member with EnumValue (handles ЗначениеПеречисления too)
 					$member = $parts[2]
 					if ($script:enumValueSynonyms -contains $member) {
 						$rest = $parts[3..($parts.Count-1)] -join '.'
@@ -2501,7 +2501,7 @@ function Emit-Table {
 
 	# Companions
 	Emit-Companion -tag "ContextMenu" -name "${name}КонтекстноеМеню" -indent $inner
-	# AutoCommandBar — with optional Autofill control
+	# AutoCommandBar - with optional Autofill control
 	if ($null -ne $el.tableAutofill) {
 		$acbId = New-Id
 		X "$inner<AutoCommandBar name=`"${name}КоманднаяПанель`" id=`"$acbId`">"
@@ -2599,7 +2599,7 @@ function Emit-Button {
 	X "$indent<Button name=`"$name`" id=`"$id`">"
 	$inner = "$indent`t"
 
-	# Type — context-aware:
+	# Type - context-aware:
 	# Inside command bar (cmdBar/autoCmdBar/popup) only CommandBarButton/CommandBarHyperlink are valid.
 	# UsualButton/Hyperlink would be silently ignored by 1C.
 	$btnType = $null
@@ -2608,7 +2608,7 @@ function Emit-Button {
 		if ($inCmdBar) {
 			# Be forgiving: any "ordinary button" hint resolves to CommandBarButton,
 			# any "hyperlink" hint resolves to CommandBarHyperlink. The model can pass
-			# either DSL ("usual"/"hyperlink") or XML names — all map to the right kind.
+			# either DSL ("usual"/"hyperlink") or XML names - all map to the right kind.
 			switch ($rawType) {
 				"usual"                { $btnType = "CommandBarButton" }
 				"UsualButton"          { $btnType = "CommandBarButton" }
@@ -2723,7 +2723,7 @@ function Emit-PictureField {
 	Emit-Title -el $el -name $name -indent $inner
 	Emit-CommonFlags -el $el -indent $inner
 
-	# ValuesPicture — picture (collection) used to render the field's value.
+	# ValuesPicture - picture (collection) used to render the field's value.
 	# Required for a Boolean-bound PictureField to actually show an icon.
 	# loadTransparent emitted only when true (1С default is false).
 	if ($el.valuesPicture) {
@@ -3185,7 +3185,7 @@ if ($def.title) {
 X '<?xml version="1.0" encoding="UTF-8"?>'
 X "<Form xmlns=`"http://v8.1c.ru/8.3/xcf/logform`" xmlns:app=`"http://v8.1c.ru/8.2/managed-application/core`" xmlns:cfg=`"http://v8.1c.ru/8.1/data/enterprise/current-config`" xmlns:dcscor=`"http://v8.1c.ru/8.1/data-composition-system/core`" xmlns:dcssch=`"http://v8.1c.ru/8.1/data-composition-system/schema`" xmlns:dcsset=`"http://v8.1c.ru/8.1/data-composition-system/settings`" xmlns:ent=`"http://v8.1c.ru/8.1/data/enterprise`" xmlns:lf=`"http://v8.1c.ru/8.2/managed-application/logform`" xmlns:style=`"http://v8.1c.ru/8.1/data/ui/style`" xmlns:sys=`"http://v8.1c.ru/8.1/data/ui/fonts/system`" xmlns:v8=`"http://v8.1c.ru/8.1/data/core`" xmlns:v8ui=`"http://v8.1c.ru/8.1/data/ui`" xmlns:web=`"http://v8.1c.ru/8.1/data/ui/colors/web`" xmlns:win=`"http://v8.1c.ru/8.1/data/ui/colors/windows`" xmlns:xr=`"http://v8.1c.ru/8.3/xcf/readable`" xmlns:xs=`"http://www.w3.org/2001/XMLSchema`" xmlns:xsi=`"http://www.w3.org/2001/XMLSchema-instance`" version=`"$($script:formatVersion)`">"
 
-# Oops — Title was emitted before header. Need to fix the order.
+# Oops - Title was emitted before header. Need to fix the order.
 # Actually, let me restructure: build the body into a separate buffer, then assemble
 
 # Reset and rebuild properly
@@ -3195,7 +3195,7 @@ $script:nextId = 1
 X '<?xml version="1.0" encoding="UTF-8"?>'
 X "<Form xmlns=`"http://v8.1c.ru/8.3/xcf/logform`" xmlns:app=`"http://v8.1c.ru/8.2/managed-application/core`" xmlns:cfg=`"http://v8.1c.ru/8.1/data/enterprise/current-config`" xmlns:dcscor=`"http://v8.1c.ru/8.1/data-composition-system/core`" xmlns:dcssch=`"http://v8.1c.ru/8.1/data-composition-system/schema`" xmlns:dcsset=`"http://v8.1c.ru/8.1/data-composition-system/settings`" xmlns:ent=`"http://v8.1c.ru/8.1/data/enterprise`" xmlns:lf=`"http://v8.1c.ru/8.2/managed-application/logform`" xmlns:style=`"http://v8.1c.ru/8.1/data/ui/style`" xmlns:sys=`"http://v8.1c.ru/8.1/data/ui/fonts/system`" xmlns:v8=`"http://v8.1c.ru/8.1/data/core`" xmlns:v8ui=`"http://v8.1c.ru/8.1/data/ui`" xmlns:web=`"http://v8.1c.ru/8.1/data/ui/colors/web`" xmlns:win=`"http://v8.1c.ru/8.1/data/ui/colors/windows`" xmlns:xr=`"http://v8.1c.ru/8.3/xcf/readable`" xmlns:xs=`"http://www.w3.org/2001/XMLSchema`" xmlns:xsi=`"http://www.w3.org/2001/XMLSchema-instance`" version=`"$($script:formatVersion)`">"
 
-# 12a. Title (from def.title or properties.title — must be multilingual XML)
+# 12a. Title (from def.title or properties.title - must be multilingual XML)
 $formTitle = $def.title
 if (-not $formTitle -and $def.properties -and $def.properties.title) {
 	$formTitle = $def.properties.title
@@ -3204,7 +3204,7 @@ if ($formTitle) {
 	Emit-MLText -tag "Title" -text "$formTitle" -indent "`t"
 }
 
-# 12b. Properties (skip 'title' — handled above as multilingual)
+# 12b. Properties (skip 'title' - handled above as multilingual)
 # When form-level Title is set, default autoTitle=false (≈95% of ERP forms do this;
 # otherwise platform appends synonym → "Title: Synonym" double-titles).
 $propsClone = New-Object PSObject

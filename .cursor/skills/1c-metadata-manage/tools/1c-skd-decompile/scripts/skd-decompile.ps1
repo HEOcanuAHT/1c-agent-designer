@@ -1,4 +1,4 @@
-﻿# skd-decompile v0.90 — Decompile 1C DCS Template.xml to JSON DSL (draft)
+﻿# skd-decompile v0.90 - Decompile 1C DCS Template.xml to JSON DSL (draft)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -28,7 +28,7 @@ $root = $xmlDoc.DocumentElement
 
 # Ring 3: not a DataCompositionSchema → fail-fast
 if ($root.LocalName -ne 'DataCompositionSchema') {
-	[Console]::Error.WriteLine("skd-decompile: корневой элемент <$($root.LocalName)> не <DataCompositionSchema> — это не схема СКД (возможно, табличный документ — используй /mxl-decompile).")
+	[Console]::Error.WriteLine("skd-decompile: корневой элемент <$($root.LocalName)> не <DataCompositionSchema> - это не схема СКД (возможно, табличный документ - используй /mxl-decompile).")
 	exit 2
 }
 
@@ -81,19 +81,19 @@ foreach ($vt in $xmlDoc.SelectNodes("//*[local-name()='Type']")) {
 	}
 }
 
-# templateCondition (variant templates) — top-level <template> with <templateCondition>
+# templateCondition (variant templates) - top-level <template> with <templateCondition>
 foreach ($t in $xmlDoc.SelectNodes("//*[local-name()='templateCondition']")) {
 	Fail-Ring3 -kind "templateCondition (вариативные шаблоны)" -loc "template/templateCondition"
 }
 
-# nestedSchema — DCS внутри DCS со своими dataSet/parameters/templates
+# nestedSchema - DCS внутри DCS со своими dataSet/parameters/templates
 foreach ($ns_el in $xmlDoc.SelectNodes("//*[local-name()='nestedSchema']")) {
 	Fail-Ring3 -kind "nestedSchema (вложенные подсхемы)" -loc "nestedSchema"
 }
 
-# Пустые dataSets — отчёт без источника данных (только settingsVariant с outputParameters).
+# Пустые dataSets - отчёт без источника данных (только settingsVariant с outputParameters).
 # Такие отчёты валидны (динамическое заполнение из кода), но compile требует ≥1 dataSet,
-# и весь DSL заточен под data-driven отчёты — fail-fast.
+# и весь DSL заточен под data-driven отчёты - fail-fast.
 if ($xmlDoc.SelectNodes("//*[local-name()='dataSet']").Count -eq 0) {
 	Fail-Ring3 -kind "отчёт без dataSet (служебный шаблон-обёртка)" -loc "DataCompositionSchema/dataSet"
 }
@@ -119,7 +119,7 @@ function New-Sentinel {
 
 # --- 3. Helpers ---
 
-# Custom JSON serializer — компактный, 2-пробельный indent, массивы примитивов inline.
+# Custom JSON serializer - компактный, 2-пробельный indent, массивы примитивов inline.
 # В отличие от ConvertTo-Json (PS5.1):
 #   - не выравнивает ключи объекта по самому длинному
 #   - не разворачивает массивы примитивов на отдельные строки
@@ -204,7 +204,7 @@ function ConvertTo-CompactJson {
 		return ([System.Convert]::ToString($obj, [System.Globalization.CultureInfo]::InvariantCulture))
 	}
 
-	# Try inline для объектов и массивов с объектами — если помещается в lineLimit с учётом текущего indent.
+	# Try inline для объектов и массивов с объектами - если помещается в lineLimit с учётом текущего indent.
 	$isContainer = ($obj -is [System.Collections.IDictionary]) -or ($obj -is [System.Management.Automation.PSCustomObject]) -or ($obj -is [array]) -or ($obj -is [System.Collections.IList])
 	if ($isContainer) {
 		$inlineAttempt = Try-InlineJson $obj
@@ -213,7 +213,7 @@ function ConvertTo-CompactJson {
 		}
 	}
 
-	# Hashtable / OrderedDictionary — объект multi-line
+	# Hashtable / OrderedDictionary - объект multi-line
 	if ($obj -is [System.Collections.IDictionary]) {
 		$keys = @($obj.Keys)
 		if ($keys.Count -eq 0) { return '{}' }
@@ -312,7 +312,7 @@ function Get-OneTypeShorthand {
 						$sign = Get-Text $qualNumber "v8:AllowedSign"
 						$signSuf = ''
 						if ($sign -eq 'Nonnegative') { $signSuf = ',nonneg' }
-						# Always explicit (D,F) — JSON readable, no surprise from default folding
+						# Always explicit (D,F) - JSON readable, no surprise from default folding
 						if ($f -eq 0) { return "decimal($d$signSuf)" }
 						if ($signSuf) { return "decimal($d,$f$signSuf)" }
 						return "decimal($d,$f)"
@@ -350,7 +350,7 @@ function Get-ValueTypeShorthand {
 	$qualD = $valueTypeNode.SelectSingleNode("v8:DateQualifiers", $ns)
 	$shorts = @()
 	foreach ($t in $types) { $shorts += (Get-OneTypeShorthand -typeNode $t -qualNumber $qualN -qualString $qualS -qualDate $qualD) }
-	# TypeSet (композитный тип-набор) — извлекаем local-name из значения "<prefix>:Name".
+	# TypeSet (композитный тип-набор) - извлекаем local-name из значения "<prefix>:Name".
 	foreach ($ts in $typeSets) {
 		$txt = $ts.InnerText
 		if ($txt -match ':(.+)$') { $shorts += $matches[1] }
@@ -361,9 +361,9 @@ function Get-ValueTypeShorthand {
 }
 
 # <role> → @{ tokens, extras }
-#   tokens — список @-флагов (boolean dcscom children); @period — sugar для periodNumber=1+periodType=Main
-#   extras — любые dcscom:KEY со строковым значением (balanceGroupName/balanceType/parentDimension/...).
-# compile/skd-edit принимают произвольные KV — никакого whitelist'а.
+#   tokens - список @-флагов (boolean dcscom children); @period - sugar для periodNumber=1+periodType=Main
+#   extras - любые dcscom:KEY со строковым значением (balanceGroupName/balanceType/parentDimension/...).
+# compile/skd-edit принимают произвольные KV - никакого whitelist'а.
 function Get-RoleInfo {
 	param($roleNode, [string]$loc)
 	if (-not $roleNode) { return $null }
@@ -389,7 +389,7 @@ function Get-RoleInfo {
 		} elseif ($txt -eq 'false' -or -not $txt) {
 			# Игнорируем явный false (дефолт)
 		} else {
-			# Любая строка → extra (без whitelist — compile эмитит любой ключ)
+			# Любая строка → extra (без whitelist - compile эмитит любой ключ)
 			$extras[$child.LocalName] = $txt
 		}
 	}
@@ -407,13 +407,13 @@ function Render-Role {
 	$hasTokens = $tokens -and $tokens.Count -gt 0
 	if (-not $hasExtras -and -not $hasTokens) { return $null }
 	if (-not $hasExtras) {
-		# Только флаги: одиночный — без @ (back-compat), множественный — "@a @b" string.
+		# Только флаги: одиночный - без @ (back-compat), множественный - "@a @b" string.
 		$plain = @($tokens | ForEach-Object { $_ -replace '^@','' })
 		if ($plain.Count -eq 1) { return @{ value = $plain[0]; isString = $true } }
 		$withAt = @($plain | ForEach-Object { "@$_" })
 		return @{ value = ($withAt -join ' '); isString = $true }
 	}
-	# Есть extras — проверяем, все ли значения "простые" (без пробелов и кавычек)
+	# Есть extras - проверяем, все ли значения "простые" (без пробелов и кавычек)
 	$allSimple = $true
 	foreach ($v in $extras.Values) {
 		if ("$v" -notmatch '^[\w\.\-]+$') { $allSimple = $false; break }
@@ -550,7 +550,7 @@ function Read-InputParameters {
 				} else {
 					$entry['value'] = $txt
 					# Сохраняем кастомный xsi:type (например, "d6p1:FoldersAndItemsUse" с локальным xmlns).
-					# Не сохраняем xs:* (string/dateTime/etc) — compile auto-detect.
+					# Не сохраняем xs:* (string/dateTime/etc) - compile auto-detect.
 					$ta = $val.Attributes['xsi:type']
 					if ($ta -and $ta.Value -notmatch '^xs:') {
 						$prefix = ($ta.Value -split ':', 2)[0]
@@ -572,11 +572,11 @@ function Read-InputParameters {
 # Build a field JSON entry (shorthand if possible, object form otherwise)
 function Build-Field {
 	param($fieldNode, [string]$loc)
-	# inputParameters теперь поддерживается в DSL — читается ниже в needsObject
+	# inputParameters теперь поддерживается в DSL - читается ниже в needsObject
 	$inputParameters = Read-InputParameters -parentNode $fieldNode
-	# orderExpression теперь поддерживается в DSL — читается ниже в needsObject.
+	# orderExpression теперь поддерживается в DSL - читается ниже в needsObject.
 	# На одном поле может быть несколько <orderExpression> (multi-sort fallback),
-	# в этом случае сохраняем массив; единичный — как объект (back-compat).
+	# в этом случае сохраняем массив; единичный - как объект (back-compat).
 	$orderExprNodes = $fieldNode.SelectNodes("r:orderExpression", $ns)
 	$orderExpression = $null
 	$orderExpressionList = @()
@@ -607,7 +607,7 @@ function Build-Field {
 	$roleExtras = if ($roleInfo) { $roleInfo.extras } else { [ordered]@{} }
 	$roleRendered = Render-Role -tokens $roleTokens -extras $roleExtras
 	$restrictTokens = Get-RestrictionTokens $fieldNode.SelectSingleNode("r:useRestriction", $ns)
-	# <attributeUseRestriction> — те же 4 флага, но для атрибутов ссылочного поля
+	# <attributeUseRestriction> - те же 4 флага, но для атрибутов ссылочного поля
 	$attrRestrictTokens = Get-RestrictionTokens $fieldNode.SelectSingleNode("r:attributeUseRestriction", $ns)
 	$appNode = $fieldNode.SelectSingleNode("r:appearance", $ns)
 	$appearance = Get-AppearanceDict $appNode
@@ -645,8 +645,8 @@ function Build-Field {
 		$s = $fieldName
 		if ($typeShort) { $s = "$fieldName`: $typeShort" }
 		if ($roleInString) {
-			# Если значение — одиночный флаг (без @ и без =) — добавляем как @flag.
-			# Если уже содержит @ или K=V — добавляем как есть.
+			# Если значение - одиночный флаг (без @ и без =) - добавляем как @flag.
+			# Если уже содержит @ или K=V - добавляем как есть.
 			$rv = $roleRendered.value
 			if ($rv -match '@' -or $rv -match '=' -or $rv -match '\s') {
 				$s += ' ' + $rv
@@ -655,7 +655,7 @@ function Build-Field {
 			}
 		}
 		if ($restrictTokens) { $s += ' ' + ($restrictTokens -join ' ') }
-		# dataPath ≠ field — fall back to object form
+		# dataPath ≠ field - fall back to object form
 		if (-not ($dataPath -and $dataPath -ne $fieldName)) {
 			return $s
 		}
@@ -722,7 +722,7 @@ function Build-TotalField {
 	$groupNodes = $tfNode.SelectNodes("r:group", $ns)
 	$hasGroups = $groupNodes -and $groupNodes.Count -gt 0
 
-	# Object form — только если есть group или expression многострочный
+	# Object form - только если есть group или expression многострочный
 	if ($hasGroups -or ($expression -match "[`r`n]")) {
 		$obj = [ordered]@{ dataPath = $dataPath; expression = $expression }
 		if ($hasGroups) {
@@ -759,7 +759,7 @@ function Build-Parameter {
 	$valueTypeNode = $pNode.SelectSingleNode("r:valueType", $ns)
 	$typeShort = Get-ValueTypeShorthand $valueTypeNode
 
-	# value — может быть несколько (valueListAllowed: список значений по умолчанию).
+	# value - может быть несколько (valueListAllowed: список значений по умолчанию).
 	$valueNodes = $pNode.SelectNodes("r:value", $ns)
 	$valueDisplay = $null
 	$valueIsNil = $false
@@ -796,7 +796,7 @@ function Build-Parameter {
 				} elseif ($variant -and $variant -ne 'Custom') {
 					$valueDisplay = $variant
 				}
-				# Custom без явных дат — valueDisplay = null, compile подставит 0001-01-01.
+				# Custom без явных дат - valueDisplay = null, compile подставит 0001-01-01.
 			} elseif ($vType -eq 'DesignTimeValue') {
 				$valueDisplay = $valueNode.InnerText
 			} elseif ($vType -eq 'LocalStringType') {
@@ -815,7 +815,7 @@ function Build-Parameter {
 	$useRestriction = (Get-Text $pNode "r:useRestriction") -eq 'true'
 	$expression = Get-Text $pNode "r:expression"
 	$inputParameters = Read-InputParameters -parentNode $pNode
-	# hidden — combo: availableAsField=false + useRestriction=true (как эмитит compile @hidden)
+	# hidden - combo: availableAsField=false + useRestriction=true (как эмитит compile @hidden)
 	$notAField = ($availableAsField -eq 'false')
 	$hidden = $notAField -and $useRestriction
 
@@ -887,11 +887,11 @@ function Render-Parameter {
 	if ($typeIsArray) { $needsObject = $true }
 	if ($valueIsDict) { $needsObject = $true }
 	if (-not $p.autoDates) {
-		# @autoDates implies use=Always + denyIncomplete=true defaults — only object form if NOT autoDates
+		# @autoDates implies use=Always + denyIncomplete=true defaults - only object form if NOT autoDates
 		if ($p.denyIncomplete) { $needsObject = $true }
 		if ($p.useAttr) { $needsObject = $true }
 	}
-	# useRestriction=true non-hidden non-autoDates требует object form — иначе shorthand
+	# useRestriction=true non-hidden non-autoDates требует object form - иначе shorthand
 	# теряет этот атрибут (compile эмитит default useRestriction=false).
 	if ($p.useRestriction -and -not $p.hidden -and -not $p.autoDates) { $needsObject = $true }
 	if ($p.expression) { $needsObject = $true }
@@ -982,21 +982,21 @@ foreach ($k in $script:builtinPresets.Keys) {
 	$script:effectivePresets[$k] = $copy
 }
 
-# existingUserPresetsRaw — копия загруженного skd-styles.json (PSCustomObject) для merge при записи.
+# existingUserPresetsRaw - копия загруженного skd-styles.json (PSCustomObject) для merge при записи.
 $script:existingUserPresetsRaw = $null
 
 # Аккумулятор внешних SQL-файлов для записи рядом с outputPath: @{name = "filename.sql"; text = "...sql text..."}
 $script:queryFilesAccumulator = @()
 $script:queryFileNamesUsed = @{}
 
-# Если запрос ≥3 строк и есть outputPath — вынести в отдельный
+# Если запрос ≥3 строк и есть outputPath - вынести в отдельный
 # `<outputBasename>-<datasetName>.sql` (префикс защищает от коллизий имён при batch-decompile).
-# Иначе — оставить inline.
+# Иначе - оставить inline.
 function Maybe-ExternalizeQuery {
 	param([string]$queryText, [string]$datasetName)
 	if (-not $queryText) { return $queryText }
 	if (-not $script:outputDir) { return $queryText }
-	# Считаем строки — \r\n или \n
+	# Считаем строки - \r\n или \n
 	$lineCount = ([regex]::Matches($queryText, "`n")).Count + 1
 	if ($lineCount -lt 3) { return $queryText }
 	# Уникализация имени файла: prefix = basename outputPath (без расширения)
@@ -1026,7 +1026,7 @@ function Save-QueryFiles {
 	[Console]::Error.WriteLine("Saved $($script:queryFilesAccumulator.Count) external query file(s)")
 }
 
-# customStylesAccumulator — новые customN, накопленные в текущем прогоне, для записи в skd-styles.json.
+# customStylesAccumulator - новые customN, накопленные в текущем прогоне, для записи в skd-styles.json.
 $script:customStylesAccumulator = [ordered]@{}
 
 # Счётчик customN
@@ -1037,7 +1037,7 @@ function Normalize-Color {
 	param($valNode)
 	if (-not $valNode) { return $null }
 	$txt = $valNode.InnerText
-	# Префикс xsi:type или value — резолвим в URI и выбираем DSL-префикс.
+	# Префикс xsi:type или value - резолвим в URI и выбираем DSL-префикс.
 	if ($txt -match '^([^:]+):(.+)$') {
 		$pfx = $matches[1]
 		$name = $matches[2]
@@ -1184,8 +1184,8 @@ function Save-UserStyles {
 # Extract per-cell width/minHeight/merge from appearance.
 function Get-CellPerCellAttrs {
 	param($appNode)
-	# drilldown — суффикс X из имени Расшифровка_X (только shortcut form B).
-	# drilldownTarget — полное имя target-параметра как есть (любая форма).
+	# drilldown - суффикс X из имени Расшифровка_X (только shortcut form B).
+	# drilldownTarget - полное имя target-параметра как есть (любая форма).
 	$attrs = @{ width = $null; height = $null; mergeV = $false; mergeH = $false; drilldown = $null; drilldownTarget = $null }
 	if (-not $appNode) { return $attrs }
 	foreach ($it in $appNode.SelectNodes("dcscor:item", $ns)) {
@@ -1213,7 +1213,7 @@ function Get-CellPerCellAttrs {
 # Extract cell content: string text, "{ParamName}", "|", ">", or $null
 function Get-CellContent {
 	param($cellNode, $perCellAttrs)
-	# Check merge flags first — empty cells with these flags are "|" or ">"
+	# Check merge flags first - empty cells with these flags are "|" or ">"
 	if ($perCellAttrs.mergeV) { return '|' }
 	if ($perCellAttrs.mergeH) { return '>' }
 
@@ -1230,7 +1230,7 @@ function Get-CellContent {
 	if ($valType -eq 'LocalStringType') {
 		$text = Get-MLText $valNode
 		if ($text -is [System.Collections.IDictionary]) {
-			# multilang in template cell — keep as-is; emit via object form (Ring 2 candidate)
+			# multilang in template cell - keep as-is; emit via object form (Ring 2 candidate)
 			return $text
 		}
 		return $text
@@ -1248,7 +1248,7 @@ function Build-TemplateParameter {
 	if ($pType -eq 'ExpressionAreaTemplateParameter') {
 		$obj['expression'] = Get-Text $pNode "dcsat:expression"
 	} elseif ($pType -eq 'DetailsAreaTemplateParameter') {
-		# Marker — handled by drilldown folding logic in Build-Template
+		# Marker - handled by drilldown folding logic in Build-Template
 		$obj['__details__'] = $true
 		$obj['expression'] = Get-Text $pNode "dcsat:expression"
 	}
@@ -1277,7 +1277,7 @@ function Build-Template {
 	$cellStyleMap = @{}        # "r,c" → имя стиля для конкретной ячейки (null для merge/no-style)
 	$cellDrilldownMap = @{}    # "r,c" → полное имя drilldown-target (для cell wrap в object-form)
 	$hasAnyStyledCell = $false
-	$drilldownByParam = @{}    # param name → field name (X from Расшифровка_X) — для form B fold
+	$drilldownByParam = @{}    # param name → field name (X from Расшифровка_X) - для form B fold
 
 	$rowIdx = 0
 	foreach ($rowNode in $rowNodes) {
@@ -1304,9 +1304,9 @@ function Build-Template {
 				}
 			}
 
-			# Drilldown attachment — для shortcut form B (Расшифровка_X) кладём в drilldownByParam.
+			# Drilldown attachment - для shortcut form B (Расшифровка_X) кладём в drilldownByParam.
 			# Полное имя target сохраняем в cellDrilldownMap для последующего разрешения:
-			# если target = "Расшифровка_X" и X совпадает с именем параметра ячейки {X} —
+			# если target = "Расшифровка_X" и X совпадает с именем параметра ячейки {X} -
 			# это shortcut и cell остаётся строкой; иначе cell wrap в {value, drilldown}.
 			if ($content -match '^\{(.+)\}$' -and $perCell.drilldown) {
 				$drilldownByParam[$matches[1]] = $perCell.drilldown
@@ -1346,7 +1346,7 @@ function Build-Template {
 		}
 	}
 
-	# Если есть ячейки со стилем, отличным от template default — оборачиваем их в object form.
+	# Если есть ячейки со стилем, отличным от template default - оборачиваем их в object form.
 	if ($templateDefault) {
 		$rowsOut = @()
 		for ($r = 0; $r -lt $rows.Count; $r++) {
@@ -1383,7 +1383,7 @@ function Build-Template {
 		}
 	}
 
-	# Сворачиваем shortcut form B: каждый exprParam X с drilldownByParam[X]=Y проверяем —
+	# Сворачиваем shortcut form B: каждый exprParam X с drilldownByParam[X]=Y проверяем -
 	# если detailsByName["Расшифровка_Y"] существует и имеет canonical shape
 	# (field=ИмяРесурса, expression="Y", action=DrillDown) → fold X.drilldown="Y" и mark detail folded.
 	$foldedDetailNames = @{}
@@ -1466,7 +1466,7 @@ function Build-Template {
 	if ($templateDefault) {
 		$tmplObj['style'] = $templateDefault
 	} elseif ($rows.Count -gt 0) {
-		# Все ячейки без стилевых атрибутов — это шаблон "без стиля"
+		# Все ячейки без стилевых атрибутов - это шаблон "без стиля"
 		$tmplObj['style'] = 'none'
 	}
 	if ($widths)    { $tmplObj['widths']    = $widths }
@@ -1503,7 +1503,7 @@ function Get-FilterValue {
 }
 
 # Same as Get-FilterValue, но дополнительно возвращает xsi:type значения,
-# чтобы caller мог сохранить valueType (например, dcscor:Field — для field-to-field
+# чтобы caller мог сохранить valueType (например, dcscor:Field - для field-to-field
 # comparison). Format: @{ value = ...; type = '<xsi-type-or-null>' }.
 function Get-FilterValueWithType {
 	param($valNode)
@@ -1517,7 +1517,7 @@ function Get-FilterValueWithType {
 	}
 	$txt = $valNode.InnerText
 	if (-not $txt) { return @{ value = '_'; type = $rawType } }
-	# Конвертация по типу — compile различает [bool]/[int]/[double] для auto-detect xsi:type.
+	# Конвертация по типу - compile различает [bool]/[int]/[double] для auto-detect xsi:type.
 	if ($vType -eq 'boolean') { return @{ value = ($txt -eq 'true'); type = $rawType } }
 	if ($vType -eq 'decimal') {
 		if ($txt -match '^-?\d+$') { return @{ value = [int]$txt; type = $rawType } }
@@ -1581,7 +1581,7 @@ function Build-FilterItem {
 			$value = $vt.value
 			# Сохраняем тип только если он не дефолтный (auto-detect compile вернёт xs:*).
 			# DesignTimeValue для значений вида "Перечисление.X.Y" / "Справочник.X.Y" /
-			# "ПланСчетов.X.Y" и т.п. также auto-detect-ится — не сохраняем.
+			# "ПланСчетов.X.Y" и т.п. также auto-detect-ится - не сохраняем.
 			$autoDetectsDTV = ($vt.type -eq 'dcscor:DesignTimeValue') -and `
 				("$($vt.value)" -match '^(Перечисление|Справочник|ПланСчетов|Документ|ПланВидовХарактеристик|ПланВидовРасчета|БизнесПроцесс|Задача|РегистрСведений|ПланОбмена|Catalog|Enum|Document|ChartOfAccounts|ChartOfCharacteristicTypes|ChartOfCalculationTypes|BusinessProcess|Task|InformationRegister|ExchangePlan)\.')
 			if ($vt.type -and $vt.type -notmatch '^xs:' -and -not $autoDetectsDTV) {
@@ -1598,10 +1598,10 @@ function Build-FilterItem {
 		}
 		$value = $arr
 		$valueIsArrayFlag = $true
-		# Сохраняем raw xsi:type если все одинаковые — compile будет использовать
+		# Сохраняем raw xsi:type если все одинаковые - compile будет использовать
 		# как явный valueType (иначе авто-detect выберет DesignTimeValue для строк
 		# "Перечисление.*", но оригинал может хранить как xs:string).
-		# DesignTimeValue для значений-ref-литералов сам авто-detect-ится — не сохраняем.
+		# DesignTimeValue для значений-ref-литералов сам авто-detect-ится - не сохраняем.
 		$uniqTypes = @($rawTypes | Sort-Object -Unique)
 		if ($uniqTypes.Count -eq 1 -and $uniqTypes[0]) {
 			$autoDetectsDTV = ($uniqTypes[0] -eq 'dcscor:DesignTimeValue') -and `
@@ -1633,7 +1633,7 @@ function Build-FilterItem {
 	if ($viewMode -eq 'QuickAccess') { $flags += '@quickAccess' }
 	elseif ($viewMode -eq 'Inaccessible') { $flags += '@inaccessible' }
 	# Normal: явное присутствие <viewMode>Normal</viewMode> в XML сохраняется
-	# через shorthand-флаг @normal (отсутствие — без флага). Это эквивалентно
+	# через shorthand-флаг @normal (отсутствие - без флага). Это эквивалентно
 	# object form "viewMode": "Normal" но компактнее.
 	elseif ($viewMode -eq 'Normal') { $flags += '@normal' }
 
@@ -1643,7 +1643,7 @@ function Build-FilterItem {
 	# Переход в object form:
 	# - userSettingPresentation,
 	# - massivное value (multi-right или пустой ValueList),
-	# - явный valueType (например, dcscor:Field — field-to-field comparison),
+	# - явный valueType (например, dcscor:Field - field-to-field comparison),
 	# - presentation на item (multilang или просто текст)
 	if ($userPresNode -or $valueIsArrayFlag -or $valueTypeAttr -or $fiPres) {
 		$obj = [ordered]@{ field = $field; op = $op }
@@ -1691,13 +1691,13 @@ function Build-SelectionItem {
 	if (-not $xt) {
 		$fName = Get-Text $item "dcsset:field"
 		if ($fName) { return $fName }
-		# Пустой <field/> → wildcard (apply to all) — эквивалентно Auto
+		# Пустой <field/> → wildcard (apply to all) - эквивалентно Auto
 		$fieldEl = $item.SelectSingleNode("dcsset:field", $ns)
 		if ($fieldEl) { return 'Auto' }
 	}
 	switch ($xt) {
 		'SelectedItemAuto' {
-			# Auto может иметь <use>false</use> — отключённый Auto-элемент в selection.
+			# Auto может иметь <use>false</use> - отключённый Auto-элемент в selection.
 			$useV = Get-Text $item "dcsset:use"
 			if ($useV -eq 'false') {
 				return [ordered]@{ auto = $true; use = $false }
@@ -1825,7 +1825,7 @@ function Get-SettingsAppearance {
 		if (-not $pName -or -not $val) { continue }
 		$rawVal = Read-AppearanceValueNode $val
 		$useV = Get-Text $it "dcscor:use"
-		# Nested dcscor:item внутри этого item — wrap form {value, use?}.
+		# Nested dcscor:item внутри этого item - wrap form {value, use?}.
 		$nestedItems = [ordered]@{}
 		foreach ($sub in $it.SelectNodes("dcscor:item", $ns)) {
 			$subName = Get-Text $sub "dcscor:parameter"
@@ -1840,7 +1840,7 @@ function Get-SettingsAppearance {
 		# Определяем форму вывода
 		$valIsLine = ($rawVal -is [System.Collections.IDictionary]) -and $rawVal.Contains('@type') -and ($rawVal['@type'] -eq 'Line')
 		if ($valIsLine) {
-			# top-level Line — атрибуты inline + опц. use/items
+			# top-level Line - атрибуты inline + опц. use/items
 			if ($useV -eq 'false') { $rawVal['use'] = $false }
 			if ($nestedItems.Count -gt 0) { $rawVal['items'] = $nestedItems }
 			$dict[$pName] = $rawVal
@@ -1864,10 +1864,10 @@ function Build-ConditionalAppearance {
 	$i = 0
 	foreach ($it in $caNode.SelectNodes("dcsset:item", $ns)) {
 		$entry = [ordered]@{}
-		# Silent-drop: scope (fields/groups/overall) — не воспроизводится в DSL
+		# Silent-drop: scope (fields/groups/overall) - не воспроизводится в DSL
 		$scopeNode = $it.SelectSingleNode("dcsset:scope", $ns)
 		if ($scopeNode -and $scopeNode.HasChildNodes) {
-			$null = Add-Warning -kind 'SilentDrop:scope' -loc "$loc/$i/scope" -detail "conditionalAppearance item имеет scope — не воспроизводится в DSL"
+			$null = Add-Warning -kind 'SilentDrop:scope' -loc "$loc/$i/scope" -detail "conditionalAppearance item имеет scope - не воспроизводится в DSL"
 		}
 		$selNode = $it.SelectSingleNode("dcsset:selection", $ns)
 		if ($selNode -and $selNode.SelectNodes("dcsset:item", $ns).Count -gt 0) {
@@ -1902,7 +1902,7 @@ function Build-ConditionalAppearance {
 		# use=false на самом condAppearance item
 		$useV = Get-Text $it "dcsset:use"
 		if ($useV -eq 'false') { $entry['use'] = $false }
-		# useInXxx — управляет где применяется правило оформления
+		# useInXxx - управляет где применяется правило оформления
 		# (group, hierarchicalGroup, overall, fieldsHeader, header, parameters,
 		#  filter, resourceFieldsHeader, overallHeader, overallResourceFieldsHeader)
 		$useInDontUse = @()
@@ -1922,7 +1922,7 @@ function Build-ConditionalAppearance {
 }
 
 # Build outputParameters dict
-# Зеркало $script:outputParamTypes из skd-compile — для known keys compile auto-detect-ит
+# Зеркало $script:outputParamTypes из skd-compile - для known keys compile auto-detect-ит
 # тип по имени параметра, поэтому valueType в DSL не нужен (избыточный шум).
 $script:outputParamTypesKnown = @{
 	'Заголовок'                              = 'mltext'
@@ -1950,7 +1950,7 @@ function Build-OutputParameters {
 		$val = $it.SelectSingleNode("dcscor:value", $ns)
 		if (-not $pName -or -not $val) { continue }
 		$vType = Get-LocalXsiType $val
-		# Полный xsi:type (с префиксом) — нужен compile для bit-perfect, если ключ не в outputParamTypes.
+		# Полный xsi:type (с префиксом) - нужен compile для bit-perfect, если ключ не в outputParamTypes.
 		$fullType = $null
 		$ta = $val.Attributes['xsi:type']
 		if ($ta) { $fullType = $ta.Value }
@@ -1970,7 +1970,7 @@ function Build-OutputParameters {
 			if ($subType -eq 'LocalStringType') { $subRaw = Get-MLText $subVal }
 			elseif ($subType -eq 'Font') { $subRaw = Get-FontValue $subVal }
 			else { $subRaw = $subVal.InnerText }
-			# Резолвим prefix → URI: если URI не из стандартных корневых xmlns —
+			# Резолвим prefix → URI: если URI не из стандартных корневых xmlns -
 			# сохраняем как объект {uri, name} чтобы compile эмитил xmlns локально.
 			$subTypeField = $subFull
 			if ($subFull -and $subFull -match '^([^:]+):(.+)$') {
@@ -1999,10 +1999,10 @@ function Build-OutputParameters {
 		$vmN = $it.SelectSingleNode("dcsset:viewMode", $ns)
 		$usidV = Get-Text $it "dcsset:userSettingID"
 		$uspN = $it.SelectSingleNode("dcsset:userSettingPresentation", $ns)
-		# Если xsi:type — кастомный (dcsset:XXX, v8ui:XXX, и т.п., не xs:* и не LocalStringType/Font),
-		# нужен wrap чтобы compile сохранил тип через valueType (default — xs:string).
+		# Если xsi:type - кастомный (dcsset:XXX, v8ui:XXX, и т.п., не xs:* и не LocalStringType/Font),
+		# нужен wrap чтобы compile сохранил тип через valueType (default - xs:string).
 		# typeIsCustom: тип не покрыт auto-detect (compile сам сделает default).
-		# Если ключ — known (есть в outputParamTypesKnown) И значение xsi:type совпадает с map —
+		# Если ключ - known (есть в outputParamTypesKnown) И значение xsi:type совпадает с map -
 		# auto-detect compile вернёт тот же тип → valueType в DSL не нужен.
 		$typeAutoDetected = $false
 		if ($script:outputParamTypesKnown.ContainsKey($pName)) {
@@ -2031,7 +2031,7 @@ function Build-OutputParameters {
 	return $d
 }
 
-# Build dataParameters — return "auto" if every non-hidden top-level param appears
+# Build dataParameters - return "auto" if every non-hidden top-level param appears
 # with userSettingID and value matches default; otherwise return explicit list.
 function Build-DataParameters {
 	param($dpNode, $topParams)
@@ -2055,10 +2055,10 @@ function Build-DataParameters {
 		if (-not $usid) { $canAuto = $false }
 		# Compare value to top-level param value
 		$valNode = $it.SelectSingleNode("dcscor:value", $ns)
-		# use на dataParameter item — это <dcscor:use> (не dcsset)
+		# use на dataParameter item - это <dcscor:use> (не dcsset)
 		$use = Get-Text $it "dcscor:use"
 		if ($use -eq 'false') { $canAuto = $false }
-		# viewMode / userSettingPresentation на dataParameter item — это dcsset:* (после value)
+		# viewMode / userSettingPresentation на dataParameter item - это dcsset:* (после value)
 		$vmN = $it.SelectSingleNode("dcsset:viewMode", $ns)
 		$uspN = $it.SelectSingleNode("dcsset:userSettingPresentation", $ns)
 		if ($vmN -or $uspN) { $canAuto = $false }
@@ -2109,7 +2109,7 @@ function Build-DataParameters {
 		# Compare to top-level default
 		if ($tp -and $tp.valueDisplay -ne $vDisplay) { $canAuto = $false }
 		if (-not $tp) { $canAuto = $false }   # extra param not in top-level
-		# Empty xs:string + use=false — оригинальный placeholder для disabled-параметра
+		# Empty xs:string + use=false - оригинальный placeholder для disabled-параметра
 		# (используется для типа DateTime в settings; см. АнализПлановыхНачислений @1506).
 		# Сохраняем явный valueType чтобы compile эмитил <value xsi:type="xs:string"/>
 		# вместо xsi:nil.
@@ -2120,7 +2120,7 @@ function Build-DataParameters {
 			$obj = [ordered]@{ parameter = $pn }
 			if ($stdPeriodObj) {
 				$obj['value'] = $stdPeriodObj
-				# valueType не нужен — compile определит StandardPeriod по value.variant
+				# valueType не нужен - compile определит StandardPeriod по value.variant
 			} elseif ($isEmptyStringPlaceholder) {
 				$obj['value'] = ''
 				$obj['valueType'] = 'xs:string'
@@ -2174,7 +2174,7 @@ function Get-GroupFields {
 			$pat = Get-Text $gItem "dcsset:periodAdditionType"
 			$gt = Get-Text $gItem "dcsset:groupType"
 			# periodAdditionBegin/End: non-default = либо dcscor:Field (path), либо
-			# date ≠ 0001-01-01T00:00:00. Сохраняем строкой — compile auto-detect тип.
+			# date ≠ 0001-01-01T00:00:00. Сохраняем строкой - compile auto-detect тип.
 			$pabN = $gItem.SelectSingleNode("dcsset:periodAdditionBegin", $ns)
 			$paeN = $gItem.SelectSingleNode("dcsset:periodAdditionEnd", $ns)
 			$pab = $null; $pae = $null
@@ -2223,13 +2223,13 @@ function Build-TableAxisBlock {
 		foreach ($fc in $fNode.SelectNodes("dcsset:item", $ns)) { $fa += (Build-FilterItem -itemNode $fc -loc "$loc/filter") }
 		$entry['filter'] = $fa
 	}
-	# order — preserve presence (even [Auto]) for bit-perfect round-trip
+	# order - preserve presence (even [Auto]) for bit-perfect round-trip
 	$ordNode = $node.SelectSingleNode("dcsset:order", $ns)
 	if ($ordNode) {
 		$ordItems = Build-Order -ordNode $ordNode -loc "$loc/order"
 		if ($ordItems.Count -gt 0) { $entry['order'] = $ordItems }
 	}
-	# selection — preserve presence (even [Auto])
+	# selection - preserve presence (even [Auto])
 	$selNode = $node.SelectSingleNode("dcsset:selection", $ns)
 	if ($selNode) {
 		$selItems = Build-Selection -selNode $selNode -loc "$loc/selection"
@@ -2303,7 +2303,7 @@ function Build-Structure {
 				$tCa = Build-ConditionalAppearance -caNode $tCaN -loc "$loc/$idx/ca"
 				if ($tCa.Count -gt 0) { $entry['conditionalAppearance'] = $tCa }
 			}
-			# use=false на самой таблице — отключённая ветка
+			# use=false на самой таблице - отключённая ветка
 			$tUse = Get-Text $it "dcsset:use"
 			if ($tUse -eq 'false') { $entry['use'] = $false }
 			# viewMode / userSettingID / userSettingPresentation / itemsViewMode / rowsViewMode / columnsViewMode на самой таблице
@@ -2360,7 +2360,7 @@ function Build-Structure {
 			$entry = [ordered]@{ type = 'chart' }
 			$nm = Get-Text $it "dcsset:name"
 			if ($nm) { $entry['name'] = $nm }
-			# point/series — может быть несколько (multi-series диаграмма).
+			# point/series - может быть несколько (multi-series диаграмма).
 			# Single → сохраняем как object (backward-compat); >1 → массив.
 			$pnList = $it.SelectNodes("dcsset:point", $ns)
 			if ($pnList.Count -eq 1) {
@@ -2380,7 +2380,7 @@ function Build-Structure {
 				foreach ($s in $snList) { $sArr += (Build-TableAxisBlock -node $s -loc "$loc/$idx/series[$si]"); $si++ }
 				$entry['series'] = $sArr
 			}
-			# Selection (chart values) — сохраняем даже [Auto] для bit-perfect presence
+			# Selection (chart values) - сохраняем даже [Auto] для bit-perfect presence
 			$selN = $it.SelectSingleNode("dcsset:selection", $ns)
 			if ($selN) {
 				$selI = Build-Selection -selNode $selN -loc "$loc/$idx/selection"
@@ -2389,7 +2389,7 @@ function Build-Structure {
 			$opN = $it.SelectSingleNode("dcsset:outputParameters", $ns)
 			$op = Build-OutputParameters -opNode $opN
 			if ($op -and $op.Count -gt 0) { $entry['outputParameters'] = $op }
-			# use=false на самой диаграмме — отключённая ветка
+			# use=false на самой диаграмме - отключённая ветка
 			$chUse = Get-Text $it "dcsset:use"
 			if ($chUse -eq 'false') { $entry['use'] = $false }
 			# viewMode / userSettingID / userSettingPresentation / itemsViewMode / pointsViewMode / seriesViewMode на chart
@@ -2417,7 +2417,7 @@ function Build-Structure {
 			continue
 		}
 		$entry = [ordered]@{}
-		# use=false на самой группе — отключённая ветка структуры
+		# use=false на самой группе - отключённая ветка структуры
 		$gUse = Get-Text $it "dcsset:use"
 		if ($gUse -eq 'false') { $entry['use'] = $false }
 		# Optional name
@@ -2427,13 +2427,13 @@ function Build-Structure {
 		$gFields = Get-GroupFields -parentNode $it -loc $loc
 		if ($gFields.Count -gt 0) { $entry['groupFields'] = $gFields }
 
-		# Local selection — preserve presence (even [Auto]) for bit-perfect round-trip
+		# Local selection - preserve presence (even [Auto]) for bit-perfect round-trip
 		$selNode = $it.SelectSingleNode("dcsset:selection", $ns)
 		if ($selNode) {
 			$selItems = Build-Selection -selNode $selNode -loc "$loc/selection"
 			if ($selItems.Count -gt 0) { $entry['selection'] = $selItems }
 		}
-		# Local order — same
+		# Local order - same
 		$ordNode = $it.SelectSingleNode("dcsset:order", $ns)
 		if ($ordNode) {
 			$ordItems = Build-Order -ordNode $ordNode -loc "$loc/order"
@@ -2463,7 +2463,7 @@ function Build-Structure {
 		$op = Build-OutputParameters -opNode $opNode
 		if ($op -and $op.Count -gt 0) { $entry['outputParameters'] = $op }
 
-		# Children — recursive
+		# Children - recursive
 		$children = Build-Structure -node $it -loc "$loc/children"
 		if ($children.Count -gt 0) { $entry['children'] = $children }
 
@@ -2495,7 +2495,7 @@ function Build-Structure {
 }
 
 # True when selection/order is just the single auto element ("Auto") that the
-# compiler adds by default to every shorthand group — folding such a group back
+# compiler adds by default to every shorthand group - folding such a group back
 # to shorthand is bit-perfect (Parse-StructureShorthand re-adds it on compile).
 # Disabled auto ({auto,use}), mixed lists ("Поле","Auto") and explicit fields
 # are objects / non-singleton lists and won't match → those keep object form.
@@ -2634,7 +2634,7 @@ function Build-DataSet {
 		$ds['fields'] = $fields
 	}
 
-	# dataSource attachment — omit if matches default (Union has no dataSource)
+	# dataSource attachment - omit if matches default (Union has no dataSource)
 	if ($xsiType -ne 'DataSetUnion') {
 		$dsSrc = Get-Text $dsNode "r:dataSource"
 		if ($emitDataSources -and $dsSrc) { $ds['dataSource'] = $dsSrc }
@@ -2724,8 +2724,8 @@ foreach ($p in $paramsRaw) {
 	# Иначе compile (который генерирует именно эти имена + type=date + DateFractions=Date)
 	# не сможет вернуть bit-perfect для отчётов с шаблоном "Период<X>" → "НачалоПериода<X>"/
 	# "КонецПериода<X>" + DateFractions=DateTime. Оставляем как явные параметры.
-	# Также НЕ сворачиваем если companions имеют availableAsField=false — compile
-	# auto-gen не передаёт этот атрибут (ERP-стиль без него; БСП-стиль с ним —
+	# Также НЕ сворачиваем если companions имеют availableAsField=false - compile
+	# auto-gen не передаёт этот атрибут (ERP-стиль без него; БСП-стиль с ним -
 	# вариативность не выразима через @autoDates флаг, пусть companions останутся явными).
 	$beginP = if ($startMatch) { $paramByName[$startMatch] } else { $null }
 	$endP   = if ($endMatch)   { $paramByName[$endMatch]   } else { $null }
@@ -2839,7 +2839,7 @@ foreach ($sv in $svNodes) {
 		return $null
 	}
 
-	# userFields — пользовательские вычисляемые поля (Expression / Case)
+	# userFields - пользовательские вычисляемые поля (Expression / Case)
 	$ufNode = $settingsNode.SelectSingleNode("dcsset:userFields", $ns)
 	if ($ufNode) {
 		$ufList = @()
@@ -2960,7 +2960,7 @@ foreach ($sv in $svNodes) {
 	$dp = Build-DataParameters -dpNode $dpTop -topParams $paramsRaw
 	if ($null -ne $dp) { $settings['dataParameters'] = $dp }
 
-	# structure — top-level <dcsset:item> children of <dcsset:settings>
+	# structure - top-level <dcsset:item> children of <dcsset:settings>
 	$structItems = Build-Structure -node $settingsNode -loc "variant[$vi]/structure"
 	if ($structItems.Count -gt 0) {
 		$short = Try-StructureShorthand $structItems
@@ -2968,11 +2968,11 @@ foreach ($sv in $svNodes) {
 		else        { $settings['structure'] = $structItems }
 	}
 
-	# <dcsset:itemsViewMode> on settings — preserve presence (even Normal)
+	# <dcsset:itemsViewMode> on settings - preserve presence (even Normal)
 	$sivmNode = $settingsNode.SelectSingleNode("dcsset:itemsViewMode", $ns)
 	if ($sivmNode) { $settings['itemsViewMode'] = $sivmNode.InnerText }
 
-	# <dcsset:additionalProperties> — key→value свойства варианта (URL, имя, GUID и т.п.)
+	# <dcsset:additionalProperties> - key→value свойства варианта (URL, имя, GUID и т.п.)
 	$apNode = $settingsNode.SelectSingleNode("dcsset:additionalProperties", $ns)
 	if ($apNode) {
 		$apDict = [ordered]@{}
@@ -3018,7 +3018,7 @@ if ($OutputPath) {
 		[void]$sb.AppendLine("")
 		foreach ($w in $script:warnings) {
 			$wId = $w.id; $wKind = $w.kind; $wLoc = $w.loc; $wDetail = $w.detail
-			[void]$sb.AppendLine("- **$wId** ($wKind) at $wLoc — $wDetail")
+			[void]$sb.AppendLine("- **$wId** ($wKind) at $wLoc - $wDetail")
 		}
 		[System.IO.File]::WriteAllText($wPath, $sb.ToString(), $enc)
 		Write-Host "Warnings: $wPath ($($script:warnings.Count) issue(s))" -ForegroundColor Yellow

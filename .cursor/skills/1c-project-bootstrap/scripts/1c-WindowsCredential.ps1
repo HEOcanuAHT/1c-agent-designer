@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
   Read/write 1C IB login via Windows Credential Manager (Generic credentials).

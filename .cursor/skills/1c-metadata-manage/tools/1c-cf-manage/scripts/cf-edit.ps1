@@ -1,4 +1,4 @@
-﻿# cf-edit v1.4 — Edit 1C configuration root (Configuration.xml)
+﻿# cf-edit v1.4 - Edit 1C configuration root (Configuration.xml)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)][Alias('Path')][string]$ConfigPath,
@@ -226,7 +226,7 @@ function Do-ModifyProperty([string]$batchVal) {
 			if (-not $propValue) { $propEl.InnerXml = "" }
 			else { $propEl.InnerText = $propValue }
 		} else {
-			# Enum or other — just set text
+			# Enum or other - just set text
 			$propEl.InnerText = $propValue
 		}
 
@@ -268,7 +268,7 @@ function Do-AddChildObject([string]$batchVal) {
 		# cf-edit add-childObject is a low-level operation for rare scenarios
 		# (e.g. restoring a rolled-back Configuration.xml when object files are intact).
 		# For creating NEW objects, meta-compile/role-compile/subsystem-compile already
-		# auto-register in Configuration.xml — calling cf-edit add-childObject there is
+		# auto-register in Configuration.xml - calling cf-edit add-childObject there is
 		# unnecessary and error-prone.
 		$typeDir = $script:typeToDir[$typeName]
 		$objFile = Join-Path (Join-Path $script:configDir $typeDir) "$objNameVal.xml"
@@ -311,7 +311,7 @@ To create a new $typeName, use $hintSkill (auto-registers in Configuration.xml):
 			if ($childTypeIdx -lt 0) { continue }
 
 			if ($child.LocalName -eq $typeName) {
-				# Same type — check alphabetical order
+				# Same type - check alphabetical order
 				if ($child.InnerText -gt $objNameVal -and -not $insertBefore) {
 					# Insert before this element (alphabetical)
 					$insertBefore = $child
@@ -320,7 +320,7 @@ To create a new $typeName, use $hintSkill (auto-registers in Configuration.xml):
 			} elseif ($childTypeIdx -lt $typeIdx) {
 				$lastPrecedingType = $child
 			} elseif ($childTypeIdx -gt $typeIdx -and -not $insertBefore) {
-				# First element of a later type — insert before it
+				# First element of a later type - insert before it
 				$insertBefore = $child
 			}
 		}
@@ -445,7 +445,7 @@ function Do-RemoveDefaultRole([string]$batchVal) {
 }
 
 # --- Operation: set-panels ---
-# Canonical English aliases — preferred form, used in docs and error messages.
+# Canonical English aliases - preferred form, used in docs and error messages.
 $script:panelUuids = @{
 	"sections"  = "b553047f-c9aa-4157-978d-448ecad24248"
 	"open"      = "cbab57f2-a0f3-4f0a-89ea-4cb19570ab75"
@@ -453,7 +453,7 @@ $script:panelUuids = @{
 	"history"   = "c933ac92-92cd-459d-81cc-e0c8a83ced99"
 	"functions" = "b2735bd3-d822-4430-ba59-c9e869693b24"
 }
-# Russian synonyms — silently accepted (cf-info displays Russian names; users
+# Russian synonyms - silently accepted (cf-info displays Russian names; users
 # may copy them straight into cf-edit value).
 $script:panelSynonyms = @{
 	"разделов"   = "sections"; "разделы"   = "sections"
@@ -590,7 +590,7 @@ foreach ($k in $script:typeToDir.Keys) { $script:dirToType[$script:typeToDir[$k]
 function Normalize-FormRef([string]$s) {
 	$s = $s.Trim()
 	if (-not $s) { return $s }
-	# UUID — leave as-is
+	# UUID - leave as-is
 	if ($s -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') { return $s }
 	# Path form?
 	if ($s.Contains("/") -or $s.Contains("\")) {
@@ -613,7 +613,7 @@ function Normalize-FormRef([string]$s) {
 		}
 		return $s
 	}
-	# Dot form — translate Russian head and 'Форма' segment, auto-insert 'Form'
+	# Dot form - translate Russian head and 'Форма' segment, auto-insert 'Form'
 	$segs = $s.Split(".")
 	if ($segs.Count -ge 1) {
 		$head = $segs[0].ToLowerInvariant()

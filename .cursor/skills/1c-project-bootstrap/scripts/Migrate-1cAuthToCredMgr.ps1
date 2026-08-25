@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
   Move IB auth from plaintext project.local.json into Windows Credential Manager.

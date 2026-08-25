@@ -1,4 +1,4 @@
-﻿# mxl-info v1.0 — Analyze 1C spreadsheet structure
+﻿# mxl-info v1.0 - Analyze 1C spreadsheet structure
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Alias('Path')]
@@ -143,7 +143,7 @@ function Get-CellData {
 
 				if ($isTemplate) {
 					# Always extract parameter names from [Param] placeholders
-					# Skip numeric-only like [5] — these are footnote refs in legal forms
+					# Skip numeric-only like [5] - these are footnote refs in legal forms
 					foreach ($m in [regex]::Matches($text, '\[([^\]]+)\]')) {
 						$val = $m.Groups[1].Value
 						if ($val -notmatch '^\d+$') {

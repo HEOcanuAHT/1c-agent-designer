@@ -1,4 +1,4 @@
-﻿# cfe-diff v1.0 — Analyze and compare 1C configuration extension (CFE)
+﻿# cfe-diff v1.0 - Analyze and compare 1C configuration extension (CFE)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]
@@ -277,11 +277,11 @@ if ($Mode -eq "A") {
 	foreach ($obj in $objects) {
 		$info = Get-ObjectInfo $obj.Type $obj.Name
 		if (-not $info) {
-			Write-Host "  [?] $($obj.Type).$($obj.Name) — unknown type"
+			Write-Host "  [?] $($obj.Type).$($obj.Name) - unknown type"
 			continue
 		}
 		if (-not $info.Exists) {
-			Write-Host "  [?] $($obj.Type).$($obj.Name) — file not found"
+			Write-Host "  [?] $($obj.Type).$($obj.Name) - file not found"
 			continue
 		}
 
@@ -297,7 +297,7 @@ if ($Mode -eq "A") {
 				$interceptors = Get-Interceptors $bsl
 				if ($interceptors.Count -gt 0) {
 					foreach ($ic in $interceptors) {
-						Write-Host "             &$($ic.Type)(`"$($ic.Method)`") — line $($ic.Line) in $relPath"
+						Write-Host "             &$($ic.Type)(`"$($ic.Method)`") - line $($ic.Line) in $relPath"
 					}
 				} else {
 					Write-Host "             $relPath (no interceptors)"
@@ -421,7 +421,7 @@ if ($Mode -eq "B") {
 				$insertBlocks = Get-InsertionBlocks $bsl
 
 				if ($insertBlocks.Count -eq 0) {
-					Write-Host "  [NEEDS_REVIEW] $($obj.Type).$($obj.Name) — &ИзменениеИКонтроль(`"$methodName`") — no #Вставка blocks"
+					Write-Host "  [NEEDS_REVIEW] $($obj.Type).$($obj.Name) - &ИзменениеИКонтроль(`"$methodName`") - no #Вставка blocks"
 					$needsReview++
 					continue
 				}
@@ -432,7 +432,7 @@ if ($Mode -eq "B") {
 				$configBsl = $bsl.Replace($ExtensionPath, $ConfigPath)
 
 				if (-not (Test-Path $configBsl)) {
-					Write-Host "  [NEEDS_REVIEW] $($obj.Type).$($obj.Name) — &ИзменениеИКонтроль(`"$methodName`") — config module not found"
+					Write-Host "  [NEEDS_REVIEW] $($obj.Type).$($obj.Name) - &ИзменениеИКонтроль(`"$methodName`") - config module not found"
 					$needsReview++
 					continue
 				}
@@ -456,10 +456,10 @@ if ($Mode -eq "B") {
 				}
 
 				if ($allTransferred) {
-					Write-Host "  [TRANSFERRED]     $($obj.Type).$($obj.Name) — &ИзменениеИКонтроль(`"$methodName`") — $($insertBlocks.Count) block(s)"
+					Write-Host "  [TRANSFERRED]     $($obj.Type).$($obj.Name) - &ИзменениеИКонтроль(`"$methodName`") - $($insertBlocks.Count) block(s)"
 					$transferred++
 				} else {
-					Write-Host "  [NOT_TRANSFERRED] $($obj.Type).$($obj.Name) — &ИзменениеИКонтроль(`"$methodName`") — some blocks not found in config"
+					Write-Host "  [NOT_TRANSFERRED] $($obj.Type).$($obj.Name) - &ИзменениеИКонтроль(`"$methodName`") - some blocks not found in config"
 					$notTransferred++
 				}
 			}

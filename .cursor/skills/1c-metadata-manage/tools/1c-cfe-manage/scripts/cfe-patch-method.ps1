@@ -1,4 +1,4 @@
-﻿# cfe-patch-method v1.1 — Generate method interceptor for 1C extension (CFE)
+﻿# cfe-patch-method v1.1 - Generate method interceptor for 1C extension (CFE)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 param(
 	[Parameter(Mandatory)]

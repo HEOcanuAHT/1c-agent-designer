@@ -1,4 +1,4 @@
-# Shared 1C platform path resolution for skill PowerShell tools.
+﻿# Shared 1C platform path resolution for skill PowerShell tools.
 # Accepts the same shapes as .dev.env PLATFORM_PATH (version install dir),
 # the bin directory, or a full path to 1cv8.exe.
 
