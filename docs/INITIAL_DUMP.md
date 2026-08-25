@@ -8,14 +8,18 @@
 5. Полная выгрузка — по `tools.preferredDump` (**ibcmd** по умолчанию):
 
 ```powershell
-# предпочтительно (README, src/_extDataProcessors/, src/_extensions/ можно не убирать — скрипт сам сделает staging):
-…\1c-ibcmd-pack\scripts\Invoke-1cIbcmdDump.ps1 -Action dump-full -ProjectRoot "<этот-репо>"
+# пустой src/: сразу dump-full
+# непустой src/: сначала спроси пользователя, что XML в src/ будет удалён и перезалит из ИБ,
+# затем: -WipeOutDir (без копии через staging)
+…\1c-ibcmd-pack\scripts\Invoke-1cIbcmdDump.ps1 -Action dump-full -ProjectRoot "<этот-репо>" [-WipeOutDir]
 
-# fallback (designer-agent — дампит прямо в src/, staging не нужен):
+# fallback (designer-agent — дампит прямо в src/):
 …\1c-designer-agent\scripts\Invoke-1cDesignerAgent.ps1 -Action dump-full -ProjectRoot "<этот-репо>"
 ```
 
-**ibcmd и непустой `src/`:** полный `export` требует пустой каталог — скрипт выгружает во `.1c/ibcmd-dump-staging/` и мержит XML в `src/`, сохраняя `README.md`, `_extDataProcessors/` и `_extensions/`. Инкремент (`dump-update`): preserve временно уезжает в `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/` (без копирования всего дампа).
+**ibcmd:** полный `export` требует **пустой** каталог. Внешки и расширения живут в `ext/` и `cfe/` (не в `src/`).  
+Непустой `src/`: агент **спрашивает**, затем `-WipeOutDir` — очистка `src/` и export сразу туда (без staging-копии). Хвосты старого layout (`README.md`, `_extDataProcessors`, `_extensions` внутри `src/`) паркуются и возвращаются.  
+Инкремент (`dump-update`): `--sync` сразу в `src/`. Park только если в `src/` ещё лежат preserve-хвосты.
 
 На файловой ИБ перед dump закрой Конфигуратор. Для ibcmd на client-server в `infobase` нужен блок `dbms`.
 

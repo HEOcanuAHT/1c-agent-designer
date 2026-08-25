@@ -1,5 +1,5 @@
 ---
-description: Внешние обработки — src/_extDataProcessors, skill 1c-external-epf
+description: Внешние обработки — ext/, skill 1c-external-epf
 alwaysApply: true
 ---
 
@@ -8,7 +8,7 @@ alwaysApply: true
 При работе с внешними обработками / `.epf` / выносом обработки из конфы:
 
 1. Следуй skill **`1c-external-epf`** (`Invoke-1cExternalEpf.ps1`).
-2. Исходники только в `src/_extDataProcessors/` — не в `DataProcessors/` без явной просьбы.
+2. Исходники только в `ext/` (`ext.dir`) — не в `src/` и не в `DataProcessors/` без явной просьбы.
 3. Сборка → `artifacts/ext/*.epf`; бинарники не коммитить.
-4. `load-changed` конфигурации не должен включать `_extDataProcessors` (фильтр в designer-agent).
+4. `load-changed` конфигурации не должен включать внешки (они вне `src/`; старый `_extDataProcessors` в `src/` фильтр designer-agent всё ещё отсекает).
 5. Dump/pack — служебная файловая ИБ `.1c/ib-ext`: `ibcmd config import` из `src/` **без apply**; боевую ИБ не трогать. Та же ИБ используется для расширений (`.cfe`, skill `1c-external-cfe`).

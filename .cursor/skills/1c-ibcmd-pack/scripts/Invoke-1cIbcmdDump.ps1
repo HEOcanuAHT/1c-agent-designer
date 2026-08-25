@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Dump / incremental dump / partial load via ibcmd (infobase config export|import).
 
@@ -23,7 +23,11 @@ param(
   # For load-files: paths relative to OutDir/src, one per line (UTF-8)
   [string]$ListFile = "",
 
-  # Full dump: no empty-dir staging. Incremental: no preserve park (may fail if README/_ext in OutDir).
+  # dump-full into a non-empty OutDir: delete XML there, then export in-place (no staging copy).
+  # Agent must ask the user first; do not pass this switch without an explicit yes.
+  [switch]$WipeOutDir,
+
+  # Incremental: do not park preserve leftovers (may fail if README/_ext still in OutDir).
   [switch]$NoStaging
 )
 
@@ -188,34 +192,25 @@ function Get-DataDir($Cfg, [string]$ProjectRoot) {
   return $path
 }
 
-function Get-StagingDir($Cfg, [string]$ProjectRoot) {
-  $rel = ".1c/ibcmd-dump-staging"
-  if ($Cfg.ibcmd -and $Cfg.ibcmd.stagingDir) { $rel = [string]$Cfg.ibcmd.stagingDir }
-  if ([System.IO.Path]::IsPathRooted($rel)) { return $rel }
-  return Join-Path $ProjectRoot $rel
-}
-
 function Get-PreserveRels($Cfg, [string]$DumpRel) {
   $rels = [System.Collections.Generic.List[string]]::new()
+  # Leftovers from the old layout (inside dump dir). New defaults live outside src/.
   [void]$rels.Add("README.md")
+  [void]$rels.Add("_extDataProcessors")
+  [void]$rels.Add("_extensions")
   $dumpNorm = ($DumpRel -replace "\\", "/").TrimEnd("/")
 
   $extraDirs = [System.Collections.Generic.List[string]]::new()
-  $extDir = "src/_extDataProcessors"
+  $extDir = "ext"
   if ($Cfg.ext -and $Cfg.ext.dir) { $extDir = ([string]$Cfg.ext.dir -replace "\\", "/").TrimEnd("/") }
   [void]$extraDirs.Add($extDir)
-  $cfeDir = "src/_extensions"
+  $cfeDir = "cfe"
   if ($Cfg.cfe -and $Cfg.cfe.dir) { $cfeDir = ([string]$Cfg.cfe.dir -replace "\\", "/").TrimEnd("/") }
   [void]$extraDirs.Add($cfeDir)
 
   foreach ($dir in $extraDirs) {
     if ($dir.StartsWith("$dumpNorm/", [System.StringComparison]::OrdinalIgnoreCase)) {
       [void]$rels.Add($dir.Substring($dumpNorm.Length + 1))
-    } elseif ($dir -notmatch "/") {
-      [void]$rels.Add($dir)
-    } else {
-      $leaf = [IO.Path]::GetFileName($dir)
-      if ($leaf) { [void]$rels.Add($leaf) }
     }
   }
 
@@ -236,7 +231,7 @@ function Test-PathIsPreserved([string]$Name, [string[]]$PreserveRels) {
   return $false
 }
 
-function Test-NeedsDumpStaging([string]$DumpAbs) {
+function Test-DumpDirNotEmpty([string]$DumpAbs) {
   $items = @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)
   return ($items.Count -gt 0)
 }
@@ -255,37 +250,22 @@ function Get-ParkDir($Cfg, [string]$ProjectRoot) {
   return Join-Path $ProjectRoot $rel
 }
 
-function Reset-StagingDir([string]$Staging) {
-  if (Test-Path -LiteralPath $Staging) {
-    Remove-Item -LiteralPath $Staging -Recurse -Force
+function Reset-EmptyDir([string]$Dir) {
+  if (Test-Path -LiteralPath $Dir) {
+    Remove-Item -LiteralPath $Dir -Recurse -Force
   }
-  New-Item -ItemType Directory -Force -Path $Staging | Out-Null
+  New-Item -ItemType Directory -Force -Path $Dir | Out-Null
 }
 
-function Clear-DumpDirExceptPreserve([string]$DumpAbs, [string[]]$PreserveRels) {
+function Clear-DumpDirContents([string]$DumpAbs) {
   foreach ($item in @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)) {
-    if (-not (Test-PathIsPreserved $item.Name $PreserveRels)) {
-      Remove-Item -LiteralPath $item.FullName -Recurse -Force
-    }
+    Remove-Item -LiteralPath $item.FullName -Recurse -Force
   }
 }
 
-function Copy-DumpTree([string]$From, [string]$To) {
-  New-Item -ItemType Directory -Force -Path $To | Out-Null
-  foreach ($item in @(Get-ChildItem -LiteralPath $From -Force -ErrorAction SilentlyContinue)) {
-    Copy-Item -LiteralPath $item.FullName -Destination $To -Recurse -Force
-  }
-}
-
-function Merge-DumpStaging([string]$Staging, [string]$DumpAbs, [string[]]$PreserveRels) {
-  New-Item -ItemType Directory -Force -Path $DumpAbs | Out-Null
-  Clear-DumpDirExceptPreserve $DumpAbs $PreserveRels
-  Copy-DumpTree $Staging $DumpAbs
-}
-
-# Move README/_ext aside so --sync can run in-place (cheap Move, not full dump copy).
+# Move leftover README/_ext aside so export/--sync can run in-place (Move, not a full dump copy).
 function Move-PreserveAside([string]$DumpAbs, [string]$ParkDir, [string[]]$PreserveRels) {
-  Reset-StagingDir $ParkDir
+  Reset-EmptyDir $ParkDir
   $moved = [System.Collections.Generic.List[string]]::new()
   foreach ($item in @(Get-ChildItem -LiteralPath $DumpAbs -Force -ErrorAction SilentlyContinue)) {
     if (Test-PathIsPreserved $item.Name $PreserveRels) {
@@ -351,7 +331,7 @@ function Throw-IbcmdFailure([string]$Combined, [int]$ExitCode) {
     throw "ibcmd: ConfigDumpInfo does not match this IB - run dump-full into this folder first, then dump-update. exit=$ExitCode"
   }
   if ([regex]::IsMatch($Combined, $reNotEmpty)) {
-    throw "ibcmd: export target must be empty (README/_extDataProcessors/_extensions break full export). Use Invoke-1cIbcmdDump without -NoStaging. exit=$ExitCode"
+    throw "ibcmd: export target must be empty. dump-full into a non-empty dir needs -WipeOutDir (after the user confirms src will be cleared). exit=$ExitCode"
   }
   throw "ibcmd exited with code $ExitCode"
 }
@@ -445,9 +425,7 @@ if ($OutDir) {
 }
 New-Item -ItemType Directory -Force -Path $dumpAbs | Out-Null
 $preserveRels = Get-PreserveRels $cfg $outRel
-$stagingDir = Get-StagingDir $cfg $ProjectRoot
 $parkDir = Get-ParkDir $cfg $ProjectRoot
-$useStaging = (-not $NoStaging) -and ($Action -eq "dump-full") -and (Test-NeedsDumpStaging $dumpAbs)
 $parkPreserve = (-not $NoStaging) -and ($Action -eq "dump-update") -and (Test-NeedsPreservePark $dumpAbs $preserveRels)
 
 $log = Join-Path $ProjectRoot ".1c\ibcmd-dump.log"
@@ -461,7 +439,6 @@ Write-Host "data=$dataDir"
 Write-Host "xmlDir=$dumpAbs"
 Write-Host "action=$Action"
 if ($preserveRels.Count -gt 0) { Write-Host "preserve=$($preserveRels -join ', ')" }
-if ($useStaging) { Write-Host "staging=$stagingDir" }
 if ($parkPreserve) { Write-Host "park=$parkDir" }
 Write-Host "update-db-cfg/apply: never (main config only)"
 
@@ -475,10 +452,21 @@ switch ($Action) {
     Write-Host "OK ping (export info)"
   }
   "dump-full" {
-    if ($useStaging) {
-      Reset-StagingDir $stagingDir
-      Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", $stagingDir)) $log
-      Merge-DumpStaging $stagingDir $dumpAbs $preserveRels
+    if (Test-DumpDirNotEmpty $dumpAbs) {
+      if (-not $WipeOutDir) {
+        Write-Host "NEED_WIPE=true"
+        throw "dump-full: $dumpAbs is not empty. Ask the user that XML in this folder will be deleted and rewritten from IB, then re-run with -WipeOutDir. ext/ and cfe/ outside src are not touched; leftover README/_extDataProcessors/_extensions inside src are parked and restored."
+      }
+      if (Test-NeedsPreservePark $dumpAbs $preserveRels) {
+        $moved = Move-PreserveAside $dumpAbs $parkDir $preserveRels
+        if ($moved.Count -gt 0) { Write-Host "parked=$($moved -join ', ')" }
+      }
+      try {
+        Clear-DumpDirContents $dumpAbs
+        Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", $dumpAbs)) $log
+      } finally {
+        Restore-PreserveFromPark $parkDir $dumpAbs
+      }
     } else {
       Invoke-IbcmdNoHang $ibcmdPath ($common + @("export", $dumpAbs)) $log
     }

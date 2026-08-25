@@ -1,5 +1,5 @@
 ---
-description: Расширения конфигурации — src/_extensions, skill 1c-external-cfe
+description: Расширения конфигурации — cfe/, skill 1c-external-cfe
 alwaysApply: true
 ---
 
@@ -8,9 +8,9 @@ alwaysApply: true
 При работе с расширениями / `.cfe`:
 
 1. Следуй skill **`1c-external-cfe`** (`Invoke-1cExternalCfe.ps1`).
-2. Исходники только в `src/_extensions/<Name>/` — не в корень `src/` как основную конфу.
+2. Исходники только в `cfe/<Name>/` (`cfe.dir`) — не в корень `src/` как основную конфу.
 3. Сборка → `artifacts/cfe/*.cfe`; бинарники не коммитить.
-4. `load-changed` / dump основной конфигурации не должен включать `_extensions`.
+4. `load-changed` / dump основной конфигурации не должен включать расширения (они вне `src/`; старый `_extensions` в `src/` фильтр designer-agent всё ещё отсекает).
 5. Dump/pack/scaffold — служебная `.1c/ib-ext` (общая с EPF): import конфы **без apply**; боевую ИБ не трогать.
 6. Исключения `apply` **только** на `.1c/ib-ext` (никогда на боевую):
    - `-AllowServiceIbApplyOnCompatMismatch` — compat mismatch;

@@ -68,7 +68,7 @@ description: >-
 …\Copy-1cProjectScaffold.ps1 -ProjectRoot "<workspace>"
 ```
 
-Копирует `.1c/*.example`, `src/**/README.md`, `docs/WORKFLOW|INITIAL_DUMP|TEMPLATE_UPGRADE|ATTRIBUTION.md`, `AGENTS.md`, GitLab MR-шаблон, **project** `.gitignore` (без игнора `src/**`).  
+Копирует `.1c/*.example`, `ext/README.md`, `cfe/README.md`, пустой `src/`, `docs/WORKFLOW|INITIAL_DUMP|TEMPLATE_UPGRADE|ATTRIBUTION.md`, `AGENTS.md`, GitLab MR-шаблон, **project** `.gitignore` (без игнора `src/**`).  
 Не копирует `.cursor/skills|rules|agents`. Существующие файлы не перезаписывает (без `-Force`).
 
 ## Шаг 1 — окружение (`boot-env`)

@@ -53,7 +53,7 @@ description: >-
    → `ConfigDumpInfo.xml` не от этой ИБ (другая база / битый маркер). Сделай `dump-full` в этот каталог, потом снова `--sync`.
 
 4. `Каталог … не пуст` (при полном `export`)  
-   → ibcmd требует **пустой** каталог. В `src/` обычно лежат `README.md`, `_extDataProcessors/`, `_extensions/` — скрипт `Invoke-1cIbcmdDump.ps1` **сам** выгружает во staging (`.1c/ibcmd-dump-staging/`) и мержит в целевой каталог, сохраняя preserve-пути. Для инкремента staging не нужен: preserve временно уезжает в `.1c/ibcmd-dump-park/`, `--sync` идёт сразу в `src/`.
+   → Нужен пустой каталог. Спроси пользователя, что XML в `src/` будет удалён и перезалит из ИБ, затем `dump-full -WipeOutDir` (без staging-копии). `ext/` и `cfe/` не трогаются. Хвосты старого layout внутри `src/` паркуются и возвращаются.
 
 5. Голый `ibcmd config …` (без `infobase`) при пользователях → интерактивный auth на stdin → «завис». Всегда `ibcmd infobase config …` + закрытый stdin.  
    Скрипты `Invoke-1cIbcmdDump` / `Pack` дополнительно **poll** stdout/stderr: при `Имя пользователя:` / `Пароль для` / `требуется аутентификация` процесс убивается сразу (не ждать ~1 мин).
@@ -90,6 +90,7 @@ description: >-
 ```powershell
 powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdDump.ps1" `
   -Action dump-full -ProjectRoot "<workspace>"
+# непустой src/: сначала согласие пользователя, затем -WipeOutDir
 ```
 
 | Action | ibcmd | Аналог designer-agent |
@@ -101,20 +102,22 @@ powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdDump.ps1" `
 
 `-OutDir` — каталог XML (дефолт `src`). Бенчи: `-OutDir .1c/dump-test/ibcmd`.
 
-### Staging / park (`src/` + README / `_extDataProcessors` / `_extensions`)
+### Wipe / park (`src/` чистый; `ext/` и `cfe/` снаружи)
 
 Проверено 8.3.23: полный `ibcmd export` требует **пустой** каталог; `export --sync` ломается, если рядом с XML есть посторонние файлы.
 
-`Invoke-1cIbcmdDump.ps1` по умолчанию:
+Поэтому XML внешек/расширений — в `ext/` и `cfe/`, не в `src/`. README в `src/` не класть.
+
+`Invoke-1cIbcmdDump.ps1`:
 
 | Action | Когда | Что делает |
 |--------|-------|------------|
-| `dump-full` | целевой каталог не пуст | export → `.1c/ibcmd-dump-staging/` → merge в `OutDir` |
-| `dump-update` | в каталоге есть preserve-пути | **Move** preserve → `.1c/ibcmd-dump-park/` → `--sync` сразу в `OutDir` → вернуть |
+| `dump-full` | `src/` пуст | `export` сразу в `src/` |
+| `dump-full` | `src/` не пуст | **стоп**, если нет `-WipeOutDir`. Агент спрашивает пользователя. С флагом: park хвостов старого layout → очистить `src/` → `export` в `src/` → вернуть хвосты. **Без** копии всего дампа через staging |
+| `dump-update` | в `src/` есть preserve-хвосты | **Move** в `.1c/ibcmd-dump-park/` → `--sync` в `src/` → вернуть |
+| `dump-update` | `src/` чистый | `--sync` сразу в `src/` |
 
-**Сохраняются**: `README.md`, `ext.dir` (обычно `_extDataProcessors/`), `cfe.dir` (обычно `_extensions/`), опционально `ibcmd.preservePaths` в `project.json`.
-
-Пустой бенч-каталог: `-NoStaging`. Designer-agent staging/park **не** нужны — дампит прямо в `src/`.
+`-WipeOutDir` **только** после явного «да» в чате (не `Read-Host`). `-NoStaging` на инкременте пропускает park (может упасть, если в `src/` ещё README/`_ext*`). Designer-agent park не нужен.
 
 ## Load / import (только основная)
 

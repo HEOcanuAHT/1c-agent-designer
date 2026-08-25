@@ -14,9 +14,9 @@ disable-model-invocation: true
 
 Работать с **внешними** обработками отдельно от метаданных конфигурации:
 
-1. `scaffold` — новый каркас в `src/_extDataProcessors`
+1. `scaffold` — новый каркас в `ext`
 2. `dump` — `.epf` → XML (в т.ч. файл из чата)
-3. `extract-from-config` — копия `DataProcessors/<Name>` → `_extDataProcessors` (без удаления из конфы)
+3. `extract-from-config` — копия `DataProcessors/<Name>` → `ext/` (без удаления из конфы)
 4. правки BSL/XML
 5. `pack` → `artifacts/ext/<Name>.epf`
 
@@ -26,16 +26,16 @@ disable-model-invocation: true
 
 | Путь | Назначение |
 |------|------------|
-| `src/_extDataProcessors/` | Hierarchical XML внешек (в git) |
+| `ext/` | Hierarchical XML внешек (в git) |
 | `artifacts/ext/` | собранные `.epf` (gitignore) |
 | `.1c/incoming/` | временные `.epf` из чата перед dump |
 
-Папка `_extDataProcessors` **не** входит в `/LoadConfigFromFiles` (фильтр в `1c-designer-agent`). Не клади внешки в `DataProcessors/` без явной просьбы пользователя.
+Папка `ext/` **не** входит в `/LoadConfigFromFiles`. Не клади внешки в `src/DataProcessors/` без явной просьбы пользователя. Старый `src/_extDataProcessors` фильтр designer-agent всё ещё отсекает.
 
 Структура одной обработки:
 
 ```
-src/_extDataProcessors/
+ext/
   <Name>.xml
   <Name>/
     Ext/ObjectModule.bsl
@@ -47,7 +47,7 @@ src/_extDataProcessors/
 `.1c/project.json` (+ `project.local.json` для auth):
 
 - `platformVersion` / `designer` — как у dump/load конфы
-- `ext.dir` — дефолт `src/_extDataProcessors`
+- `ext.dir` — дефолт `ext`
 - `ext.artifacts` — дефолт `artifacts/ext`
 - `ext.serviceIb` — **служебная файловая ИБ** для dump/pack (см. ниже)
 
@@ -120,7 +120,7 @@ Dump/pack внешек требуют ИБ с **метаданными осно�
 ### Вынос из конфигурации
 
 1. `extract-from-config -Name …` (источник `src/DataProcessors/<Name>`).
-2. Правки во `_extDataProcessors`.
+2. Правки в `ext/`.
 3. `pack`. Удаление объекта из конфы — **только** если пользователь явно попросил.
 
 ### Сборка после правок

@@ -26,7 +26,7 @@ description: >-
 - СКД / регистры / антипаттерны / архитектура → `std-dcs-design`, `std-registers-design`, `std-anti-patterns`, `std-architecture`, …
 - интеграции / лог → `std-integrations`, `std-logging`
 
-При правках в `src/_extensions/` дополнительно:
+При правках в `cfe/` дополнительно:
 - `std-extension-patterns`
 - skill `1c-external-cfe` → `reference-adopted.md` рядом с его SKILL.md (Adopted XML, protected `.bin`)
 
@@ -34,8 +34,8 @@ description: >-
 
 **Можно** — читать и менять файлы по заданию родителя:
 - `src/` — основная конфигурация (XML, BSL, формы)
-- `src/_extDataProcessors/` — внешние обработки
-- `src/_extensions/<Name>/` — расширения
+- `ext/` — внешние обработки
+- `cfe/<Name>/` — расширения
 
 **Можно (файловый XML-tooling)** — скрипты skill `1c-metadata-manage`
 (`<SkillHome>/tools/…`: form-edit/compile, meta-edit, skd-*, cfe-patch/borrow/validate и т.п.),
@@ -52,7 +52,7 @@ description: >-
 
 ## Расширения (файлы)
 
-Если ТЗ про `_extensions/<Name>/`:
+Если ТЗ про `cfe/<Name>/`:
 
 1. **Не выдумывай Adopted XML с нуля**, если родитель не дал шаблон/дамп. Минимум — `reference-adopted.md`. Иначе верни `Нужно решение`: «нужен dump заимствования из Конфигуратора».
 2. У Adopted обязательно: `ObjectBelonging`, `ExtendedConfigurationObject` (uuid **основной**), `GeneratedType`, `<ChildObjects/>`, при перехвате модуля — `PropertyState …=Extended`.

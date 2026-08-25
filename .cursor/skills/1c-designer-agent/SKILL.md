@@ -93,7 +93,7 @@ AgentMode всегда работает из `AgentBaseDir\<userDir>` (част�
 
 `load-changed -ListFile <path>` — явный список путей относительно `src/` (удобно для незакоммиченных файлов).
 
-Пути под `src/_extDataProcessors/` (внешние обработки) и `src/_extensions/` (расширения) **исключаются** из list-file — это не метаданные основной конфигурации (skills `1c-external-epf`, `1c-external-cfe`).
+Пути под `src/_extDataProcessors/` и `src/_extensions/` (старый layout) **исключаются** из list-file. Актуальные внешки/расширения лежат в `ext/` и `cfe/` — в `src/` их нет.
 
 ## Параллель с открытым Конфигуратором (файловая ИБ)
 

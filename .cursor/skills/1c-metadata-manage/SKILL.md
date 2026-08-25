@@ -17,8 +17,8 @@ disable-model-invocation: true
 | Задача | Канон шаблона |
 |--------|----------------|
 | Dump/load XML основной конфы | `1c-ibcmd-pack` / `1c-designer-agent` (**без** update-db-cfg) |
-| EPF pack/dump/scaffold | `1c-external-epf` → `src/_extDataProcessors/`, `.1c/ib-ext` |
-| CFE pack/dump/scaffold в артефакты | `1c-external-cfe` → `src/_extensions/` |
+| EPF pack/dump/scaffold | `1c-external-epf` → `ext/`, `.1c/ib-ext` |
+| CFE pack/dump/scaffold в артефакты | `1c-external-cfe` → `cfe/` |
 | Bootstrap / sync | `1c-project-bootstrap` / `1c-template-sync` |
 
 Этот skill — **сборка/правка XML** (UUID, ChildObjects, Form.xml, СКД, роли, borrow CFE) и валидация скриптами.
@@ -49,8 +49,8 @@ disable-model-invocation: true
 powershell.exe -NoProfile -File "<SkillHome>/tools/1c-meta-validate/scripts/meta-validate.ps1" ...
 ```
 
-Расширения: XML-исходники в `src/_extensions/<Name>/` (не корень `src/` как у upstream).  
-Внешние обработки: `src/_extDataProcessors/` + skill `1c-external-epf` (здесь нет epf-build/dump).
+Расширения: XML-исходники в `cfe/<Name>/` (не корень `src/` как у upstream).  
+Внешние обработки: `ext/` + skill `1c-external-epf` (здесь нет epf-build/dump).
 
 ## Домены
 

@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.17.1",
+  "version": "2026.08.24.1",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -28,6 +28,8 @@
   ],
   "neverTouch": [
     "src",
+    "ext",
+    "cfe",
     ".1c/project.json",
     ".1c/project.local.json",
     ".1c/ib-dev",
@@ -37,6 +39,10 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.24.1",
+      "summary": "EPF/CFE XML: ext/ и cfe/ (не внутри src/). dump-full: спросить и очистить src (-WipeOutDir), без staging-копии. dump-update — сразу в src/."
+    },
     {
       "since": "2026.08.17.1",
       "summary": "Cursor Plugin MVP: skills/rules из плагина; bootstrap копирует каркас в пустой проект. Клоны с .cursor/skills — dual-mode."

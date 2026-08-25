@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ## Цель
 
-1. `scaffold` — пустое расширение в `src/_extensions/<Name>/`
+1. `scaffold` — пустое расширение в `cfe/<Name>/`
 2. `dump` — `.cfe` → XML
 3. правки BSL/XML — `/implementer` (Adopted XML: `reference-adopted.md`)
 4. `pack` → `artifacts/cfe/<Name>.cfe`
@@ -23,15 +23,15 @@ disable-model-invocation: true
 
 | Путь | Назначение |
 |------|------------|
-| `src/_extensions/<Name>/` | Hierarchical XML |
+| `cfe/<Name>/` | Hierarchical XML |
 | `artifacts/cfe/` | `.cfe` (gitignore) |
 | `.1c/cfe-*.log` | логи scaffold/dump/pack (UTF-8) |
 
-`_extensions` не входит в dump/load основной конфы.
+`cfe/` не входит в dump/load основной конфы.
 
 ## Конфиг
 
-- `cfe.dir` / `cfe.artifacts` — дефолты `src/_extensions`, `artifacts/cfe`
+- `cfe.dir` / `cfe.artifacts` — дефолты `cfe`, `artifacts/cfe`
 - `ext.serviceIb` — общая служебная ИБ с внешками
 
 ## Служебная ИБ
@@ -92,7 +92,7 @@ COM на `.1c/ib-ext` (`V83.COMConnector` + `QuerySchema` / `FindParameters`). �
 **Режим агента (opt-in):** rule `1c-query-validate` — по умолчанию выкл.; «проверяй запросы» → `.1c/query-validate.mode=on`; validate только оркестратор, пачкой с `-ReuseOnly`.
 | Action | Параметры | Результат |
 |--------|-----------|-----------|
-| `scaffold` | `-Name` [`-Prefix`] [`-Synonym`] [`-Purpose`] | `src/_extensions/<Name>/` + явный `NamePrefix` |
+| `scaffold` | `-Name` [`-Prefix`] [`-Synonym`] [`-Purpose`] | `cfe/<Name>/` + явный `NamePrefix` |
 | `dump` | `-CfePath` `-Name` | XML в `cfe.dir/<Name>/` |
 | `pack` | `-Name` или `-XmlDir` | `.cfe` в `cfe.artifacts` |
 
@@ -131,7 +131,7 @@ COM на `.1c/ib-ext` (`V83.COMConnector` + `QuerySchema` / `FindParameters`). �
 ## Правила
 
 1. Не коммитить `.cfe` / `artifacts/`.
-2. Исходники только в `src/_extensions/`.
+2. Исходники только в `cfe/`.
 3. Dump/pack/scaffold — служебная `.1c/ib-ext`.
 4. `config apply` на служебной — **только** с `-AllowServiceIbApplyOnCompatMismatch`. На боевой ИБ — никогда.
 5. Установка `.cfe` в боевую ИБ — вручную пользователем.

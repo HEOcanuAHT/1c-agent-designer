@@ -13,7 +13,7 @@
     "password": ""
   },
   "ext": {
-    "dir": "src/_extDataProcessors",
+    "dir": "ext",
     "artifacts": "artifacts/ext",
     "serviceIb": {
       "enabled": true,
@@ -22,7 +22,7 @@
     }
   },
   "cfe": {
-    "dir": "src/_extensions",
+    "dir": "cfe",
     "artifacts": "artifacts/cfe"
   }
 }

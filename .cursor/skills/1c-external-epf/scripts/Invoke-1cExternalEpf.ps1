@@ -27,7 +27,7 @@ $ExternalClassId = "c3831ec8-d8d5-4f93-8a22-f9bfae07327f"
 
 function Get-ExtDirRel($Cfg) {
   if ($Cfg.ext -and $Cfg.ext.dir) { return ([string]$Cfg.ext.dir -replace "\\", "/").TrimEnd("/") }
-  return "src/_extDataProcessors"
+  return "ext"
 }
 
 function Get-ArtifactsRel($Cfg) {

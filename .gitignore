@@ -50,13 +50,14 @@ logs/
 artifacts/
 agent-dump-test/
 
-# Template: src/ stays a skeleton. Experimental dumps are local.
+# Template: src/ is the platform dump dir (empty here). Experimental dumps stay local.
 src/**
-!src/README.md
-!src/_extDataProcessors/
-!src/_extDataProcessors/**
-!src/_extensions/
-!src/_extensions/**
+
+# Template: EPF/CFE skeletons only (projects commit XML under ext/ and cfe/).
+ext/**
+!ext/README.md
+cfe/**
+!cfe/README.md
 
 # OS
 Thumbs.db

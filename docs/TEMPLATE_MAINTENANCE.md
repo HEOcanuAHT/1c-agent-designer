@@ -29,12 +29,12 @@ cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "<аб�
 
 | Можно | Нельзя |
 |--------|--------|
-| `.cursor-plugin/plugin.json`, `.cursor/skills` (bootstrap, std-*, 1c-forms, 1c-metadata-manage, designer-agent, ibcmd-pack, external-epf/cfe, tech-decisions) | XML конкретной конфы в `src/` (кроме `src/README.md`, `src/_extDataProcessors/README.md`, `src/_extensions/README.md`) |
+| `.cursor-plugin/plugin.json`, `.cursor/skills` (bootstrap, std-*, 1c-forms, 1c-metadata-manage, designer-agent, ibcmd-pack, external-epf/cfe, tech-decisions) | XML конкретной конфы в `src/` |
 | `.cursor/agents/implementer.md` | Секреты, пути к личным ИБ |
 | `.cursor/rules`, каркас `.1c/*.example`, `docs/*` шаблона | Коммиты под одну конфу без обобщения |
-| `.gitignore`, MR-шаблон, README шаблона | |
+| `.gitignore`, MR-шаблон, README шаблона, `ext/README.md`, `cfe/README.md` | |
 
-`src/` в шаблоне — пустой каркас: `README.md`, `src/_extDataProcessors/README.md`, `src/_extensions/README.md` (без XML конкретной конфы/внешек/расширений).
+`src/` в шаблоне пустой (дамп конфы). Каркас внешек/расширений: `ext/README.md`, `cfe/README.md`.
 
 ## Git
 

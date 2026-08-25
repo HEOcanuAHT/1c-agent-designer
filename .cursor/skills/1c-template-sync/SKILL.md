@@ -28,7 +28,8 @@ description: >-
 
 **Никогда не трогать:**
 
-- `src/` (XML конфигурации и внешние обработки проекта)
+- `src/` (XML конфигурации)
+- `ext/`, `cfe/` (XML внешек и расширений проекта)
 - `.1c/project.json`, `.1c/project.local.json` (кроме поля `template.*` после sync)
 - каталоги ИБ / `artifacts/` / runtime `.1c/*`
 

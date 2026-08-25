@@ -55,26 +55,50 @@
 
 ### `ibcmd` — только настройки инструмента
 
-`dataDir`, `stagingDir`, `parkDir`, `preservePaths` — без подключения к ИБ.
+`dataDir`, `parkDir`, `preservePaths` — без подключения к ИБ. `stagingDir` больше не используется.
 
-Полный `export` в непустой `src/`: скрипт сам делает staging (`.1c/ibcmd-dump-staging/`) и сохраняет `README.md`, `_extDataProcessors/`, `_extensions/`.  
-Инкремент: preserve → `.1c/ibcmd-dump-park/`, `--sync` сразу в `src/`.
+Полный `export` в непустой `src/`: спросить пользователя → `-WipeOutDir` (очистить `src/`, export сразу туда).  
+Инкремент: `--sync` сразу в `src/`. Park только для хвостов старого layout внутри `src/`.
 
 ### Внешние обработки и расширения
 
+Исходники **вне** `src/`:
+
 ```json
 "ext": {
-  "dir": "src/_extDataProcessors",
+  "dir": "ext",
   "artifacts": "artifacts/ext",
   "serviceIb": { "enabled": true, "dbPath": ".1c/ib-ext", "dataDir": ".1c/ib-ext-data" }
 },
 "cfe": {
-  "dir": "src/_extensions",
+  "dir": "cfe",
   "artifacts": "artifacts/cfe"
 }
 ```
 
-Дефолты совпадают — блоки опциональны.
+Sync tooling **не** двигает папки и **не** правит `ext.dir` / `cfe.dir` в рабочем `project.json`. В живом проекте после обновления плагина (Reload Window) вставь агенту промпт ниже.
+
+### Промпт агенту в живом проекте (≥ 2026.08.24.1)
+
+```
+Миграция раскладки шаблона 2026.08.24.1. Сделай сам, без лишних вопросов если пути старые есть на диске.
+
+Цель:
+- src/ — только XML основной конфы (дамп платформы). Без README.md, без _extDataProcessors, без _extensions.
+- XML внешек → ext/  (ext.dir)
+- XML расширений → cfe/  (cfe.dir)
+
+Шаги:
+1. Покажи что есть: src/_extDataProcessors, src/_extensions, src/README.md, блоки ext/cfe в .1c/project.json (и project.local.json, если там dir).
+2. Если src/_extDataProcessors есть — git mv (или Move-Item, если не в git) в ext/. Если ext/ уже есть — смержи содержимое, не затирай чужое.
+3. Если src/_extensions есть — то же в cfe/.
+4. src/README.md удали, только если это каркас шаблона (про выгрузку/staging/_ext*), не произвольный файл проекта.
+5. В .1c/project.json выставь "ext":{"dir":"ext"} и "cfe":{"dir":"cfe"} (остальные поля ext/cfe не трогай). Удали ibcmd.stagingDir, если есть. То же в project.local.json, только если там переопределены dir.
+6. Не трогай XML конфы в src/ (Catalogs, Documents, Configuration.xml, …), .1c/ib-ext, artifacts, пароли.
+7. git status: только перенос папок + правки json. Не коммить, пока не попрошу.
+
+Если папок src/_ext* нет и dir уже ext/cfe — напиши «уже мигрировано» и ничего не меняй.
+```
 
 ### CFE: CompatibilityMode и имена (≥ 2026.07.31.1)
 

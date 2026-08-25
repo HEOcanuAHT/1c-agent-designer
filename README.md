@@ -5,8 +5,8 @@
 - иерархическая выгрузка в `src/`
 - skills стандартов ИТС (`coding-standards`, `std-*`)
 - dump/load: предпочтительно **ibcmd** (`1c-ibcmd-pack`), запасной путь — `1c-designer-agent`
-- внешние обработки через `1c-external-epf` (`src/_extDataProcessors`)
-- расширения через `1c-external-cfe` (`src/_extensions` → `.cfe`)
+- внешние обработки через `1c-external-epf` (`ext`)
+- расширения через `1c-external-cfe` (`cfe` → `.cfe`)
 - упаковка `.cf` через `1c-ibcmd-pack`
 - субагент `/implementer` (только файлы; сборка и ИБ — основной агент)
 
@@ -59,6 +59,8 @@ cd my-config
   skills/                # bootstrap, template-sync, coding-standards, std-*, designer-agent, …
 .1c/                     # project.json.example, template-manifest.json, secrets example
 docs/
-src/                     # XML конфы + _extDataProcessors (внешки) + _extensions (.cfe)
+src/                     # XML основной конфы (только дамп платформы)
+ext/                     # XML внешних обработок
+cfe/                     # XML расширений (.cfe)
 .gitlab/merge_request_templates/
 ```

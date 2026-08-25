@@ -25,9 +25,8 @@ $relFiles = @(
   ".1c/project.local.json.example",
   ".1c/README.md",
   ".1c/template-manifest.json",
-  "src/README.md",
-  "src/_extDataProcessors/README.md",
-  "src/_extensions/README.md",
+  "ext/README.md",
+  "cfe/README.md",
   "docs/WORKFLOW.md",
   "docs/INITIAL_DUMP.md",
   "docs/TEMPLATE_UPGRADE.md",
@@ -56,6 +55,12 @@ function Copy-RelFile([string]$Rel) {
 }
 
 foreach ($rel in $relFiles) { Copy-RelFile $rel }
+
+$srcDir = Join-Path $ProjectRoot "src"
+if (-not (Test-Path -LiteralPath $srcDir)) {
+  New-Item -ItemType Directory -Path $srcDir -Force | Out-Null
+  Write-Host "MKDIR src"
+}
 
 $giSrc = Join-Path $PSScriptRoot "..\scaffold\gitignore"
 $giDst = Join-Path $ProjectRoot ".gitignore"

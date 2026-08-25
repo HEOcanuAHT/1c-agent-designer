@@ -32,7 +32,7 @@ $CommonPath = Join-Path $ScriptDir "..\..\1c-external-epf\scripts\Common-Service
 
 function Get-CfeDirRel($Cfg) {
   if ($Cfg.cfe -and $Cfg.cfe.dir) { return ([string]$Cfg.cfe.dir -replace "\\", "/").TrimEnd("/") }
-  return "src/_extensions"
+  return "cfe"
 }
 
 function Get-CfeArtifactsRel($Cfg) {
@@ -115,7 +115,7 @@ function Find-ExtensionXmlDir([string]$CfeRootAbs, [string]$Name) {
   $candidate = Join-Path $CfeRootAbs $Name
   $cfg = Join-Path $candidate "Configuration.xml"
   if (Test-Path -LiteralPath $cfg) { return $candidate }
-  throw "Extension XML not found: $cfg (expected src/_extensions/<Name>/Configuration.xml)"
+  throw "Extension XML not found: $cfg (expected cfe/<Name>/Configuration.xml or cfe.dir)"
 }
 
 function Get-ServiceContext($Cfg, [string]$ProjectRoot, [string]$SrcAbs) {

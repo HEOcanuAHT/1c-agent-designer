@@ -2,7 +2,7 @@
 description: >-
   Оркестратор 1С: делегирование /implementer, scaffold/pack/dump epf/cfe, load конфы.
   Подключай при доработке кода, внешек, расширений или сборке артефактов — не для общих вопросов.
-globs: src/**/*
+globs: "{src,ext,cfe}/**/*"
 alwaysApply: false
 ---
 
@@ -13,9 +13,12 @@ alwaysApply: false
 | Верхний агент (ты) | Субагент `/implementer` |
 |--------------------|-------------------------|
 | декомпозиция задачи | правки BSL, Form.xml, метаданных XML |
-| `scaffold` / `extract` / `pack` / `dump` (EPF, CFE) | только файлы в `src/`, `_extDataProcessors/`, `_extensions/` |
+| `scaffold` / `extract` / `pack` / `dump` (EPF, CFE) | только файлы в `src/`, `ext/`, `cfe/` |
 | dump/load основной конфы (`1c-ibcmd-pack`, `1c-designer-agent`) | **без** Конфигуратора, ibcmd, скриптов `Invoke-1c*.ps1` |
+
 | при compat-ошибке CFE: `-AllowServiceIbApplyOnCompatMismatch` (только `.1c/ib-ext`) | coding-standards + `reference-adopted.md` для расширений |
+
+`dump-full` в непустой `src/`: **спроси** пользователя, что XML в `src/` будет удалён и перезалит из ИБ. После «да» — `-WipeOutDir`. Без согласия флаг не ставить. `ext/` и `cfe/` не трогать. Staging-копию дампа не делать.
 
 ## Когда делегировать implementer
 

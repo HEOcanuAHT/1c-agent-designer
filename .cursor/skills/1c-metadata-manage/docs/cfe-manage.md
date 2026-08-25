@@ -1,4 +1,4 @@
-﻿<!-- Adapted from comol/ai_rules_1c / cc-1c-skills. IB dump/load/EPF pack: use template skills. -->
+<!-- Adapted from comol/ai_rules_1c / cc-1c-skills. IB dump/load/EPF pack: use template skills. -->
 
 # 1C Extension Manage — Init, Borrow, Diff, Patch, Validate
 
@@ -17,7 +17,7 @@ powershell.exe -NoProfile -File .cursor/skills/1c-metadata-manage/tools/1c-cfe-m
 | `Name` | Extension name (required) | — |
 | `Synonym` | Synonym | = Name |
 | `NamePrefix` | Prefix for own objects | = Name + "_" |
-| `OutputDir` | Output directory | `src/_extensions/<Name>` |
+| `OutputDir` | Output directory | `cfe/<Name>` |
 | `Purpose` | `Patch` / `Customization` / `AddOn` | `Customization` |
 | `Version` | Extension version | — |
 | `Vendor` | Vendor | — |
