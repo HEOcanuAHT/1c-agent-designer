@@ -1,6 +1,9 @@
 ---
-description: Designer Agent dump/load — не обновлять конфигурацию БД
-alwaysApply: true
+description: >-
+  Dump/load XML через designer-agent (без update-db-cfg).
+  Use when dump, load-changed, DumpConfigToFiles, загрузка XML в ИБ,
+  designer-agent, Invoke-1cDesignerAgent.
+alwaysApply: false
 ---
 
 # 1C Designer Agent: загрузка XML

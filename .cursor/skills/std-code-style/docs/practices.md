@@ -41,7 +41,7 @@ Exception: simple `Prefix + Suffix` is acceptable when it reads better.
 - `Попытка ... Исключение` around DB reads/writes is **PROHIBITED**, except for explicit, well-justified transaction control.
 - `ЗаписьЖурналаРегистрации()` is **PROHIBITED** unless explicitly requested by the task.
 - `Сообщить()` for user notifications is **PROHIBITED**. Use `ОбщегоНазначения.СообщитьПользователю` (server) / `ОбщегоНазначенияКлиент.СообщитьПользователю` (client).
-- `Выполнить()` and `Вычислить()` are **PROHIBITED** without extreme necessity (see `dev-standards-architecture.md §3 → "Security"`).
+- `Выполнить()` and `Вычислить()` are **PROHIBITED** without extreme necessity (see `std-security`).
 - Hardcoded credentials (passwords, tokens, API keys) in code are **PROHIBITED**.
 - `?(Условие, Значение1, Значение2)` ternary operator is **PROHIBITED in any form**, including the simple non-nested case. Use `Если ... Иначе` or extract a small helper function. Rationale: keeps logic visible in step-debugger and code review. **[Project rule — stricter than ITS standard.]**
 - Boolean comparisons against `Истина` / `Ложь` are forbidden — use the boolean expression directly.
@@ -170,4 +170,4 @@ After any code change, perform a brief internal review. Scale it to the path:
 
 If issues are found, apply the validator budget from `поиск по src/ или optional MCP`: a blocking defect requires a clean confirming run on the changed state; non-blocking style noise does not start another AI-review loop. If the limit is exhausted without a clean pass after a blocking fix, do not declare the gate passed; report the artifact as unverified.
 
-Always consider whether an external transaction already exists (e.g. an object-write transaction) before opening a new one. See `platform-solutions.md` for the canonical templates.
+Always consider whether an external transaction already exists (e.g. an object-write transaction) before opening a new one. See `std-platform-solutions` for the canonical templates.

@@ -400,12 +400,9 @@ The upstream `cc-1c-skills` skills `epf-bsp-init` and `epf-bsp-add-command` are 
 
 No script files were brought into `tools/` — the operations are pure module-text edits performed by the agent, which is how upstream ships them as well.
 
-## MCP Integration
+## Related tools
 
-- **BSP docs (MCP optional)** — Find SSL module methods for BSP registration and verify correct API method names.
-- **Grep/Read src/ (MCP optional)** — Verify target metadata object names.
-- **Read object XML (MCP optional)** — Get full structure of target objects for registration.
-- **Grep src/ (MCP optional)** — Find existing handler patterns in the codebase.
+Grep/Read `src/`. BSP registration is module-text edits; patterns — `docs/ssl-patterns.md`. No MCP.
 
 ## SDD Integration
 

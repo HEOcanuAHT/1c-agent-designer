@@ -42,7 +42,7 @@ description: >-
 когда родитель просил править/дособрать XML в репозитории. Это не dump/load ИБ. `SkillHome` = каталог SKILL.md (плагин или клон), XML — в workspace `src/`.
 
 **Нельзя** — любое взаимодействие с ИБ и packaging tooling:
-- skills/rules `1c-designer-agent`, `1c-ibcmd-pack`, `1c-external-epf`, `1c-external-cfe`, `1c-project-bootstrap`
+- dump/load / pack конфы — skills `1c-dump`, `1c-ibcmd-pack`, `1c-designer-agent`, `1c-external-epf`, `1c-external-cfe`, `1c-query-validate`, `1c-project-bootstrap`
 - скрипты `Invoke-1c*.ps1`, `ibcmd`, `1cv8 DESIGNER`, служебная `.1c/ib-ext`
 - `scaffold` / `pack` / `dump` / `load-changed` внешки и расширений (через `1c-external-*`), `config apply`, `update-db-cfg` / `/UpdateDBCfg`
 - правки `.1c/project.json`, `project.local.json`

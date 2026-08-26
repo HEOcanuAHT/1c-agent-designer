@@ -1,7 +1,10 @@
-# После sync шаблона в живом проекте
+# После обновления шаблона в живом проекте
 
 После `Sync-1cTemplate.ps1 -Action sync` сверь конфиг с актуальным шаблоном.  
 `project.json` / `project.local.json` sync **не перезаписывает** (кроме `template.version`).
+
+Канон полей: [`.1c/README.md`](../.1c/README.md) и `.1c/project.json.example`.  
+История breaking-changes — `upgradeNotes` в `.1c/template-manifest.json` (скрипт печатает `UPGRADE …`).
 
 Проекты **без** `.cursor/skills` в git: не sync, а обновление плагина (`git pull` шаблона + Reload Window).
 
@@ -13,72 +16,29 @@
 4. `ping` выбранным dump-инструментом.
 5. Отдельный коммит tooling (не смешивать с `src/`).
 
-## Ожидаемая форма `project.json` (текущая версия)
+## Эта версия (2026.08.26.6)
 
-### `tools.preferredDump`
+- `1c-metadata-manage` / `std-architecture` — короткие роутеры (детали в `docs/`).
+- Ownership запросов/C-S — у `std-queries` / `std-client-server`; запахи — `std-anti-patterns`.
+- CFE borrow/patch: вход через `1c-external-cfe`, tools остаются в `1c-metadata-manage`.
 
-`"ibcmd"` при доступе к SQL/файловой ИБ, иначе `"agent"`.
+## Если проект отстаёт
 
-### `infobase` — один блок для agent и ibcmd
+Кратко (детали — `upgradeNotes` манифеста):
 
-| `type` | Поля | designer-agent | ibcmd |
-|--------|------|----------------|-------|
-| `file` | `path` | `/F` | `--db-path` |
-| `ibname` | `name` + `dbms` | `/IBName` | SQL через `dbms` |
-| `server` | `server` + `dbms` | `/S` | SQL через `dbms` |
+| since | Что проверить |
+|-------|----------------|
+| 2026.08.26.6 | Роутеры metadata-manage / architecture; не тянуть старый монолит architecture |
+| 2026.08.26.5 | Skills `1c-runtime`, `1c-dump`; Common-* не из ibcmd-pack |
+| 2026.08.26.4 | AlwaysApply → `1c-invariants`; канон полей `.1c/README.md` |
+| 2026.08.26.3 | (legacy) Common-* были в `1c-ibcmd-pack/scripts/` |
+| 2026.08.26.2 | Query validate — skill `1c-query-validate` |
+| 2026.08.26.1 | Служебная ИБ: save→load без apply |
+| 2026.08.24.1 | XML внешек/расширений в `ext/` и `cfe/` |
 
-`dbms` — только в `infobase`, не в `ibcmd`. Для файловой ИБ блок `dbms` не нужен.
+Sync tooling **не** двигает папки и **не** правит `ext.dir` / `cfe.dir` в рабочем `project.json`. Если `src/_extDataProcessors` или `src/_extensions` ещё есть — вставь агенту промпт ниже (после Reload Window).
 
-Пример серверной ИБ:
-
-```json
-"infobase": {
-  "type": "ibname",
-  "name": "My Base",
-  "dbms": {
-    "kind": "MSSQLServer",
-    "server": "sql-host",
-    "name": "db_name",
-    "windowsAuth": true
-  }
-}
-```
-
-### Auth — два слоя (не путать)
-
-| Слой | Где | Назначение |
-|------|-----|------------|
-| SQL | `infobase.dbms.windowsAuth` / `dbms.credentialTarget` | только ibcmd → СУБД |
-| 1С | `auth.credentialTarget` (CredMgr) | пользователь ИБ в ibcmd и designer-agent |
-
-`auth.credentialTarget` — **не** логин SQL. Пароль 1С — в Credential Manager, не в git.
-
-### `ibcmd` — только настройки инструмента
-
-`dataDir`, `parkDir`, `preservePaths` — без подключения к ИБ. `stagingDir` больше не используется.
-
-Полный `export` в непустой `src/`: спросить пользователя → `-WipeOutDir` (очистить `src/`, export сразу туда).  
-Инкремент: `--sync` сразу в `src/`. Park только для хвостов старого layout внутри `src/`.
-
-### Внешние обработки и расширения
-
-Исходники **вне** `src/`:
-
-```json
-"ext": {
-  "dir": "ext",
-  "artifacts": "artifacts/ext",
-  "serviceIb": { "enabled": true, "dbPath": ".1c/ib-ext", "dataDir": ".1c/ib-ext-data" }
-},
-"cfe": {
-  "dir": "cfe",
-  "artifacts": "artifacts/cfe"
-}
-```
-
-Sync tooling **не** двигает папки и **не** правит `ext.dir` / `cfe.dir` в рабочем `project.json`. В живом проекте после обновления плагина (Reload Window) вставь агенту промпт ниже.
-
-### Промпт агенту в живом проекте (≥ 2026.08.24.1)
+### Промпт: старый layout `src/_ext*` (≤ 2026.08.24.1)
 
 ```
 Миграция раскладки шаблона 2026.08.24.1. Сделай сам, без лишних вопросов если пути старые есть на диске.
@@ -100,33 +60,10 @@ Sync tooling **не** двигает папки и **не** правит `ext.di
 Если папок src/_ext* нет и dir уже ext/cfe — напиши «уже мигрировано» и ничего не меняй.
 ```
 
-### Служебная ИБ EPF/CFE (≥ 2026.08.26.1)
-
-Для C/S (`infobase.dbms`) и файловой боевой ИБ pack идёт через `config save` → `config load` в `.1c/ib-ext` **без apply**. XML import из `src/` — fallback. На больших Hierarchical-дампах import может hang — не гонять его «для проверки».
-
-`.cf` с живой ИБ, штамп — `src/Configuration.xml`. Если `src/` разъехался с ИБ — в служебной будет конфа ИБ (для `cfg:*` обычно ок).
-
-### CFE: CompatibilityMode и имена (≥ 2026.07.31.1)
-
-При ошибке «режим совместимости… не соответствует версии ИБ» на scaffold/pack:  
-`-AllowServiceIbApplyOnCompatMismatch` (apply **только** служебной `.1c/ib-ext`).  
-Имена расширения для ibcmd — ASCII. Adopted XML: skill `1c-external-cfe` / `reference-adopted.md`.
-
-### Роли агентов
-
-- `/implementer` — только BSL/XML в репозитории.
-- Основной агент — scaffold/pack/dump, load конфы (rule `1c-orchestrator`).
-
-### Knowledge / XML (с 2026.07.31.2)
-
-После sync появятся skills: `1c-forms`, `1c-metadata-manage`, `std-anti-patterns`, `std-extension-patterns`, `std-dcs-design`, `std-registers-design`, `std-architecture`, `std-logging`, `std-integrations`, …  
-Роутер — обновлённый `coding-standards`.  
-**Не** используют upstream dump/load/`UpdateDBCfg`/epf-build — канон по-прежнему `1c-ibcmd-pack` / `1c-designer-agent` / `1c-external-*`.
-
 ## Для разработчиков шаблона
 
 При breaking change для живых проектов:
 
-1. Поднять `version` в `.1c/template-manifest.json` (+ `template.version` в example).
-2. Обновить **этот файл** — актуальная форма конфига, без истории версий.
+1. Поднять `version` в `.1c/template-manifest.json` (+ `template.version` в example, `version` в `plugin.json`).
+2. Обновить **этот файл** — только дельта «что сделать после sync», без копии схемы из `.1c/README.md`.
 3. Краткий пункт в `upgradeNotes` манифеста (для одного вывода `UPGRADE` после sync).

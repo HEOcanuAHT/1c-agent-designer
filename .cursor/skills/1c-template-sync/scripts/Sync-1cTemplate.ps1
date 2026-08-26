@@ -39,10 +39,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Read-JsonFile([string]$Path) {
-  if (-not (Test-Path -LiteralPath $Path)) { return $null }
-  return (Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json)
-}
+. (Join-Path $PSScriptRoot "..\..\1c-runtime\scripts\Common-Project.ps1")
 
 function Get-ManifestPath([string]$Root) {
   return (Join-Path $Root ".1c\template-manifest.json")
@@ -108,7 +105,7 @@ function Write-UpgradeNotes {
     [string]$ProjectRoot
   )
   if (-not $FromVersion) {
-    Write-Host "UPGRADE first-sync: read docs/TEMPLATE_UPGRADE.md and align .1c/project.json with .1c/project.json.example"
+    Write-Host "UPGRADE first-sync: read .1c/README.md (schema) and docs/TEMPLATE_UPGRADE.md (delta); align project.json with project.json.example"
     return
   }
   if ((Compare-TemplateVersion $FromVersion $ToVersion) -ge 0) { return }

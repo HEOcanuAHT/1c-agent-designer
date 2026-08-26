@@ -1,7 +1,7 @@
 ﻿<#
 .SYNOPSIS
   Configuration extensions (.cfe): scaffold / dump (.cfe->XML) / pack (XML->.cfe).
-  Reuses service IB (.1c/ib-ext) from Common-ServiceIb.ps1 (same as EPF).
+  Reuses service IB (.1c/ib-ext) from 1c-runtime Common-ServiceIb.ps1 (same as EPF).
 #>
 [CmdletBinding()]
 param(
@@ -27,7 +27,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$CommonPath = Join-Path $ScriptDir "..\..\1c-external-epf\scripts\Common-ServiceIb.ps1"
+$CommonPath = Join-Path $ScriptDir "..\..\1c-runtime\scripts\Common-ServiceIb.ps1"
 . (Resolve-Path -LiteralPath $CommonPath).Path
 
 function Get-CfeDirRel($Cfg) {

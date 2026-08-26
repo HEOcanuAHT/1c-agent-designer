@@ -18,7 +18,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 Registers are the spine of any non-trivial 1C configuration; mistakes here are expensive to undo because they are usually wired into document posting, RLS, and reports. This file consolidates the design decisions worth thinking through **before** running the metadata skill.
 
-> **Scope.** This file owns *design* rules. XML / schema mechanics live in `.cursor/.cursor/skills/1c-metadata-manage/docs/meta-manage.md`. Queries against registers — start at the router `query-design.md` (hard rules in `dev-standards-architecture.md §3 → "Queries"`, anti-patterns in `anti-patterns.md`).
+> **Scope.** This file owns *design* rules. XML / schema mechanics live in `1c-metadata-manage` (`docs/meta-manage.md`). Queries against registers — `std-queries` / `std-query-optimization`; smells — `std-anti-patterns`.
 
 ## 1. Choosing the register type
 
@@ -74,11 +74,11 @@ When a register has balances, the platform exposes virtual tables:
 | `СрезПервых(&Период, Условие)` (info reg.) | First record on or after the date. |
 | `СрезПоследних(&Период, Условие)` (info reg.) | Last record on or before the date. |
 
-**Filter virtual tables via parameters, not `ГДЕ` after the call** — hard rule (owner: `dev-standards-architecture.md §3 → "Queries"`; catalog entry with fix template: `anti-patterns.md §4`). Putting the filter into the parameter pushes it into the engine and uses indexes; putting it into `ГДЕ` reads the full virtual table first.
+**Filter virtual tables via parameters, not `ГДЕ` after the call** — hard rule (owner: `std-queries` / `std-query-optimization`; catalog: `std-anti-patterns`). Putting the filter into the parameter pushes it into the engine and uses indexes; putting it into `ГДЕ` reads the full virtual table first.
 
 ## 8. Posting / reposting
 
-- **`ОбработкаПроведения`** lives in the document's object module. Inside it: lock first, read second, write third (see `locks-and-transactions.md`). Do not call user dialogs, long-running operations, or external services inside the procedure.
+- **`ОбработкаПроведения`** lives in the document's object module. Inside it: lock first, read second, write third (see `std-transactions-locks`). Do not call user dialogs, long-running operations, or external services inside the procedure.
 - **`Движения.X.Записывать = Истина`** controls whether the platform writes the in-memory tabular section to the register on commit. Set it once; do not toggle inside loops.
 - **Do not modify movements outside `ОбработкаПроведения` / `ОбработкаУдаленияПроведения`.** Direct manipulation of `Движения.X` from external code (e.g. a data processor) bypasses sequencing logic and creates inconsistent data.
 - **Re-posting (`ОбработкаЗаполнения` is not it).** For mass re-post operations, use `Документы.X.Выбрать()` + `Записать(РежимЗаписиДокумента.Проведение)` in a transaction-per-document loop with explicit cancellation on errors.
@@ -101,8 +101,8 @@ When a register has balances, the platform exposes virtual tables:
 
 | Concern | File |
 |---|---|
-| XML / schema mechanics for register objects | `.cursor/.cursor/skills/1c-metadata-manage/docs/meta-manage.md` (skill) |
-| Query anti-patterns (loops, dot-notation, subselects) | `anti-patterns.md` |
-| Authoritative query rules | `dev-standards-architecture.md §3 → "Queries"` |
-| Locks during posting | `locks-and-transactions.md` |
+| XML / schema mechanics for register objects | `1c-metadata-manage (`docs/meta-manage.md`)` (skill) |
+| Query anti-patterns (loops, dot-notation, subselects) | `std-anti-patterns` |
+| Authoritative query rules | `std-queries` / `std-query-optimization` |
+| Locks during posting | `std-transactions-locks` |
 | Reporting against registers (DCS) | `dcs-design.md` |

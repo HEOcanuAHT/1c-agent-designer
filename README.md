@@ -4,10 +4,11 @@
 
 - иерархическая выгрузка в `src/`
 - skills стандартов ИТС (`coding-standards`, `std-*`)
-- dump/load: предпочтительно **ibcmd** (`1c-ibcmd-pack`), запасной путь — `1c-designer-agent`
+- dump/load: skill **`1c-dump`** (`tools.preferredDump` → ibcmd или designer-agent)
 - внешние обработки через `1c-external-epf` (`ext`)
 - расширения через `1c-external-cfe` (`cfe` → `.cfe`)
-- упаковка `.cf` через `1c-ibcmd-pack`
+- проверка языка запросов: skill `1c-query-validate` (opt-in)
+- общий runtime: `1c-runtime`; упаковка `.cf` — `1c-ibcmd-pack`
 - субагент `/implementer` (только файлы; сборка и ИБ — основной агент)
 
 Предпочтительно: skills/rules живут в **плагине**, репозиторий конфы — `src/` + `.1c/`.  
@@ -55,7 +56,7 @@ cd my-config
 .cursor-plugin/plugin.json   # манифест Cursor Plugin
 .cursor/
   agents/implementer.md
-  rules/                 # bootstrap, plugin-paths, load без БД, git/XML
+  rules/                 # 1c-invariants (always); dump/epf/cfe/bootstrap — по задаче
   skills/                # bootstrap, template-sync, coding-standards, std-*, designer-agent, …
 .1c/                     # project.json.example, template-manifest.json, secrets example
 docs/

@@ -381,13 +381,9 @@ The PowerShell scripts under `tools/1c-role-{compile,info,validate}/scripts/` we
 - **`role-validate`** — auto-discovers metadata from the path to `Rights.xml`; `-MetadataPath` is no longer required, metadata-driven checks always run when the file is present.
 - **All 10 validators** (`role-validate`, `meta-validate`, `epf-validate`, `skd-validate`, `cf-validate`, `cfe-validate`, `form-validate`, `mxl-validate`, `subsystem-validate`, `interface-validate`) now emit a single one-liner by default; the full per-check trace is available via `-Detailed`. Each accepts a folder path as the primary file argument and resolves to the canonical XML file (e.g. `Roles/MyRole` → `Roles/MyRole/Ext/Rights.xml`). The universal `-Path` parameter is supported in addition to the legacy named parameters (`-RolePath`, `-FormPath`, `-TemplatePath`, `-ObjectPath`, …).
 
-## MCP Integration
+## Related tools
 
-- **Grep/Read src/ (MCP optional)** — Verify metadata object names when defining rights; verify objects referenced in role rights exist in the configuration.
-- **Read object XML (MCP optional)** — Get full object structure to understand which attributes/tabular parts need specific access rights.
-- **get_xsd_schema** — Get XSD schema for role XML (`object_type="Роль"`). Use before generating role definitions.
-- ***-validate scripts** — Validate generated role XML against XSD.
-- **BSP docs (MCP optional)** — Find SSL role patterns.
+Grep/Read `src/`. Role scripts: `role-info`, `role-compile`, `role-validate`. No MCP.
 
 ## SDD Integration
 

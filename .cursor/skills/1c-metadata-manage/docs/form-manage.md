@@ -864,16 +864,9 @@ In addition to the form-compile / form-info / form-add / form-edit / form-remove
 - Platform 8.5 support — new compatibility / interface mode values and the new XML header format.
 - Brief output by default; full per-check trace via `-Detailed`. The `-Path` parameter accepts both a `Form.xml` file and a `Forms/<Name>` folder (auto-resolves to `Forms/<Name>/Ext/Form.xml`).
 
-## MCP Integration
+## Related tools
 
-- **get_object_dossier** — Comprehensive structural passport of the metadata object including all its forms, attributes, dependencies, and code in one call. Use as the first step before form design.
-- **search_forms** — Find similar existing forms in the configuration by object name, form name, or title. Use as a starting point for new form design.
-- **inspect_form_layout** — Get full form structure: element hierarchy with types and data bindings, form attributes, commands, event handlers, visibility, accessibility. Use to study existing forms before creating or modifying.
-- **Grep/Read src/ (MCP optional)** — Verify metadata object existence and structure before creating forms; verify object types, attribute names, and metadata types when defining attributes. Use `names_only=true` to get compact object lists.
-- **Read object XML (MCP optional)** — Get full attribute types, tabular parts, synonyms for the metadata object the form belongs to.
-- **get_xsd_schema** — Get XSD schema for form XML (`object_type="Форма"`). Use before generating or modifying Form.xml to know valid structure.
-- ***-validate scripts** — Validate generated or modified Form.xml against XSD (`object_type="Форма"`). Always validate before committing.
-- **search in src/ (MCP optional)** — Find real form examples in the codebase, similar form implementations, and patterns when designing forms.
+Grep/Read `src/`. Form scripts: `form-info`, `form-edit`, `form-compile`, `form-validate`, `form-scaffold`. No MCP.
 
 ## SDD Integration
 

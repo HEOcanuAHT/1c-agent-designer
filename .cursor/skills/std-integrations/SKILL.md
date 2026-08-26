@@ -27,14 +27,14 @@ Applies to integration code: HTTP services, REST clients, web services, file exc
 - Локальный прототип (curl/Postman) — только для отладки контракта; прод-код остаётся в BSL.
 ## 2. Long-running and blocking operations
 
-- Network calls are potentially long-running. Run all integration operations in the background through the БСП **"Long-running operations"** subsystem (`ДлительныеОперации.ВыполнитьФункцию`), not through a direct `ФоновыеЗадания` call. See `platform-solutions.md §2 → "Long-running operations"`.
-- On the client — no synchronous HTTP calls; use `НачатьВыполнение*` or an async wrapper (template — `platform-solutions.md §8 → "External components on the thin client"`).
+- Network calls are potentially long-running. Run all integration operations in the background through the БСП **"Long-running operations"** subsystem (`ДлительныеОперации.ВыполнитьФункцию`), not through a direct `ФоновыеЗадания` call. See `std-platform-solutions §2 → "Long-running operations"`.
+- On the client — no synchronous HTTP calls; use `НачатьВыполнение*` or an async wrapper (template — `std-platform-solutions §8 → "External components on the thin client"`).
 
 ## 3. HTTP client
 
-- Use platform `HTTPСоединение` / `HTTPЗапрос` or the БСП wrapper. `КомпонентаHTTPСервисы` and third-party COM objects are forbidden (see `dev-standards-architecture.md §3 → "Cross-Platform Compatibility"`).
+- Use platform `HTTPСоединение` / `HTTPЗапрос` or the БСП wrapper. `КомпонентаHTTPСервисы` and third-party COM objects are forbidden (see `std-platform-solutions` / `std-architecture` → `docs/patterns.md`).
 - Connection timeout and read timeout MUST be set **explicitly** — use values from ``.1c/project.json`` or configuration constants, not magic numbers in code.
-- Any response code different from the expected one MUST be turned into a meaningful exception with `ПодробноеПредставлениеОшибки(ИнформацияОбОшибке())` written to the event log. See `dev-standards-architecture.md §3 → "Error Handling"`.
+- Any response code different from the expected one MUST be turned into a meaningful exception with `ПодробноеПредставлениеОшибки(ИнформацияОбОшибке())` written to the event log. See `std-logging`.
 
 ## 4. Serialization and data contract
 
@@ -44,7 +44,7 @@ Applies to integration code: HTTP services, REST clients, web services, file exc
 
 ## 5. Security
 
-- Credentials, tokens, API keys — only via **write-protected configuration constants** or the БСП "Безопасное хранение паролей" subsystem. Hardcoding is forbidden (`dev-standards-architecture.md §3 → "Security"`).
+- Credentials, tokens, API keys — only via **write-protected configuration constants** or the БСП "Безопасное хранение паролей" subsystem. Hardcoding is forbidden (`std-security`).
 - Validate the token/session before each request; implement token refresh centrally.
 
 ## 6. Idempotency and retries

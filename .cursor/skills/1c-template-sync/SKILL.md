@@ -161,7 +161,7 @@ Sync **не** трогает `.1c/project.local.json`. Если в файле л
 | id | content |
 |----|---------|
 | `sync-done` | sync skills/rules |
-| `sync-upgrade` | сверить `.1c/project.json` с example и `docs/TEMPLATE_UPGRADE.md` |
+| `sync-upgrade` | сверить `.1c/project.json` с example и `.1c/README.md` |
 | `sync-secrets` | проверить local на plaintext password |
 | `sync-credmgr` | по согласию Migrate / Set-1cIbCredential |
 | `sync-ping` | по согласию ping dump-инструментом |
@@ -172,7 +172,7 @@ Sync **не** трогает `.1c/project.local.json`. Если в файле л
 
 Sync **не перезаписывает** `project.json` / `project.local.json` (кроме `template.version`).
 
-1. Сверь `.1c/project.json` с `.1c/project.json.example` и `docs/TEMPLATE_UPGRADE.md` (актуальная форма полей).
+1. Сверь `.1c/project.json` с `.1c/project.json.example` и `.1c/README.md` (канон полей). Дельта после sync — `docs/TEMPLATE_UPGRADE.md`.
 2. Если в манифесте есть `upgradeNotes` — скрипт печатает `UPGRADE [версия] …` для пропущенных версий; правки в конфиг — **вручную**, с согласия пользователя.
 
 Автоматически только безопасное: CredMgr, копирование allowlist, `template.version` в `project.json`.

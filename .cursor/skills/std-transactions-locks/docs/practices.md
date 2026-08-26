@@ -7,7 +7,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 The 1C platform offers two locking subsystems (automatic / managed) and an implicit-transaction model around object writes. Most production lock incidents come from mixing the two, opening unintended transactions, or holding locks across user dialogs. This file is the canonical home for those rules.
 
-> **Scope.** This file owns the design rules. The narrow case "set a lock before reading balances during posting" lives as a worked example in `platform-solutions.md §9 → "Managed locks and deadlock prevention"` — that section now points back here for the general theory.
+> **Scope.** This file owns the design rules. The narrow case "set a lock before reading balances during posting" lives as a worked example in `std-platform-solutions §9 → "Managed locks and deadlock prevention"` — that section now points back here for the general theory.
 
 ## 1. Lock mode of the configuration
 
@@ -30,7 +30,7 @@ The platform opens its own transaction around:
 - `НаборЗаписей.Записать()` for register record sets.
 - Movement materialization at the end of `ОбработкаПроведения`.
 
-**Inside an object's `ПередЗаписью` / `ПриЗаписи` / `ОбработкаПроведения`, do NOT open your own `НачалоТранзакции` / `ЗафиксироватьТранзакцию`.** The transaction is already there; a nested call fakes a savepoint but disables proper rollback on the outer error. See `platform-solutions.md §4 → "Transactions in event handlers"`.
+**Inside an object's `ПередЗаписью` / `ПриЗаписи` / `ОбработкаПроведения`, do NOT open your own `НачалоТранзакции` / `ЗафиксироватьТранзакцию`.** The transaction is already there; a nested call fakes a savepoint but disables proper rollback on the outer error. See `std-platform-solutions §4 → "Transactions in event handlers"`.
 
 ### Explicit transactions in calling code
 
@@ -62,12 +62,12 @@ When the calling code needs to atomically write several objects or to combine a 
 КонецПопытки;
 ```
 
-The structured payload (`Данные = Структура`) and the dotted event name follow `logging-strategy.md §3-§5`; never log error context as a single concatenated string.
+The structured payload (`Данные = Структура`) and the dotted event name follow `skill `std-logging` §3-§5`; never log error context as a single concatenated string.
 
 Rules:
 
 - The `НачалоТранзакции()` → `Попытка` … `ЗафиксироватьТранзакцию()` → `Исключение` `ОтменитьТранзакцию()` `ВызватьИсключение` `КонецПопытки` shape (see the example above) is the **only** correct pattern. Any deviation (no `Попытка`, no `ОтменитьТранзакцию` in the catch branch, no re-raise) is a defect.
-- **Diagnose, do not swallow.** Log the error and `ВызватьИсключение` — see `logging-strategy.md §5 → "Error / exception logging"`.
+- **Diagnose, do not swallow.** Log the error and `ВызватьИсключение` — see `skill `std-logging` §5 → "Error / exception logging"`.
 - **Re-check `ТранзакцияАктивна()`** before second `ОтменитьТранзакцию` only in diagnostics — normally the flow already guarantees it.
 
 ### Forbidden inside transactions
@@ -206,15 +206,15 @@ For information registers used as a status log (`СтатусыЗаказов`, 
 - **MS SQL DMVs (server infobase only)** — `sys.dm_tran_locks`, `sys.dm_os_waiting_tasks` for live snapshots when the technological log is not enough.
 - **Posting replay** — re-post the failing document under the debugger to capture the exact lock call sequence.
 
-See `systematic-debugging.md` for the surrounding methodology — locks must be diagnosed in the Reproduce → Hypothesize → Experiment → Fix order, not by guess-and-retry.
+See the Reproduce → Hypothesize → Experiment → Fix order, not guess-and-retry.
 
 ## 7. Companion rules
 
 | Concern | File |
 |---|---|
-| Worked posting example | `platform-solutions.md §9 → "Managed locks and deadlock prevention"` |
-| Transaction nesting in event handlers | `platform-solutions.md §4 → "Transactions in event handlers"` |
-| Authoritative query rules under locks | `dev-standards-architecture.md §3 → "Queries"` |
-| Logging lock-conflict events | `logging-strategy.md` |
-| Systematic debugging of lock incidents | `systematic-debugging.md` |
-| Register design (what gets locked) | `registers-design.md` |
+| Worked posting example | `std-platform-solutions §9 → "Managed locks and deadlock prevention"` |
+| Transaction nesting in event handlers | `std-platform-solutions §4 → "Transactions in event handlers"` |
+| Authoritative query rules under locks | `std-architecture` (Queries) |
+| Logging lock-conflict events | skill `std-logging` |
+| Systematic debugging of lock incidents | Reproduce → Hypothesize → Experiment → Fix |
+| Register design (what gets locked) | skill `std-registers-design` |

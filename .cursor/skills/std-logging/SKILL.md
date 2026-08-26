@@ -16,7 +16,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 # Logging Strategy
 
-`dev-standards-code-style.md → "Forbidden Calls and Constructs"` bans `ЗаписьЖурналаРегистрации` without an explicit task; `dev-standards-architecture.md §3 → "Error Handling"` bans empty `Попытка / Исключение`. This file is the **positive** companion: when logging *is* explicitly requested, this is how to do it.
+`std-code-style → "Forbidden Calls and Constructs"` bans `ЗаписьЖурналаРегистрации` without an explicit task; empty `Попытка / Исключение` is banned (see `std-architecture` → `docs/patterns.md` / error-handling headlines). This file is the **positive** companion: when logging *is* explicitly requested, this is how to do it.
 
 ## 1. When to log
 
@@ -29,7 +29,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 | Transactional rollback | **Yes** | Reason + document / operation key. |
 | Standard CRUD on metadata via UI | **No** | The platform-level audit is enough. |
 | Unhandled exceptions caught by an outer handler | **Yes** | Full `ПодробноеПредставлениеОшибки(ИнформацияОбОшибке())`. |
-| Trace / debug output during development | **No** | Use the debugger / `ПоказатьЗначение`; remove before commit. See `systematic-debugging.md → Phase 4`. |
+| Trace / debug output during development | **No** | Use the debugger / `ПоказатьЗначение`; remove before commit. |
 
 Rule of thumb: **log what cannot be reconstructed later**. Errors users see, integration boundaries, background work. Do not log mundane reads / writes that already leave a metadata trace.
 
@@ -63,7 +63,7 @@ Examples:
 - `ФоновоеЗадание.ОбновлениеКурсовВалют.Старт`
 - `ФоновоеЗадание.ОбновлениеКурсовВалют.Финиш`
 
-Reserved prefix `Debug.*` — **only** during active debugging, must be removed before commit (`verification-delivery.md → Soft gate A`). Never ship `Debug.*` to production.
+Reserved prefix `Debug.*` — **only** during active debugging, must be removed before commit. Never ship `Debug.*` to production.
 
 ## 4. Structured payload
 
@@ -147,8 +147,8 @@ Rules:
 
 | Concern | File |
 |---|---|
-| Ban on uninvited `ЗаписьЖурналаРегистрации` calls | `dev-standards-code-style.md → "Forbidden Calls and Constructs"` |
-| Ban on empty `Попытка / Исключение` | `dev-standards-architecture.md §3 → "Error Handling"` |
-| Removing `Debug.*` log entries before commit | `verification-delivery.md → "Soft gate A"`, `systematic-debugging.md → "Phase 4"` |
-| Background-job lifecycle logging | `platform-solutions.md §2 → "Long-running operations"` |
-| Integration request / response logging | `integrations-add.md` |
+| Ban on uninvited `ЗаписьЖурналаРегистрации` calls | `std-code-style → "Forbidden Calls and Constructs"` |
+| Ban on empty `Попытка / Исключение` | `std-architecture` → `docs/patterns.md` (performance / error headlines) |
+| Removing `Debug.*` log entries before commit | remove before commit |
+| Background-job lifecycle logging | `std-platform-solutions §2 → "Long-running operations"` |
+| Integration request / response logging | skill `std-integrations` |

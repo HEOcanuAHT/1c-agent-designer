@@ -20,11 +20,11 @@ BSL patterns for working with 1C configuration extensions.
 
 Applies to: extension code (`**/Extensions/**/*.bsl` and similar).
 
-Background reference: `dev-standards-architecture.md §2` (Extensions) — modification priority, directives, placement rules. This file is the **practical** companion: interceptor types, `ПродолжитьВызов` semantics, markers, and adopted-object constraints.
+Background reference: `std-architecture` → `docs/patterns.md` (Extensions summary) — modification priority and placement. This file is the **practical** companion: interceptor types, `ПродолжитьВызов` semantics, markers, and adopted-object constraints.
 
 > **Naming convention used in examples.** Below, `Расш1_` / `МоеРасш_` denotes the **extension's own short alias** (set in the extension's properties — typically the `Имя` of the extension or an explicit alias), **not** `{PREFIX}` from ``.1c/project.json``. `{PREFIX}` applies to new metadata objects and attributes; the extension alias applies to procedure / function names introduced by the extension and prevents name collisions between extensions. The two are independent: an extension can both add a new attribute `{PREFIX}Признак` to a typical object and define an interceptor procedure `Расш1_ПриЗаписи` in the same module.
 >
-> The alias itself MUST NOT contain the letter «ё» — see `dev-standards-code-style.md → Typography`. Use `МоеРасш_`, `Расш1_`, `MyExt_` or any «ё»-free form.
+> The alias itself MUST NOT contain the letter «ё» — see `std-code-style → Typography`. Use `МоеРасш_`, `Расш1_`, `MyExt_` or any «ё»-free form.
 
 ---
 

@@ -7,17 +7,15 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 This file owns the **rules**, not the MCP sequence. The pre-edit and post-edit MCP playbooks live in:
 
-- `tooling-playbooks.md → Form Analysis and Generation` — full ordered list of MCP calls (`search_forms` → `inspect_form_layout` → `проверка метаданных в src/ (Grep/Read; MCP optional)` → `get_xsd_schema` → write/modify XML → `скрипты *-validate из 1c-metadata-manage` → compile via the `1c-metadata-manage` skill).
-
-Do not duplicate that sequence here.
+- Sequence: Grep/Read `src/` → mutate via skill `1c-metadata-manage` (form-*) → `form-validate.ps1`. No MCP.
 
 ## Rules specific to creating / modifying a form
 
-- **The `1c-metadata-manage` skill (form-manage section) is the mandatory execution path** for creating or structurally modifying `Form.xml` — hard gate per `AGENTS.md → Skills and Subagents`; the skill drives the toolchain (BOM, encoding, UID generation, ordering of `ChildObjects`). Hand-editing is allowed only within the narrow exceptions of `.cursor/.cursor/skills/1c-metadata-manage/SKILL.md → Hard rule` (unambiguous one-line fix; skill not available — stated once).
-- **XSD validation is mandatory** after any XML edit — `скрипты *-validate из 1c-metadata-manage` against the schema returned by `get_xsd_schema(object_type="Форма")`. A form that parses in your editor is not a form that loads in Designer.
-- **Form-element naming.** Elements added to a typical form must carry the `{PREFIX}` prefix from ``.1c/project.json``. Elements inside a newly created form (object already prefixed) do **not** repeat the prefix on every element — see `dev-standards-change-markers.md → "Metadata Naming"`.
-- **Common pitfalls** are catalogued in `metadata-xml-workarounds.md` — read it before hand-editing the XML.
-- **Region structure of the form module** — `module-structure.md → Form Module` (5 mandatory regions).
+- **The `1c-metadata-manage` skill (form-manage)** is the preferred path for creating or structurally modifying `Form.xml` (BOM, UUID, `ChildObjects`). Hand-editing — only Hard rule exceptions in that skill.
+- **Validate** after XML edit: `form-validate.ps1` from `1c-metadata-manage`.
+- **Form-element naming.** Elements added to a typical form must carry the `{PREFIX}` prefix from `.1c/project.json`. Elements inside a newly created form (object already prefixed) do **not** repeat the prefix — see skill `std-metadata`.
+- **Common pitfalls** — skill `std-metadata-xml`.
+- **Region structure of the form module** — skill `std-module-structure` (Form Module, 5 regions).
 
 ## Form-Presentation Rules
 
@@ -60,4 +58,4 @@ All typical form modifications are performed **programmatically**, not visually.
 | Event handlers (`ПриОткрытии`, `ПередЗаписью`, …), form-module logic, reserved names | `form-module.md` |
 | Client-side async code (`Асинх` / `Ждать`) | `async-methods.md` |
 
-This list is curated by the router file `forms.md`; load only the items you actually touch.
+This list is curated by the router skill `1c-forms`; load only the items you actually touch.

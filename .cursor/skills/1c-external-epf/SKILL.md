@@ -52,13 +52,13 @@ ext/
 - `ext.artifacts` — дефолт `artifacts/ext`
 - `ext.serviceIb` — **служебная файловая ИБ** для dump/pack (см. ниже)
 
-Пример полей — `project.json.example` рядом со skill.
+Пример полей — `.1c/project.json.example` (канон проекта).
 
 ## Служебная ИБ (dump/pack)
 
 Dump/pack внешек требуют ИБ с **метаданными основной конфы** (`cfg:*` типы). Боевую ИБ **не** используем как цель pack: только как источник `.cf` (без `config apply`).
 
-Служебная ИБ **общая** с расширениями `.cfe` (skill `1c-external-cfe`, общий модуль `Common-ServiceIb.ps1`).
+Служебная ИБ **общая** с расширениями `.cfe` (skill `1c-external-cfe`, модуль `1c-runtime/scripts/Common-ServiceIb.ps1`).
 
 Перед `dump` / `pack` скрипт (если `ext.serviceIb.enabled` ≠ false):
 

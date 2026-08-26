@@ -6,9 +6,9 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 Covers **writing** new 1C queries: structure, parameters, virtual tables, temporary tables, totals, joins with tabular sections, and the small set of patterns you need 90% of the time.
 
-For tuning existing queries, joins versus subqueries, composite-type dereferencing, index alignment and DCS specifics — see [query-optimization.md](query-optimization.md).
+For tuning existing queries, joins versus subqueries, composite-type dereferencing, index alignment and DCS specifics — see skill `std-query-optimization`.
 
-For project-wide query rules — load the router `skill `std-queries`` first. Authoritative formatting, aliases, parameters, and the no-queries-in-loops ban live in `dev-standards-architecture.md §3 → "Queries"`; severity catalog — `anti-patterns.md` (§1 Query in Loop, §4 Virtual Table Filter in WHERE, §5 Missing ПЕРВЫЕ N, Batch Query with Temp Table).
+For project-wide query rules — load the router `skill `std-queries`` first. Formatting, aliases, parameters, no-queries-in-loops — `std-queries` / `std-query-optimization`; severity catalog — `std-anti-patterns` (§1 Query in Loop, §4 Virtual Table Filter in WHERE, §5 Missing ПЕРВЫЕ N, Batch Query with Temp Table).
 
 ## When to Use This Skill
 
@@ -127,7 +127,7 @@ These are the high-leverage tools — most reporting queries are built around th
 |	РегистрНакопления.ТоварыНаСкладах.Остатки(&МоментВремени, Склад = &Склад) КАК Остатки"
 ```
 
-The second form is the canonical one — see `query-optimization.md` for why.
+The second form is the canonical one — see `std-query-optimization` for why.
 
 ## Temporary Tables and Batch Queries
 
@@ -230,7 +230,7 @@ Use `ЕСТЬNULL` on every column that comes through `ЛЕВОЕ`/`ПРАВОЕ
 
 ## Anti-patterns to avoid while writing
 
-These are mistakes you make at write time, not at optimisation time. Optimisation patterns are in `query-optimization.md`.
+These are mistakes you make at write time, not at optimisation time. Optimisation patterns are in `std-query-optimization`.
 
 - **String concatenation for parameters** — see *Parameters* above.
 - **No alias for output columns** — breaks consumer readability and DCS.
@@ -308,4 +308,4 @@ These are mistakes you make at write time, not at optimisation time. Optimisatio
 
 ---
 
-**See also:** [query-optimization.md](query-optimization.md) for join strategy, virtual-table tuning, composite-type dereferencing and index alignment.
+**See also:** skill `std-query-optimization` for join strategy, virtual-table tuning, composite-type dereferencing and index alignment.

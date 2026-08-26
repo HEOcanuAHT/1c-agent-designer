@@ -15,7 +15,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 -->
 # 1C Anti-Patterns and Performance Guidelines
 
-> **Ownership.** This file owns the anti-pattern **catalog**: severity, detection hints, before/after fix templates. The normative query rules themselves (no queries in loops, parameterization, `КАК` aliases, virtual-table filters via parameters, intermediate result variable, `ВТ_*` naming, `ПЕРВЫЕ N`) are owned by `dev-standards-architecture.md §3 → "Queries"`; the dot-notation ban — by `dev-standards-architecture.md §4`. On conflict, the owner file wins — update rules there, update examples here.
+> **Ownership.** This file owns the anti-pattern **catalog**: severity, detection hints, before/after fix templates. Normative query rules — `std-queries` / `std-query-optimization`; client-server — `std-client-server`; placement / BSP refs — `std-architecture` → `docs/patterns.md`. On conflict, the owner skill wins — update rules there, examples here.
 
 ## Critical Anti-Patterns (Must Fix)
 
@@ -47,7 +47,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 **Impact:** Loads entire object from database
 **Severity:** CRITICAL
-**Note:** Project default is a hard ban outside trivial single-call handlers. **[Project rule — stricter than ITS standard]** — ITS allows occasional dot-notation in non-hot code; the project default is to use dedicated БСП methods regardless. See `dev-standards-architecture.md §4 → "Data Access — Reference Attribute Access"`.
+**Note:** Project default is a hard ban outside trivial single-call handlers. **[Project rule — stricter than ITS standard]** — ITS allows occasional dot-notation in non-hot code; the project default is to use dedicated БСП methods regardless. See `std-architecture` → `docs/patterns.md` (Data access).
 
 ```bsl
 // ❌ CRITICAL: Full object load for each attribute
@@ -63,7 +63,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 Наименование = Реквизиты.Наименование;
 ```
 
-**SSL Methods Reference:** See `dev-standards-architecture.md §4 → "Data Access — Reference Attribute Access"`.
+**SSL Methods Reference:** See `std-architecture` → `docs/patterns.md` (Data access).
 
 ### 3. Subquery in SELECT
 
@@ -126,7 +126,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 |   ПО Группы.ГруппаДоступа = Значения.ГруппаДоступа"
 ```
 
-Full pattern (incl. join-before-grouping) — `query-optimization.md → Pre-collect and Index Before Join / Group`.
+Full pattern (incl. join-before-grouping) — `std-query-optimization → Pre-collect and Index Before Join / Group`.
 
 ## High Priority Anti-Patterns
 
@@ -194,7 +194,7 @@ A temp table has no indexes by default. If it later participates in a `СОЕД�
 |   Номенклатура, Склад"
 ```
 
-Mandatory cases and the selectivity guidance — `query-optimization.md → Temporary Table Indexing`.
+Mandatory cases and the selectivity guidance — `std-query-optimization → Temporary Table Indexing`.
 
 ### 6. Excessive Client-Server Calls
 
@@ -249,7 +249,7 @@ Mandatory cases and the selectivity guidance — `query-optimization.md → Temp
 
 **Impact:** Bypasses the platform's user-message subsystem; messages are not bound to form fields, are not collected by long-running operations, and behave inconsistently between thin / web / mobile clients.
 **Severity:** HIGH
-**Source rule:** `dev-standards-code-style.md → "Forbidden Calls and Constructs"` ("`Сообщить()` for user notifications is **PROHIBITED**").
+**Source rule:** `std-code-style → "Forbidden Calls and Constructs"` ("`Сообщить()` for user notifications is **PROHIBITED**").
 
 ```bsl
 // ❌ HIGH: legacy global call, not bound to form fields, lost in long-running ops
@@ -291,7 +291,7 @@ Mandatory cases and the selectivity guidance — `query-optimization.md → Temp
 |ВЫБРАТЬ ... ИЗ РегистрНакопления.Запасы"
 ```
 
-Details — `query-optimization.md → No РАЗЛИЧНЫЕ inside ОБЪЕДИНИТЬ operands`.
+Details — `std-query-optimization → No РАЗЛИЧНЫЕ inside ОБЪЕДИНИТЬ operands`.
 
 ### 8. Missing Caching
 

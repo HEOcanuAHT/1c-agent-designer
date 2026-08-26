@@ -16,9 +16,9 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 # DCS / СКД — Report Design Rules
 
-The 1C Data Composition System (СхемаКомпоновкиДанных, СКД) is the canonical engine for reports. The rules below cover design decisions that recur in code review and that the structural skill (`.cursor/.cursor/skills/1c-metadata-manage/docs/skd-manage.md`) intentionally does not opine on.
+The 1C Data Composition System (СхемаКомпоновкиДанных, СКД) is the canonical engine for reports. The rules below cover design decisions that recur in code review and that the structural skill (`1c-metadata-manage (`docs/skd-manage.md`)`) intentionally does not opine on.
 
-> **Scope.** This file owns *report design* rules. XML / schema mechanics for `.dcs` files live in the `.cursor/.cursor/skills/1c-metadata-manage/docs/skd-manage.md` skill (XML structure, datasets API, query parameters API). Anti-patterns of slow queries inside a DCS — `anti-patterns.md` and `dev-standards-architecture.md §3 → "Queries"`.
+> **Scope.** This file owns *report design* rules. XML / schema mechanics for `.dcs` files live in `1c-metadata-manage` (`docs/skd-manage.md`). Slow query smells inside DCS — `std-anti-patterns`; query norms — `std-queries` / `std-query-optimization`.
 
 ## 1. Choosing the data-set type
 
@@ -116,7 +116,7 @@ Pattern for programmatic filter injection (full template — error handling, str
 Notes:
 
 - `СтандартнаяОбработка = Ложь` is set **before** the `Попытка` block — if a handler exits via `ВызватьИсключение` mid-render, the platform must not silently fall back to the default composition and produce a half-baked second document.
-- Logging follows `logging-strategy.md §3-§5`: dotted event name (`Отчет.<Имя>.Ошибка`), structured `Данные = Структура`, `ПодробноеПредставлениеОшибки` (not `КраткоеПредставлениеОшибки`), and re-raise so the caller still sees the failure.
+- Logging follows `skill `std-logging` §3-§5`: dotted event name (`Отчет.<Имя>.Ошибка`), structured `Данные = Структура`, `ПодробноеПредставлениеОшибки` (not `КраткоеПредставлениеОшибки`), and re-raise so the caller still sees the failure.
 - `УстановитьПараметр` and `УстановитьФильтр` are project-local helpers — extract them into the report's manager module to keep the override compact.
 
 ## 6. RLS interaction
@@ -128,7 +128,7 @@ Notes:
 ## 7. Performance checklist
 
 - **Indexed filter fields** — every parameter pushed into a query `ГДЕ` must hit an index. Check via the configurator's "Анализ производительности" or `СтруктураХраненияБазыДанных`.
-- **Virtual tables** — filter through parameters (`Остатки(&Период, Условие)`), never through `ГДЕ` after the virtual call. Hard rule (owner: `dev-standards-architecture.md §3 → "Queries"`; catalog entry with fix template: `anti-patterns.md §4`).
+- **Virtual tables** — filter through parameters (`Остатки(&Период, Условие)`), never through `ГДЕ` after the virtual call. Hard rule (owner: `std-queries` / `std-query-optimization`; catalog: `std-anti-patterns`).
 - **`ПЕРВЫЕ N`** when the report is paginated or "top-N" by nature — push the limit into the query, not into the row-formatting hook.
 - **Avoid `ВЫРАЗИТЬ` on the left side of `ГДЕ`** — it disables index usage.
 - **`Объект`-typed datasets** that pull large `ТаблицаЗначений` from BSL are the most common performance trap; consider materializing into a temporary information register if the data must be reused.
@@ -137,8 +137,8 @@ Notes:
 
 | Concern | File |
 |---|---|
-| XML / schema mechanics for `.dcs` | `.cursor/.cursor/skills/1c-metadata-manage/docs/skd-manage.md` (skill) |
-| Query anti-patterns | `anti-patterns.md` |
-| Authoritative query rules | `dev-standards-architecture.md §3 → "Queries"` |
-| Long-running report execution | `platform-solutions.md §2 → "Long-running operations"` |
-| Register design (data side) | `registers-design.md` |
+| XML / schema mechanics for `.dcs` | `1c-metadata-manage (`docs/skd-manage.md`)` (skill) |
+| Query anti-patterns | `std-anti-patterns` |
+| Authoritative query rules | `std-queries` / `std-query-optimization` |
+| Long-running report execution | `std-platform-solutions §2 → "Long-running operations"` |
+| Register design (data side) | skill `std-registers-design` |

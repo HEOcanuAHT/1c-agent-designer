@@ -443,17 +443,9 @@ The PowerShell scripts under `tools/1c-skd-{compile,edit,info,validate}/scripts/
 - Field detail view (`-Mode fields -Name <Field>`) prints kv role parameters (`balanceGroupName`, `balanceType`, `accountTypeExpression`, …) on the Role line.
 - Section `query` of `-Mode full` prints external dataset names when no queries exist (no more anonymous "(no query datasets)").
 
-## MCP Integration
+## Related tools
 
-- **get_object_dossier** — Comprehensive structural passport of the object for DCS data set fields: attributes, tabular parts, dimensions, resources, and their types in one call.
-- **Grep/Read src/ (MCP optional)** — Verify object and attribute names used in queries; cross-reference field names with actual metadata objects.
-- **Read object XML (MCP optional)** — Get exact attribute types and tabular part structure for objects used in DCS data sets.
-- **search_code** — Find existing BSL code that builds DCS queries or modifies DCS programmatically (prefer over Grep; supports semantic/fulltext/hybrid search).
-- **Grep/Read src/ (MCP optional)** (`names_only=true`) — Find similar metadata objects for DCS schema XML reference.
-- **get_xsd_schema** — Get XSD schema for DCS XML (`object_type="СКД"`). Use before generating schema XML.
-- ***-validate scripts** — Validate generated DCS XML against XSD. Always validate before committing.
-- **search in src/ (MCP optional)** — Find similar DCS patterns in the codebase.
-- **docsearch** — Look up valid DCS element types and properties when investigating validation errors; DCS platform documentation.
+Grep/Read `src/`. SKD scripts: `skd-info`, `skd-edit`, `skd-compile`, `skd-decompile`, `skd-validate`. No MCP.
 
 ## SDD Integration
 

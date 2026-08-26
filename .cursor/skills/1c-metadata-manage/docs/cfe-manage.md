@@ -173,18 +173,9 @@ The PowerShell scripts under `tools/1c-cfe-manage/scripts/` were refreshed from 
 - Accepts plural type names (`Catalogs` → `Catalog`).
 - Python port: no extra blank lines in generated modules.
 
-## MCP Integration
+## Related tools
 
-- **get_object_dossier** — Comprehensive structural passport of the base object before borrowing (structure, forms, dependencies, code modules, roles).
-- **Grep/Read src/ (MCP optional)** — Find objects to borrow and verify module paths.
-- **Read object XML (MCP optional)** — Get full object structure for objects being borrowed.
-- **search_code** — Find methods to intercept (prefer over `Grep src/ (MCP optional)`; supports semantic/fulltext/hybrid search with detail levels L0–L3).
-- **Grep src/ (MCP optional)** — Find methods in raw BSL files (fallback when `search_code` is not available).
-- **Grep/Read src/ (MCP optional)** (`names_only=true`) — Find similar metadata objects for extension XML reference.
-- **compare_base_and_extension** — Structural diff between base and extension after borrowing: attributes, forms, and routines added/overridden/unchanged.
-- **trace_impact** — Recursive impact analysis of extension changes on the base configuration (preferred over `graph_dependencies` for deep dependency chains).
-- **graph_dependencies** — Flat dependency overview before borrowing.
-- **syntaxcheck** — Verify generated BSL code.
+Grep/Read `src/` and `cfe/`. CFE XML: `cfe-borrow`, `cfe-diff`, `cfe-patch-method`, `cfe-validate`. Pack/scaffold — skill `1c-external-cfe`. No MCP.
 
 ## SDD Integration
 

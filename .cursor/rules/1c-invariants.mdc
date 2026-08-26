@@ -1,0 +1,35 @@
+---
+description: >-
+  Жёсткие инварианты разработки 1С: SkillHome, без kill 1cv8, load без КБД,
+  query-validate opt-in. На любых задачах 1С-проекта.
+alwaysApply: true
+---
+
+# Инварианты 1С
+
+Только если есть `.1c/`, `src/Configuration.xml`, или пользователь явно про 1С/bootstrap. На чужих репо не применяй.
+
+## Пути
+
+**ProjectRoot** = workspace. **SkillHome** = каталог `SKILL.md` (плагин или `.cursor/skills/<name>`).
+Скрипты: `-ProjectRoot "<workspace>"`. Skills в проект не копировать. Детали: rule `1c-plugin-paths`.
+
+## Процессы
+
+Не убивать пользовательские `1cv8` / Конфигуратор / Предприятие (даже «на всякий случай»).
+При lock — путь ИБ и pid, решение за пользователем. Детали: rule `1c-no-kill-user-1cv8`.
+
+## Dump / load
+
+Только **основная** конфигурация. Не `update-db-cfg` / `/UpdateDBCfg` / `config apply` на боевую. КБД — вручную.
+Инструмент: skill **`1c-dump`** (`tools.preferredDump`: ibcmd | agent). SQL ≠ пользователь 1С — rule `1c-ibcmd-auth`.
+
+## Запросы
+
+`Invoke-1cValidateQuery.ps1` по умолчанию **не** гонять. Вкл. по фразе «проверяй запросы» — rule/skill `1c-query-validate`.
+
+## Git
+
+Фичи в `feature/…` / `fix/…`, не напрямую в `main`. Процесс: `docs/WORKFLOW.md` (rule `1c-config-repo`).
+
+Канон полей `project.json`: `.1c/README.md`.

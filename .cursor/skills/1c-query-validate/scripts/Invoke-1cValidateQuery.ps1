@@ -36,7 +36,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$CommonPath = Join-Path $ScriptDir "..\..\1c-external-epf\scripts\Common-ServiceIb.ps1"
+$CommonPath = Join-Path $ScriptDir "..\..\1c-runtime\scripts\Common-ServiceIb.ps1"
 . (Resolve-Path -LiteralPath $CommonPath).Path
 
 function Get-QvStatePaths([string]$ProjectRoot) {

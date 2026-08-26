@@ -10,6 +10,11 @@ description: >-
 # 1C ibcmd (pack + dump + load)
 
 Если в `.1c/project.json` задано `"tools": { "preferredDump": "ibcmd" }` — это **основной** путь dump/load; designer-agent только по явной просьбе или если ibcmd недоступен.
+
+**Фасад для агента:** skill `1c-dump` / `Invoke-1cDump.ps1` (выбирает ibcmd vs agent). Этот skill — детали CLI ibcmd и pack `.cf`.
+
+Общий runtime: skill **`1c-runtime`** (`Common-Project.ps1`, `Common-IbcmdConnection.ps1`, `Common-ServiceIb.ps1`). В `scripts/` этого skill — stubs на runtime. Не копировать Common-* в другие skills.
+
 ## Сценарии
 
 | Сценарий | Скрипт | ИБ |

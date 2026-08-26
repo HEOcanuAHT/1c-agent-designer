@@ -9,5 +9,5 @@ alwaysApply: true
 
 1. Не клади сюда XML конкретной конфы, секреты, пути личных ИБ.
 2. Skills/rules держи обобщёнными; имена продуктов — только как нейтральные примеры.
-3. Load XML — только основная конфигурация, без `update-db-cfg`.
+Load XML — только основная конфигурация, без `update-db-cfg` (rule `1c-invariants`).
 4. Процесс веток/MR и Cursor workspace: `docs/TEMPLATE_MAINTENANCE.md`.

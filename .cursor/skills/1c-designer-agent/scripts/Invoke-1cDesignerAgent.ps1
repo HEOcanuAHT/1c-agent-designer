@@ -21,51 +21,7 @@ param(
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 . (Join-Path $ScriptDir "..\..\1c-ibcmd-pack\scripts\Convert-1cDumpObjectList.ps1")
-
-function Read-JsonFile([string]$Path) {
-  if (-not (Test-Path -LiteralPath $Path)) { return $null }
-  return (Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json)
-}
-
-function Merge-Config($Base, $Overlay) {
-  if ($null -eq $Overlay) { return $Base }
-  if ($null -eq $Base) { return $Overlay }
-  $json = $Base | ConvertTo-Json -Depth 20 | ConvertFrom-Json
-  foreach ($p in $Overlay.PSObject.Properties) {
-    $name = $p.Name
-    $val = $p.Value
-    if ($null -ne $val -and ($val -is [System.Management.Automation.PSCustomObject]) -and
-        $json.PSObject.Properties[$name] -and ($json.$name -is [System.Management.Automation.PSCustomObject])) {
-      $json.$name = Merge-Config $json.$name $val
-    } else {
-      $json | Add-Member -NotePropertyName $name -NotePropertyValue $val -Force
-    }
-  }
-  return $json
-}
-
-function Resolve-Designer([string]$Explicit, [string]$PlatformVersion) {
-  if ($env:1C_DESIGNER -and (Test-Path -LiteralPath $env:1C_DESIGNER)) { return $env:1C_DESIGNER }
-  if ($Explicit -and (Test-Path -LiteralPath $Explicit)) { return $Explicit }
-  if ($PlatformVersion) {
-    foreach ($root in @(${env:ProgramFiles}, ${env:ProgramFiles(x86)})) {
-      if (-not $root) { continue }
-      $candidate = Join-Path $root "1cv8\$PlatformVersion\bin\1cv8.exe"
-      if (Test-Path -LiteralPath $candidate) { return $candidate }
-    }
-  }
-  foreach ($root in @(${env:ProgramFiles}, ${env:ProgramFiles(x86)})) {
-    if (-not $root) { continue }
-    $base = Join-Path $root "1cv8"
-    if (-not (Test-Path -LiteralPath $base)) { continue }
-    $found = Get-ChildItem $base -Recurse -Filter "1cv8.exe" -ErrorAction SilentlyContinue |
-      Where-Object { $_.FullName -match '\\bin\\1cv8\.exe$' } |
-      Sort-Object FullName -Descending |
-      Select-Object -First 1 -ExpandProperty FullName
-    if ($found) { return $found }
-  }
-  throw "1cv8.exe not found."
-}
+. (Join-Path $ScriptDir "..\..\1c-runtime\scripts\Common-Project.ps1")
 
 function Resolve-Git {
   foreach ($c in @(
@@ -90,40 +46,10 @@ function Resolve-Plink {
 }
 
 function Get-AgentAuth($Cfg, [string]$ProjectRoot = "") {
-  $credHelper = Join-Path $PSScriptRoot "..\..\1c-project-bootstrap\scripts\1c-WindowsCredential.ps1"
-  if (-not (Test-Path -LiteralPath $credHelper)) {
-    throw "Missing credential helper: $credHelper"
-  }
-  . $credHelper
+  Import-1cCredHelper
   $auth = Resolve-1cIbAuth -Cfg $Cfg -ProjectRoot $ProjectRoot
   Write-Host "agent auth source=$($auth.Source)"
   return @{ User = $auth.User; Password = $auth.Password; Required = $auth.Required }
-}
-
-function Get-IbArgs($Cfg, [string]$ProjectRoot) {
-  $type = "file"
-  if ($Cfg.infobase -and $Cfg.infobase.type) { $type = [string]$Cfg.infobase.type }
-  if ($type -eq "server") {
-    if (-not $Cfg.infobase.server) { throw "infobase.server required" }
-    return @("/S", ([string]$Cfg.infobase.server))
-  }
-  if ($type -eq "ibname") {
-    $ibName = $null
-    if ($Cfg.infobase.name) { $ibName = [string]$Cfg.infobase.name }
-    elseif ($Cfg.infobase.path) { $ibName = [string]$Cfg.infobase.path }
-    if (-not $ibName) { throw "infobase.name required for type=ibname" }
-    return @("/IBName", $ibName)
-  }
-  $p = if ($env:1C_IB_PATH) { $env:1C_IB_PATH }
-    elseif ($Cfg.infobase -and $Cfg.infobase.path) { [string]$Cfg.infobase.path }
-    else { ".1c/ib-dev" }
-  $dbPath = if ([System.IO.Path]::IsPathRooted($p)) { $p } else { Join-Path $ProjectRoot $p }
-  return @("/F", $dbPath)
-}
-
-function Get-SrcRel($Cfg) {
-  if ($Cfg.src) { return ([string]$Cfg.src -replace "\\", "/").TrimEnd("/") }
-  return "src"
 }
 
 function Get-Transport($Cfg) {

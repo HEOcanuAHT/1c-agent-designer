@@ -1,5 +1,7 @@
 # `.1c/project.json` — описание информационной базы
 
+**Канон полей** для агента и живых проектов. Таблицы отсюда не копировать в `AGENTS.md` / `WORKFLOW.md`.
+
 Рабочий файл: `project.json.example` → `project.json`. Секреты: `project.local.json` (не в git).  
 Bootstrap: skill `1c-project-bootstrap`. Sync tooling: skill `1c-template-sync`.
 
@@ -48,6 +50,7 @@ ibcmd через SQL обычно **заметно быстрее** agent; дл�
 - `ext.dir` — внешние обработки (skill `1c-external-epf`).
 - `ext.serviceIb` — служебная файловая ИБ для pack/dump внешек и расширений (save `.cf` с боевой + load, без apply; XML import — fallback; не коммитить).
 - `cfe.dir` / `cfe.artifacts` — расширения `.cfe` (skill `1c-external-cfe`).
+- Проверка языка запросов — skill `1c-query-validate` (COM на `.1c/ib-ext`; opt-in).
 
 ### Два входа (не путать)
 
@@ -59,5 +62,5 @@ ibcmd через SQL обычно **заметно быстрее** agent; дл�
 `auth.credentialTarget` — **не** логин SQL. Путь CredMgr уже задаётся здесь (`1c-ib/<project>`); для SQL при Windows auth отдельный CredMgr **не нужен**.
 
 ```powershell
-.\.cursor\skills\1c-project-bootstrap\scripts\Check-1cDevEnv.ps1 -ProjectRoot .
+powershell -NoProfile -File "<SkillHome-1c-project-bootstrap>/scripts/Check-1cDevEnv.ps1" -ProjectRoot "<workspace>"
 ```

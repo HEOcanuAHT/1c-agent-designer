@@ -16,42 +16,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-
-function Read-JsonFile([string]$Path) {
-  if (-not (Test-Path -LiteralPath $Path)) { return $null }
-  return (Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json)
-}
-
-function Merge-Config($Base, $Overlay) {
-  if ($null -eq $Overlay) { return $Base }
-  if ($null -eq $Base) { return $Overlay }
-  $json = $Base | ConvertTo-Json -Depth 20 | ConvertFrom-Json
-  foreach ($p in $Overlay.PSObject.Properties) {
-    $name = $p.Name
-    $val = $p.Value
-    if ($null -ne $val -and ($val -is [System.Management.Automation.PSCustomObject]) -and
-        $json.PSObject.Properties[$name] -and ($json.$name -is [System.Management.Automation.PSCustomObject])) {
-      $json.$name = Merge-Config $json.$name $val
-    } else {
-      $json | Add-Member -NotePropertyName $name -NotePropertyValue $val -Force
-    }
-  }
-  return $json
-}
-
-function Resolve-Ibcmd([string]$Explicit, [string]$PlatformVersion) {
-  if ($env:1C_IBCMD -and (Test-Path -LiteralPath $env:1C_IBCMD)) { return $env:1C_IBCMD }
-  if ($Explicit -and (Test-Path -LiteralPath $Explicit)) { return $Explicit }
-  if ($PlatformVersion) {
-    $candidate = Join-Path ${env:ProgramFiles} "1cv8\$PlatformVersion\bin\ibcmd.exe"
-    if (Test-Path -LiteralPath $candidate) { return $candidate }
-  }
-  $found = Get-ChildItem (Join-Path ${env:ProgramFiles} "1cv8") -Recurse -Filter "ibcmd.exe" -ErrorAction SilentlyContinue |
-    Sort-Object FullName -Descending |
-    Select-Object -First 1 -ExpandProperty FullName
-  if ($found) { return $found }
-  throw "ibcmd.exe not found. Set platformVersion or ibcmd / 1C_IBCMD."
-}
+. (Join-Path $PSScriptRoot "..\..\1c-runtime\scripts\Common-IbcmdConnection.ps1")
 
 function Resolve-Git([string]$Explicit) {
   if ($Explicit -and (Test-Path -LiteralPath $Explicit)) { return $Explicit }
@@ -66,20 +31,6 @@ function Resolve-Git([string]$Explicit) {
   $cmd = Get-Command git -ErrorAction SilentlyContinue
   if ($cmd) { return $cmd.Source }
   throw "git.exe not found. Install Git or add it to PATH."
-}
-
-function Get-AuthArgs($Cfg, [string]$ProjectRoot = "") {
-  $credHelper = Join-Path $PSScriptRoot "..\..\1c-project-bootstrap\scripts\1c-WindowsCredential.ps1"
-  if (-not (Test-Path -LiteralPath $credHelper)) {
-    throw "Missing credential helper: $credHelper"
-  }
-  . $credHelper
-  $auth = Resolve-1cIbAuth -Cfg $Cfg -ProjectRoot $ProjectRoot
-  if (-not $auth.Required) { return @() }
-  Write-Host "ibcmd auth source=$($auth.Source)"
-  $a = @("--user=$($auth.User)")
-  if ($auth.Password) { $a += "--password=$($auth.Password)" }
-  return $a
 }
 
 function Test-FileIbExists([string]$DbPath) {
@@ -160,7 +111,7 @@ $cfgPath = Join-Path $ProjectRoot ".1c\project.json"
 $localPath = Join-Path $ProjectRoot ".1c\project.local.json"
 
 if (-not (Test-Path -LiteralPath $cfgPath)) {
-  throw "Missing $cfgPath - copy project.json.example from skill 1c-ibcmd-pack."
+  throw "Missing $cfgPath - copy .1c/project.json.example -> .1c/project.json."
 }
 
 $cfg = Merge-Config (Read-JsonFile $cfgPath) (Read-JsonFile $localPath)
@@ -223,7 +174,7 @@ if ($Action -eq "pack-delta") {
   }
 }
 
-$authArgs = Get-AuthArgs $cfg $ProjectRoot
+$authArgs = Get-IbAuthArgs $cfg $ProjectRoot
 $commonDb = @("--db-path=$dbPath") + $authArgs
 $forceArgs = @()
 if ($force) { $forceArgs = @("--force") }

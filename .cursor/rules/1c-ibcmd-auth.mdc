@@ -1,11 +1,13 @@
 ---
-description: ibcmd — два входа (SQL ≠ пользователь 1С / CredMgr)
-alwaysApply: true
+description: >-
+  ibcmd: SQL ≠ пользователь 1С (CredMgr). Use when ibcmd, dump, pack cf,
+  config save, Get-ConnectionArgs, служебная ИБ, infobase.dbms.
+alwaysApply: false
 ---
 
 # ibcmd: SQL и auth.credentialTarget — разные вещи
 
-При dump/load через skill `1c-ibcmd-pack` / `Invoke-1cIbcmdDump.ps1` и при `config save` в служебную ИБ (EPF/CFE, `Common-ServiceIb` → тот же `Get-ConnectionArgs`):
+При dump/load через skill `1c-dump` / `1c-ibcmd-pack` / `Invoke-1cIbcmdDump.ps1` и при `config save` в служебную ИБ (EPF/CFE, `1c-runtime/scripts/Common-ServiceIb` → тот же `Get-ConnectionArgs`):
 
 1. **Всегда** вызывай готовый скрипт. Не собирай `ibcmd` вручную и не подставляй пароли из CredMgr в SQL.
 2. **`auth.credentialTarget`** (CredMgr) → только пользователь **1С** (`--user`/`--password`). Это **не** логин SQL.

@@ -4,7 +4,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 -->
 # 1C Query Optimization Skill (Advanced Patterns)
 
-For project-wide query work — load the router `skill `std-queries`` first. Authoritative hard rules (formatting, aliases, parameters, no queries in loops) — `dev-standards-architecture.md §3 → "Queries"`. Anti-patterns with examples (query in loop, subquery in SELECT, virtual table filter in WHERE, missing `ПЕРВЫЕ N`) — `anti-patterns` rule.
+For project-wide query work — load the router `skill `std-queries`` first. Hard rules (formatting, aliases, parameters, no queries in loops) — `std-queries`. Anti-patterns with examples — skill `std-anti-patterns`.
 
 ## When to Use
 
@@ -18,7 +18,7 @@ Invoke this skill when:
 
 Walk this list explicitly for **every** query-optimization task (and for every new multi-batch query). Each item is a known miss with a case below:
 
-1. Virtual-table filters — in **parameters**, not `ГДЕ` (`anti-patterns.md §4`).
+1. Virtual-table filters — in **parameters**, not `ГДЕ` (`std-anti-patterns §4`).
 2. Virtual-table **periodicity matches the join granularity** — joining by `Регистратор` requires periodicity `Регистратор`, not `Авто`.
 3. Every temp table later used in a `СОЕДИНЕНИЕ`, `ОБЪЕДИНИТЬ`, or `В (ВЫБРАТЬ …)` filter — created with `ИНДЕКСИРОВАТЬ ПО` on the join / dedup keys (see *Temporary Table Indexing* below).
 4. No redundant deduplication — `РАЗЛИЧНЫЕ` inside `ОБЪЕДИНИТЬ` operands or on top of `СГРУППИРОВАТЬ ПО` (see *ОБЪЕДИНИТЬ vs ОБЪЕДИНИТЬ ВСЕ* below).

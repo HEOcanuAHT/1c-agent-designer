@@ -1,8 +1,8 @@
 ---
 description: >-
   Два корня 1С: workspace (проект) vs SkillHome (плагин или .cursor/skills).
-  Как вызывать скрипты skills, если tooling не скопирован в репо.
-alwaysApply: true
+  Use when calling skill scripts, SkillHome, -ProjectRoot, or plugin paths.
+alwaysApply: false
 ---
 
 # Пути: плагин vs проект

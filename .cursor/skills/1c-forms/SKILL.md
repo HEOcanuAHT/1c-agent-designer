@@ -9,29 +9,25 @@ disable-model-invocation: true
 # 1c-forms — управляемые формы
 
 Источник: адаптировано из [comol/ai_rules_1c](https://github.com/comol/ai_rules_1c) (без MCP-гейтов).
-Мутации `Form.xml` — предпочтительно через skill `1c-metadata-manage` (form-*).
-Dump/load конфы — `1c-ibcmd-pack` / `1c-designer-agent` (без update-db-cfg).
+Мутации `Form.xml` — skill `1c-metadata-manage` (form-*). Dump/load — `1c-dump`.
 
+Роутер: сначала этот skill, затем только нужные companion docs.
 
-# Managed Forms — Entry Point
-
-This file is the **router** for managed-form work. Load it first, then load only the companion rules selected by the table below — companion files are not auto-attached by file pattern.
-
-> **Execution gate.** Companion rules define *what* a correct form looks like; the *mutation* of `Form.xml` / layouts itself goes through the **`1c-metadata-manage`** skill (`form-manage.md`, form-compile DSL) or skill `1c-metadata-manage` — hard gate per `AGENTS.md → Skills and Subagents`, exceptions only per the skill's `SKILL.md → Hard rule`. Editing `Form.Module.bsl` logic is regular BSL work and is not covered by this gate.
+> **Execution gate.** Мутации `Form.xml` — `1c-metadata-manage` (`docs/form-manage.md`, form-compile DSL). Hard rule — в SKILL того skill. `Form.Module.bsl` — обычный BSL.
 
 ## Routing
 
 | Task | Load |
-|---|---|
-| Design a form layout from scratch, or when requirements do not specify element placement | `form-patterns.md` |
-| Create or structurally modify `Form.xml` | `forms-add.md`, `metadata-xml-workarounds.md` |
-| Programmatic modification of typical forms (element placement, fill checking, form commands) | `forms-add.md → Form-Presentation Rules` |
-| Add or rename form event handlers | `form-module.md → Adding Form Event Handlers` |
-| Edit `Form.Module.bsl` logic | `form-module.md` |
-| Server-side form-module code (reserved names `ПараметрыВыбора`, `СвязиПараметровВыбора`, `СписокВыбора`, `ПараметрыОтбора`, `ОтборСтрок`) | `form-module.md → Reserved Names` |
-| Set up module regions in a new form module | `module-structure.md → Form Module` (5 mandatory regions) |
-| Client-server architecture (directives, round trips) | `skill `std-architecture` §3 → "Client-Server Interaction"`, `skill `std-anti-patterns` → "Excessive Client-Server Calls"`, `skill `std-anti-patterns` → "Using &НаСервере Instead of &НаСервереБезКонтекста"` |
-| Client-side async code (`Асинх` / `Ждать`) | `async-methods.md` |
-| Working on an adopted form of an extension | `skill `std-extension-patterns``, `skill `std-architecture` §2` |
+|------|------|
+| Layout from scratch | `form-patterns.md` |
+| Create / structural `Form.xml` | `forms-add.md`, `std-metadata-xml` |
+| Typical form presentation rules | `forms-add.md` → Form-Presentation Rules |
+| Form event handlers | `form-module.md` → Adding Form Event Handlers |
+| `Form.Module.bsl` logic | `form-module.md` |
+| Reserved names (`ПараметрыВыбора`, …) | `form-module.md` → Reserved Names |
+| Module regions | `std-module-structure` |
+| Client-server / round trips | `std-client-server`, `std-anti-patterns` (Excessive Client-Server Calls, `&НаСервере` vs БезКонтекста) |
+| Async (`Асинх` / `Ждать`) | `async-methods.md` |
+| Adopted form in extension | `std-extension-patterns` |
 
-Each companion file is self-contained — load only the ones that match the task. Do not preload the whole set "to be safe".
+Не прелоадить весь набор «на всякий случай».
