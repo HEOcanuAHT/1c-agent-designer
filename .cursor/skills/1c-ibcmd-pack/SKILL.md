@@ -225,5 +225,7 @@ Env: `1C_IBCMD`, `1C_IB_PATH`, `1C_IB_USER`, `1C_IB_PASSWORD`, `1C_DB_USER`, `1C
 
 ## Результат пользователю
 
-Dump/load: каталог, list/файлы, `ELAPSED_SEC`, тип подключения (без паролей), явно «без apply / КБД».  
+Dump/load: каталог, list/файлы, `ELAPSED_SEC`, `OK action=…`, строка `RESULT={…}`, тип подключения (без паролей), явно «без apply / КБД».  
 Pack: путь к `.cf`, credentials да/нет.
+
+**Ожидание Shell:** не фон + `AwaitShell` 90 с на короткий dump. Таблица `block_until_ms` — в skill **`1c-dump`** (раздел «Ожидание Shell»).

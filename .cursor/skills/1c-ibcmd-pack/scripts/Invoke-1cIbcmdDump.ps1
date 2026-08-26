@@ -378,15 +378,33 @@ switch ($Action) {
 }
 
 $sw.Stop()
+$elapsedSec = [math]::Round($sw.Elapsed.TotalSeconds, 1)
+$dumpFiles = $null
+$dumpBytes = $null
 if ($Action -eq "dump-full" -or $Action -eq "dump-update" -or $Action -eq "dump-objects") {
   $cfgXml = Join-Path $dumpAbs "Configuration.xml"
   $marker = Join-Path $dumpAbs "ConfigDumpInfo.xml"
   if (-not (Test-Path -LiteralPath $cfgXml)) { throw "${Action}: missing $cfgXml" }
   if (-not (Test-Path -LiteralPath $marker)) { throw "${Action}: missing $marker" }
   $files = @(Get-ChildItem -LiteralPath $dumpAbs -Recurse -File -EA SilentlyContinue)
+  $dumpFiles = $files.Count
+  $dumpBytes = ($files | Measure-Object Length -Sum).Sum
+  if ($null -eq $dumpBytes) { $dumpBytes = 0 }
   Write-Host "DUMP_DIR=$dumpAbs"
-  Write-Host "DUMP_FILES=$($files.Count)"
-  Write-Host "DUMP_BYTES=$(($files | Measure-Object Length -Sum).Sum)"
+  Write-Host "DUMP_FILES=$dumpFiles"
+  Write-Host "DUMP_BYTES=$dumpBytes"
 }
-Write-Host ("ELAPSED_SEC={0}" -f [math]::Round($sw.Elapsed.TotalSeconds, 1))
+Write-Host ("ELAPSED_SEC={0}" -f $elapsedSec)
 Write-Host "OK action=$Action"
+$result = [ordered]@{
+  status = "ok"
+  action = $Action
+  sec    = $elapsedSec
+}
+if ($null -ne $dumpFiles) {
+  $result.files = $dumpFiles
+  $result.bytes = [int64]$dumpBytes
+}
+Write-Host ("RESULT=" + ($result | ConvertTo-Json -Compress))
+[Console]::Out.Flush()
+if ([Console]::Error) { [Console]::Error.Flush() }
