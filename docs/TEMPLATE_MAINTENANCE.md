@@ -29,7 +29,7 @@ cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "<аб�
 
 | Можно | Нельзя |
 |--------|--------|
-| `.cursor-plugin/plugin.json`, `.cursor/skills` (bootstrap, std-*, 1c-forms, 1c-metadata-manage, designer-agent, ibcmd-pack, external-epf/cfe, tech-decisions) | XML конкретной конфы в `src/` |
+| `.cursor-plugin/plugin.json`, `.cursor/skills` (bootstrap, runtime, dump, std-*, 1c-forms, 1c-metadata-manage, designer-agent, ibcmd-pack, external-epf/cfe, query-validate, tech-decisions) | XML конкретной конфы в `src/` |
 | `.cursor/agents/implementer.md` | Секреты, пути к личным ИБ |
 | `.cursor/rules`, каркас `.1c/*.example`, `docs/*` шаблона | Коммиты под одну конфу без обобщения |
 | `.gitignore`, MR-шаблон, README шаблона, `ext/README.md`, `cfe/README.md` | |
@@ -46,11 +46,12 @@ cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "<аб�
 
 ## После изменения skills/rules
 
-1. **Подними `version`** в `.1c/template-manifest.json`, `.cursor-plugin/plugin.json` и в `project.json.example` → `template.version`.
-2. При **breaking change** для живых проектов — обнови `docs/TEMPLATE_UPGRADE.md` и краткий пункт в `upgradeNotes` манифеста.
+1. **Подними `version`** в `.1c/template-manifest.json` (источник), затем то же в `.cursor-plugin/plugin.json` и `project.json.example` → `template.version`.
+2. При **breaking change** для живых проектов — краткая **дельта** в `docs/TEMPLATE_UPGRADE.md` (схема полей — только `.1c/README.md`) и пункт в `upgradeNotes` манифеста.
 3. Если файл нужен **только в шаблоне** (например `template-maintenance.mdc`) — добавь в `projectSkipPaths` **и** не включай в `.cursor-plugin/plugin.json` → `rules`.
-4. Запушить в шаблон. Для плагина: Reload Window (junction уже смотрит на этот клон).
-5. Живые **клоны** с `.cursor/skills` в git — skill **`1c-template-sync`**. Проекты только с плагином — не копировать skills, только обновить плагин + Reload.
+4. **Не** ставь `alwaysApply: true` на узкие правила (dump, auth, query-validate). Инварианты — `1c-invariants.mdc`.
+5. Запушить в шаблон. Для плагина: Reload Window (junction уже смотрит на этот клон).
+6. Живые **клоны** с `.cursor/skills` в git — skill **`1c-template-sync`**. Проекты только с плагином — не копировать skills, только обновить плагин + Reload.
 
 Пример sync (только клоны):
 
@@ -63,7 +64,7 @@ cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "<аб�
 ## Чеклист перед PR в шаблон
 
 - [ ] Нет имён/путей конкретной конфы и личных серверов
-- [ ] Load по-прежнему без `update-db-cfg` (правило `1c-designer-agent`)
+- [ ] Load по-прежнему без `update-db-cfg` (rule `1c-invariants`)
 - [ ] Примеры в `.1c/*.example`, не `project.local.json`
 - [ ] README/docs обновлены, если менялся процесс
 - [ ] При изменении tooling поднят `version` в `template-manifest.json`, `plugin.json` (+ example)

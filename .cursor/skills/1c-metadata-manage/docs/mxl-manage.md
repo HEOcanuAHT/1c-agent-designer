@@ -352,13 +352,9 @@ The PowerShell script `tools/1c-mxl-validate/scripts/mxl-validate.ps1` was refre
 
 The compile/decompile/info scripts (`mxl-compile`, `mxl-decompile`, `mxl-info`) were not refreshed — no significant upstream changes for them in this period.
 
-## MCP Integration
+## Related tools
 
-- **Grep/Read src/ (MCP optional)** — Verify object names used in parameters; find template paths in the configuration.
-- **Read object XML (MCP optional)** — Get attribute types for objects whose data will populate the layout.
-- **get_xsd_schema** — Get XSD schema for layout XML (`object_type="Макет"`). Use before generating MXL XML.
-- ***-validate scripts** — Validate generated layout XML against XSD.
-- **search in src/ (MCP optional)** — Find existing layout examples in the codebase.
+Grep/Read `src/`. MXL scripts: `mxl-info`, `mxl-compile`, `mxl-decompile`, `mxl-validate`. No MCP.
 
 ## SDD Integration
 

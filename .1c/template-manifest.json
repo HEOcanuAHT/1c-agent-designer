@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.26.1",
+  "version": "2026.08.26.6",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -39,6 +39,26 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.26.6",
+      "summary": "1c-metadata-manage и std-architecture — короткие роутеры; паттерны в std-architecture/docs/patterns.md; запросы/C-S ownership у ITS skills."
+    },
+    {
+      "since": "2026.08.26.5",
+      "summary": "1c-runtime (Common-*); фасад 1c-dump. CFE/EPF/validate/agent dotsource runtime. CredMgr helpers load at script scope (PS 5.1)."
+    },
+    {
+      "since": "2026.08.26.4",
+      "summary": "AlwaysApply сжат: 1c-invariants. Канон полей ИБ только .1c/README.md. Query-validate/auth/dump/git — по задаче, не always."
+    },
+    {
+      "since": "2026.08.26.3",
+      "summary": "Shared runtime: Common-Project.ps1 + Common-ServiceIb.ps1 in 1c-ibcmd-pack/scripts (CFE/validate no longer depend on EPF). EPF Designer auth via Resolve-1cIbAuth/CredMgr. Rules epf/cfe/bootstrap/sync: not alwaysApply."
+    },
+    {
+      "since": "2026.08.26.2",
+      "summary": "Query validate — отдельный skill 1c-query-validate (скрипт ушёл из 1c-external-cfe). Канон конфига только .1c/project.json.example. Knowledge: живые имена skills, без MCP."
+    },
     {
       "since": "2026.08.26.1",
       "summary": "Service IB: C/S и файловая боевая ИБ — config save .cf + load в .1c/ib-ext (без apply). XML import — fallback. SQL vs 1C auth через общий Get-ConnectionArgs."

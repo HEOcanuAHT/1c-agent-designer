@@ -11,16 +11,23 @@
 - Фичи/фиксы: `feature/…` или `fix/…` от актуального `main`.
 - Не коммитить доработки напрямую в `main` (кроме согласованных sync-коммитов выгрузки).
 
-## Dump / load (Designer Agent)
+## Dump / load
+
+По `tools.preferredDump` в `.1c/project.json` (канон полей: [`.1c/README.md`](../.1c/README.md)):
+
+| Значение | Skill |
+|----------|--------|
+| `ibcmd` (предпочтительно) | фасад **`1c-dump`** → `1c-ibcmd-pack` |
+| `agent` | фасад **`1c-dump`** → `1c-designer-agent` |
+
+Агенту: `Invoke-1cDump.ps1` (skill `1c-dump`). Детали CLI — в ibcmd-pack / designer-agent.
 
 - `dump-full` / `dump-update` → XML в `src/`.
-- Откат файлов объекта к ИБ без git: `dump-objects` (`-ListFile` / `-Objects`). `dump-update` правки на диске не видит.
-- Правки в git → `load-changed` (или `-ListFile`) → **только основная конфигурация**.
+- Откат файлов объекта к ИБ без git: `dump-objects`. `dump-update` правки на диске не видит.
+- Правки в git → `load-changed` (или list-file) → **только основная конфигурация**.
 - **Не** вызывать `update-db-cfg` / `/UpdateDBCfg` из автоматизации.
 - Принятие в конфигурацию БД — вручную в Конфигураторе.
-- Перед dump/load на файловой ИБ закройте обычный Конфигуратор.
-
-Скрипты: `.cursor/skills/1c-designer-agent/`.
+- Перед dump/load на файловой ИБ закройте обычный Конфигуратор (агент `1cv8` не убивает).
 
 ## Merge Request
 

@@ -1,8 +1,8 @@
 ---
 description: >-
   Запрет убивать пользовательские 1cv8/Конфигуратор; только orphan ibcmd
-  служебной ИБ.
-alwaysApply: true
+  служебной ИБ. Use when lock, kill 1cv8, ibcmd hang, исключительная блокировка.
+alwaysApply: false
 ---
 
 # Не трогать пользовательские процессы 1С

@@ -23,7 +23,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $SkillRoot = Split-Path -Parent $ScriptDir
 $ExternalClassId = "c3831ec8-d8d5-4f93-8a22-f9bfae07327f"
 
-. (Join-Path $ScriptDir "Common-ServiceIb.ps1")
+. (Join-Path $ScriptDir "..\..\1c-runtime\scripts\Common-ServiceIb.ps1")
 
 function Get-ExtDirRel($Cfg) {
   if ($Cfg.ext -and $Cfg.ext.dir) { return ([string]$Cfg.ext.dir -replace "\\", "/").TrimEnd("/") }
@@ -58,7 +58,8 @@ function Invoke-DesignerBatch {
     [string[]]$ExtraArgs,
     [string]$LogName
   )
-  $auth = Get-Auth $Cfg
+  Import-1cCredHelper
+  $auth = Resolve-1cIbAuth -Cfg $Cfg -ProjectRoot $ProjectRoot
   $authArgs = Get-DesignerAuthArgs $auth
   $logDir = Join-Path $ProjectRoot ".1c"
   New-Item -ItemType Directory -Force -Path $logDir | Out-Null

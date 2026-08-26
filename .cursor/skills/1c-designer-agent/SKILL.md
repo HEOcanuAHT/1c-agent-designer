@@ -21,8 +21,9 @@ disable-model-invocation: true
 AgentMode+SSH — experimental (`designerAgent.transport: agent` или `-UseAgent`).
 
 Быстрый dump/load через **ibcmd**: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdDump.ps1`.  
+**Фасад:** skill `1c-dump` / `Invoke-1cDump.ps1` (читает `tools.preferredDump`).  
 Оба инструмента читают **`infobase`**: agent — `path`/`name`/`server`; ibcmd — `path` (файл) или `dbms` (C/S, быстрее).  
-Если в проекте `tools.preferredDump: "ibcmd"` — по умолчанию используй ibcmd, не agent.
+Если в проекте `tools.preferredDump: "ibcmd"` — по умолчанию используй ibcmd (или фасад), не agent.
 **И dump, и import** — только **основная** конфигурация; `config apply` / КБД не трогать (как и этот skill без `update-db-cfg`).
 
 ## Два «только отличия»
@@ -35,8 +36,10 @@ AgentMode+SSH — experimental (`designerAgent.transport: agent` или `-UseAge
 
 ## Конфиг
 
-- `.1c/project.json` — `infobase.path`, `src`, `platformVersion`
-- `.1c/project.local.json` — `auth.user` / `auth.password`
+Канон полей: `.1c/README.md`.
+
+- `.1c/project.json` — `infobase` (`path` / `name` / `server`), `src`, `platformVersion`
+- Auth 1С: `auth.credentialTarget` (CredMgr). Fallback: env `1C_IB_USER`/`1C_IB_PASSWORD` или plaintext в `project.local.json` (не коммитить)
 - `designerAgent.transport`: `batch` (дефолт) | `agent`
 
 Путь к файловой ИБ — со слэшами: `C:/Users/.../InfoBase8`.
@@ -67,17 +70,17 @@ AgentMode всегда работает из `AgentBaseDir\<userDir>` (част�
 ## Правила
 
 1. Не авто-помещать в хранилище.
-2. Секреты только в `project.local.json` / env (в лог пароль не писать).
+2. Секреты: CredMgr (`auth.credentialTarget`) или `project.local.json` / env (в лог пароль не писать).
 3. Перед dump/load закрыть обычный конфигуратор и старый AgentMode на этой ИБ.
 4. После `dump-*` / `load-changed` / `ping` агент гасится (kill по `.1c/agent.pid`), если не `designerAgent.keepAlive: true`. `start` оставляет процесс жить; `stop` — ручная остановка.
 5. **Загрузка (частичная и полная) — только в основную конфигурацию.** Не вызывать `update-db-cfg` / `/UpdateDBCfg`. Принятие в конфигурацию БД — вручную в Конфигураторе.
 6. **Ошибка захвата в хранилище** при load (`не захвачен в хранилище`, `ConfigFilesError`): коротко скажи пользователю, что объект **не захвачен в хранилище**, и назови объект (например `Catalog.Номенклатура`). Не разворачивай полный traceback. Дальше — захватить объект в Конфигураторе и повторить load.
 7. **Auth / пользователи ИБ** (проверено, в т.ч. файловая):
-   - ИБ **с пользователями** + верные `auth.user`/`password` → dump/load-changed **OK** (в т.ч. инкремент). Логин SSH к AgentMode = учётка ИБ.
+   - ИБ **с пользователями** + верные учётные данные 1С (CredMgr / fallback) → dump/load-changed **OK** (в т.ч. инкремент). Логин SSH к AgentMode = учётка ИБ.
    - ИБ **без пользователей** → `auth.required: false` (без `/N` `/P`, SSH с пустым логином).
    - Пользователи **есть**, `auth.required: false` / без `/N` `/P` → SSH `Authentication failed` (~несколько секунд). Конфу без учётки не выгрузить.
    - Неверный пользователь/пароль → тот же `Authentication failed` (иногда `transport shut down or saw EOF`).  
-     **Сказать:** проверь логин/пароль ИБ в `project.local.json`; если пользователей нет — `auth.required: false`. Не разворачивай traceback paramiko.
+     **Сказать:** проверь `auth.credentialTarget` (CredMgr) или fallback в `project.local.json`; если пользователей нет — `auth.required: false`. Не разворачивай traceback paramiko.
 8. **ibcmd** при тех же auth-проблемах: см. skill `1c-ibcmd-pack` (`Идентификация пользователя не выполнена`, `Требуется экспортировать конфигурацию полностью`).
 
 ### AgentMode: `/IBName`, auth

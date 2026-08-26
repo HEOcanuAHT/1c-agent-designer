@@ -9,7 +9,7 @@ Rules for using the asynchronous mechanism introduced in platform 8.3.18+.
 
 Applies to: client-side code with asynchronous calls (`&НаКлиенте`).
 
-Authoritative reference: `dev-standards-architecture.md §3 → "Async and Modality"`. This file gives the practical patterns and the pitfalls.
+Authoritative reference: skill `std-architecture` (Async and Modality). This file gives the practical patterns and the pitfalls.
 
 ---
 

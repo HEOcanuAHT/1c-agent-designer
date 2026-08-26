@@ -5,7 +5,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 # Managed-Form Layout Patterns
 
-Design guidance for managed forms, distilled from typical 1C configurations. Use when building a form and the user's requirements do not spell out where elements go. This is layout knowledge — it applies whether the form is edited via the `1c-metadata-manage` skill, EDT, or Designer. It complements the entry point `forms.md` and the hand-editing gotchas in `metadata-xml-workarounds.md`.
+Design guidance for managed forms, distilled from typical 1C configurations. Use when building a form and the user's requirements do not spell out where elements go. This is layout knowledge — it applies whether the form is edited via the `1c-metadata-manage` skill, EDT, or Designer. It complements the entry point skill `1c-forms` and the hand-editing gotchas in skill `std-metadata-xml`.
 
 Element and group names below (`ГруппаШапка`, `Отбор[Поле]`, …) are the conventional 1C identifiers — keep them in Russian as shown; they are real names, not prose.
 

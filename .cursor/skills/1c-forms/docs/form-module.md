@@ -9,7 +9,7 @@ This file owns form-module-specific topics: event-handler wiring, reserved names
 
 ## Client-Server Interaction and Compilation Directives
 
-Single source of truth — `dev-standards-architecture.md §3 → "Client-Server Interaction"`; examples and severity — `anti-patterns.md §6–§7`. Not duplicated here.
+Single source of truth — skill `std-architecture` / `std-client-server`; examples and severity — skill `std-anti-patterns`. Not duplicated here.
 
 ## Async Programming
 
@@ -89,4 +89,4 @@ In 1C form modules, local variables **must not** be named after standard form-el
 
 ## Module Structure
 
-The 5-region template for form modules — `module-structure.md → Form Module`; all 5 regions are mandatory even when empty.
+The 5-region template for form modules — skill `std-module-structure` (Form Module); all 5 regions are mandatory even when empty.

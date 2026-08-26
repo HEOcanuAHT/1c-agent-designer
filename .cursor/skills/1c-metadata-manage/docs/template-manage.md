@@ -105,8 +105,6 @@ The script refuses a real deletion without `-Force`. It parses and serializes th
 3. `1c-mxl-validate` — validate template structure
 4. `1c-mxl-info` — analyze template structure
 
-## MCP Integration
+## Related tools
 
-- **Grep/Read src/ (MCP optional)** — Verify the parent object exists and supports templates.
-- **Read object XML (MCP optional)** — Get parent object structure to confirm template compatibility.
-- **search in src/ (MCP optional)** — Find similar template implementations.
+Grep/Read `src/`. Template scripts: `add-template`, `remove-template`; MXL — `mxl-*`. No MCP.

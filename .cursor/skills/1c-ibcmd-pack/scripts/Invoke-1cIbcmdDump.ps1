@@ -36,43 +36,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "Convert-1cDumpObjectList.ps1")
-. (Join-Path $PSScriptRoot "Common-IbcmdConnection.ps1")
-
-function Read-JsonFile([string]$Path) {
-  if (-not (Test-Path -LiteralPath $Path)) { return $null }
-  return (Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json)
-}
-
-function Merge-Config($Base, $Overlay) {
-  if ($null -eq $Overlay) { return $Base }
-  if ($null -eq $Base) { return $Overlay }
-  $json = $Base | ConvertTo-Json -Depth 20 | ConvertFrom-Json
-  foreach ($p in $Overlay.PSObject.Properties) {
-    $name = $p.Name
-    $val = $p.Value
-    if ($null -ne $val -and ($val -is [System.Management.Automation.PSCustomObject]) -and
-        $json.PSObject.Properties[$name] -and ($json.$name -is [System.Management.Automation.PSCustomObject])) {
-      $json.$name = Merge-Config $json.$name $val
-    } else {
-      $json | Add-Member -NotePropertyName $name -NotePropertyValue $val -Force
-    }
-  }
-  return $json
-}
-
-function Resolve-Ibcmd([string]$Explicit, [string]$PlatformVersion) {
-  if ($env:1C_IBCMD -and (Test-Path -LiteralPath $env:1C_IBCMD)) { return $env:1C_IBCMD }
-  if ($Explicit -and (Test-Path -LiteralPath $Explicit)) { return $Explicit }
-  if ($PlatformVersion) {
-    $candidate = Join-Path ${env:ProgramFiles} "1cv8\$PlatformVersion\bin\ibcmd.exe"
-    if (Test-Path -LiteralPath $candidate) { return $candidate }
-  }
-  $found = Get-ChildItem (Join-Path ${env:ProgramFiles} "1cv8") -Recurse -Filter "ibcmd.exe" -ErrorAction SilentlyContinue |
-    Sort-Object FullName -Descending |
-    Select-Object -First 1 -ExpandProperty FullName
-  if ($found) { return $found }
-  throw "ibcmd.exe not found. Set platformVersion or ibcmd / 1C_IBCMD."
-}
+. (Join-Path $PSScriptRoot "..\..\1c-runtime\scripts\Common-IbcmdConnection.ps1")
 
 function Get-PreserveRels($Cfg, [string]$DumpRel) {
   $rels = [System.Collections.Generic.List[string]]::new()

@@ -93,7 +93,6 @@ The PowerShell scripts under `tools/1c-interface-manage/scripts/` were refreshed
 - **`interface-edit`** — operations `place` / `order` accept the value as an object (not only as a string). Command names in `hide` / `show` / `place` / `order` are normalised: `Catalogs.X` and `Справочник.X` map to canonical `Catalog.X`.
 - **`interface-validate`** — universal validator improvements (one-liner output by default, `-Detailed`, folder path auto-resolution) — see `role-manage.md` → "Recent Additions".
 
-## MCP Integration
+## Related tools
 
-- **Grep/Read src/ (MCP optional)** — Verify command and subsystem names referenced in the interface configuration.
-- **Read object XML (MCP optional)** — Get object structure for verifying command targets.
+Grep/Read `src/`. Interface scripts: `interface-edit`, `interface-validate`. No MCP.

@@ -256,7 +256,7 @@ For form attributes with reference or composite types — first copy the value t
 
 Headlines of the rules to follow: lock **before** reading; use `Исключительный` for writes and `Разделяемый` only for consistent reads; pass `ИсточникДанных` instead of iterating; lock the register, not the document; never call user dialogs / long-running operations under a transaction; set configuration lock mode to `Управляемый`.
 
-**Authoritative deep-dive — `locks-and-transactions.md`.** That file covers the full theory: transaction boundaries, implicit vs explicit transactions, lock-ordering contract for the whole project, mass-operation patterns, status-log pattern, and the technological-log diagnostics (`TLOCK` / `TDEADLOCK`). When designing a new posting path or debugging a deadlock — read it first.
+**Authoritative deep-dive — `std-transactions-locks`.** That file covers the full theory: transaction boundaries, implicit vs explicit transactions, lock-ordering contract for the whole project, mass-operation patterns, status-log pattern, and the technological-log diagnostics (`TLOCK` / `TDEADLOCK`). When designing a new posting path or debugging a deadlock — read it first.
 
 **Standard.** ITS: "Управление блокировкой данных в транзакции", "Особенности проведения документов".
 

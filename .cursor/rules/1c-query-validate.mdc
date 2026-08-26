@@ -1,8 +1,9 @@
 ---
 description: >-
-  Опциональная проверка языка запросов 1С через COM (QuerySchema) на .1c/ib-ext.
-  По умолчанию выкл.; вкл. по фразе пользователя «проверяй запросы».
-alwaysApply: true
+  Опциональная проверка языка запросов 1С (COM QuerySchema на .1c/ib-ext).
+  Use when user asks проверяй запросы, валидируй запросы, validate queries,
+  выключи проверку запросов, or query-validate.mode is on.
+alwaysApply: false
 ---
 
 # Проверка запросов (opt-in)
@@ -36,14 +37,14 @@ Linux/macOS — вне scope.
 
 ## Как вызывать (меньше Allow в Cursor)
 
-Два шага; **не** мешать prepare и validate в одной команде без нужды.
+Следуй skill **`1c-query-validate`**. Два шага; **не** мешать prepare и validate в одной команде без нужды.
 
 ### 1) Ensure — редко (раз за сессию / после обновления `src/`)
 
 Может дергать ibcmd → Cursor часто просит Allow — **нормально один раз**:
 
 ```powershell
-powershell -NoProfile -File "<SkillHome-1c-external-cfe>/scripts/Invoke-1cValidateQuery.ps1" -Action ensure -ProjectRoot "<workspace>"
+powershell -NoProfile -File "<SkillHome-1c-query-validate>/scripts/Invoke-1cValidateQuery.ps1" -Action ensure -ProjectRoot "<workspace>"
 ```
 
 Не добавляй `-ExecutionPolicy Bypass`, не ищи/не убивай процессы вокруг validate.
@@ -54,13 +55,13 @@ powershell -NoProfile -File "<SkillHome-1c-external-cfe>/scripts/Invoke-1cValida
 
 ```powershell
 # записать изменённые запросы в .1c/qv-batch/*.txt (UTF-8), затем:
-powershell -NoProfile -File "<SkillHome-1c-external-cfe>/scripts/Invoke-1cValidateQuery.ps1" -ReuseOnly -BatchDir .1c/qv-batch -ProjectRoot "<workspace>"
+powershell -NoProfile -File "<SkillHome-1c-query-validate>/scripts/Invoke-1cValidateQuery.ps1" -ReuseOnly -BatchDir .1c/qv-batch -ProjectRoot "<workspace>"
 ```
 
 Один запрос:
 
 ```powershell
-powershell -NoProfile -File "<SkillHome-1c-external-cfe>/scripts/Invoke-1cValidateQuery.ps1" -ReuseOnly -QueryFile .1c/qv-batch/01.txt -ProjectRoot "<workspace>"
+powershell -NoProfile -File "<SkillHome-1c-query-validate>/scripts/Invoke-1cValidateQuery.ps1" -ReuseOnly -QueryFile .1c/qv-batch/01.txt -ProjectRoot "<workspace>"
 ```
 
 | Exit | Смысл |

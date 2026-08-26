@@ -1,6 +1,9 @@
 ---
-description: Первичная настройка проекта 1С (плагин или клон шаблона)
-alwaysApply: true
+description: >-
+  Первичная настройка проекта 1С (плагин или клон шаблона).
+  Use when user asks настрой окружение, bootstrap, это конфа 1С, подключи ИБ,
+  or the folder has .1c/ without project.json or src/Configuration.xml.
+alwaysApply: false
 ---
 
 # Bootstrap репозитория конфигурации 1С

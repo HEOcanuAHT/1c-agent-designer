@@ -26,6 +26,7 @@ disable-model-invocation: true
 | Клиент/сервер, вызовы сервера, трафик | `std-client-server` |
 | Управляемые формы / `Form.xml` / async | `1c-forms` (+ `1c-metadata-manage` form-*) |
 | Текст запроса, `Запрос`, СКД-запросы (оформление) | `std-queries` (+ `docs/query-writing.md`) |
+| Runtime-проверка языка запросов (opt-in) | `1c-query-validate` (оркестратор, не implementer) |
 | Производительность запросов, индексы, ВТ | `std-query-optimization` (+ `docs/practices.md`) |
 | Запись данных, транзакции, блокировки | `std-transactions-locks` (+ `docs/practices.md`) |
 | Роли, RLS, `ПравоДоступа`, привилегированный режим | `std-access-rights` |
@@ -38,7 +39,7 @@ disable-model-invocation: true
 | Регистры (проектирование) | `std-registers-design` |
 | Антипаттерны / ревью perf | `std-anti-patterns` |
 | Ловушки платформы | `std-platform-solutions` |
-| Архитектура (шире ITS-выжимок) | `std-architecture` |
+| Архитектура (размещение кода/объектов) | `std-architecture` (+ `docs/patterns.md`) |
 | Журнал регистрации | `std-logging` |
 | HTTP/REST/очереди | `std-integrations` |
 

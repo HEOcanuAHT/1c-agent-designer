@@ -1,6 +1,9 @@
 ---
-description: Предлагать подтянуть обновления шаблона 1С без затрагивания src/
-alwaysApply: true
+description: >-
+  Подтянуть обновления шаблона 1С без затрагивания src/.
+  Use when user asks обнови шаблон, sync template, подтяни skills,
+  or tooling looks outdated (no template-manifest / old dump-epf scripts).
+alwaysApply: false
 ---
 
 # Обновление шаблона в проекте конфигурации

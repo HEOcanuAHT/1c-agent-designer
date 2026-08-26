@@ -18,7 +18,7 @@ MCP-only gates removed. Dump/load/EPF/CFE pack: template skills 1c-ibcmd-pack, 1
 
 Concrete recurring mistakes when generating or editing 1C metadata XML / MDO and managed-form XML by hand or with scripts. Apply when authoring metadata XML directly (rather than via the `1c-metadata-manage` skill).
 
-> **Hand-editing is the exception, not a parallel path.** Mutating metadata XML goes through the `1c-metadata-manage` skill or skill `1c-metadata-manage` (see `skill `1c-metadata-manage``) — hard gate per `AGENTS.md → Skills and Subagents`. This file applies only inside the documented exceptions (`.cursor/.cursor/skills/1c-metadata-manage/SKILL.md → Hard rule`: one-line fix, skill unavailable) and for reviewing existing files.
+> **Hand-editing is the exception, not a parallel path.** Mutating metadata XML goes through skill **`1c-metadata-manage`**. This file applies only inside that skill's Hard rule (one-line fix, skill unavailable) and for reviewing existing files.
 
 ---
 
@@ -87,7 +87,7 @@ When adding metadata objects — also update `Configuration.xml` (`<childObjects
 
 Whenever editing metadata XML by hand, after the change run:
 
-- `скрипты *-validate из 1c-metadata-manage` from `1c-code-metadata-mcp` against the appropriate XSD (`get_xsd_schema` first if unsure of the type).
-- Then a sanity load via `1c-metadata-manage/tools/1c-meta-validate/scripts/meta-validate.ps1`.
+- `*-validate` scripts from skill `1c-metadata-manage` (form-validate / meta-validate / …).
+- Then a sanity check via `1c-metadata-manage/tools/1c-meta-validate/scripts/meta-validate.ps1`.
 
 This catches structural issues (missing required elements, wrong type names, broken references) before they reach the platform.

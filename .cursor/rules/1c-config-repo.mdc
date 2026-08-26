@@ -1,6 +1,8 @@
 ---
-description: Git + XML-исходники конфигурации 1С (общий шаблон)
-alwaysApply: true
+description: >-
+  Git-workflow конфигурации 1С: ветки, MR, хранилище.
+  Use when commit, branch, merge request, хранилище 1С, синхронизация src.
+alwaysApply: false
 ---
 
 # Workflow репозитория конфигурации 1С

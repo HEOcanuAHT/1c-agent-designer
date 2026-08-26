@@ -519,25 +519,9 @@ The PowerShell scripts under `tools/1c-meta-{compile,edit,info,remove,validate}/
 
 - Returns exit code 1 when the object is not found (was silently 0).
 
-## MCP Integration
+## Related tools
 
-- **get_object_dossier** — Comprehensive structural passport in one call: structure, forms, subscriptions, roles, dependencies, code modules, business info. Use as the first step before creating/modifying/removing objects.
-- **Grep/Read src/ (MCP optional)** — Verify object names don't conflict, find objects to remove and their relationships. Use `object_type` filter to narrow results.
-- **Read object XML (MCP optional)** — Get full object structure: attribute types, tabular parts, synonyms, properties. Use for verifying attribute types and references.
-- **Grep/Read src/ (MCP optional)** (`names_only=true`) — Find similar metadata objects for XML reference before generating new XML.
-- **get_xsd_schema** — Get XSD schema for the metadata type to validate generated XML structure.
-- ***-validate scripts** — Validate generated or modified metadata XML against XSD before committing.
-- **search_code** — Find BSL code references to objects (prefer over `Grep src/ (MCP optional)` and Grep; supports semantic/fulltext/hybrid search with detail levels L0–L3).
-- **Grep src/ (MCP optional)** — Find code references in raw BSL files (fallback when `search_code` is not available).
-- **trace_impact** — Recursive multi-level impact analysis before removal or modification (preferred over `graph_dependencies` for deep dependency chains).
-- **find_objects_using_object** — Find all objects referencing the given object in their attributes/dimensions/resources before removal.
-- **find_usages_of_object** — Attribute-level reference analysis: which specific attributes reference the object.
-- **graph_dependencies** — Flat dependency overview (who uses this / what it uses).
-- **docsearch** — Look up platform documentation for metadata type properties and valid property values when investigating validation errors.
-- **business_search** — Semantic search of related objects when creating configuration objects.
-- **answer_metadata_question** — Natural-language questions about object structure (meta-info provides more detailed structural analysis).
-- **check_1c_code** — Verify BSL code in object modules after fixing structural issues (syntax, logic, performance).
-- **review_1c_code** — Check code style and ITS standards compliance in object modules.
+Grep/Read `src/`. Meta scripts: `meta-info`, `meta-edit`, `meta-compile`, `meta-validate`, `meta-remove`. No MCP.
 
 ## SDD Integration
 

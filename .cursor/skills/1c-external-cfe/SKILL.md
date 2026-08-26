@@ -37,7 +37,7 @@ disable-model-invocation: true
 
 ## Служебная ИБ
 
-Та же `.1c/ib-ext`, что у `1c-external-epf` (`Common-ServiceIb.ps1`).
+Та же `.1c/ib-ext`, что у `1c-external-epf` (`1c-runtime/scripts/Common-ServiceIb.ps1`).
 
 По умолчанию: create → **загрузка конфы без apply** → extension create/import/export/save.
 
@@ -73,6 +73,16 @@ disable-model-invocation: true
 **Рекомендация:** ASCII-идентификаторы (`FixDbmsType`, префикс `Fix_`). Синоним можно кириллицей в XML после scaffold.  
 Скрипт пишет Warning, если Name/Prefix не ASCII.
 
+## XML-инструменты (borrow / patch / validate)
+
+Файловый XML расширений (не pack/dump ИБ):
+
+- skill `1c-metadata-manage` → [docs/cfe-manage.md](../1c-metadata-manage/docs/cfe-manage.md) / tools `1c-cfe-manage`
+- Adopted / protected `.bin` — `reference-adopted.md` рядом с этим SKILL
+- BSL-перехватчики — `std-extension-patterns`
+
+Каркас нового расширения «с нуля» для агента — **этот** skill (`scaffold`), не `cfe-init` без ТЗ оркестратора.
+
 ## Команды
 
 `SkillHome` = каталог этого SKILL.md. `-ProjectRoot` = workspace.
@@ -84,22 +94,8 @@ disable-model-invocation: true
 …\Invoke-1cExternalCfe.ps1 -Action pack -Name "…" -AllowServiceIbApplyOnCompatMismatch -RefreshServiceIb
 ```
 
-### Проверка языка запросов (служебная ИБ)
+Проверка языка запросов — skill **`1c-query-validate`** (не этот skill).
 
-COM на `.1c/ib-ext` (`V83.COMConnector` + `QuerySchema` / `FindParameters`). Без ENTERPRISE / HTTP / расширения.
-
-```powershell
-# редко (ibcmd) — раз за сессию / после обновления src
-…\Invoke-1cValidateQuery.ps1 -Action ensure
-# часто: без ibcmd, пачка в одном COM
-…\Invoke-1cValidateQuery.ps1 -ReuseOnly -BatchDir .1c/qv-batch
-…\Invoke-1cValidateQuery.ps1 -ReuseOnly -QueryFile .1c/qv-batch/01.txt
-…\Invoke-1cValidateQuery.ps1 -Action health   # или -ReuseOnly -Action health
-```
-
-Без `-ExecutionPolicy Bypass`. Exit `2` / `NEED_ENSURE=true` → сначала ensure.
-
-**Режим агента (opt-in):** rule `1c-query-validate` — по умолчанию выкл.; «проверяй запросы» → `.1c/query-validate.mode=on`; validate только оркестратор, пачкой с `-ReuseOnly`.
 | Action | Параметры | Результат |
 |--------|-----------|-----------|
 | `scaffold` | `-Name` [`-Prefix`] [`-Synonym`] [`-Purpose`] | `cfe/<Name>/` + явный `NamePrefix` |

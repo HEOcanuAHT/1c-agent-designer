@@ -129,16 +129,9 @@ The PowerShell scripts under `tools/1c-cf-manage/scripts/` were refreshed from [
 - Cross-references `Form` references in the home page and in default-form properties of configuration objects — broken links are now caught at validation time, not at load time.
 - Platform 8.5 support — new compatibility-mode and interface-mode values plus the new XML header format. (Same upgrade in `cfe-validate`, `epf-validate`, `skd-validate`.)
 
-## MCP Integration
+## Related tools
 
-- **get_object_dossier** — Comprehensive structural passport of existing configuration objects (structure, forms, dependencies, code, roles) in one call.
-- **Grep/Read src/ (MCP optional)** — Explore existing configuration structure, verify object names.
-- **Read object XML (MCP optional)** — Get full object structure for existing configuration objects.
-- **Grep/Read src/ (MCP optional)** (`names_only=true`) — Find similar configuration objects as XML reference examples.
-- **get_xsd_schema** — Get XSD schema for configuration XML. Use before generating Configuration.xml.
-- ***-validate scripts** — Validate generated configuration XML against XSD.
-- **compare_base_and_extension** — Compare configuration objects with their extension counterparts when working with configurations that have extensions.
-- **docsearch** — Platform documentation on configuration properties.
+Grep/Read `src/`. CF scripts: `cf-info`, `cf-edit`, `cf-init`, `cf-validate`. No MCP.
 
 ## SDD Integration
 

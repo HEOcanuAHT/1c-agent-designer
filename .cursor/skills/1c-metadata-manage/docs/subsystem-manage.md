@@ -137,14 +137,9 @@ The PowerShell scripts under `tools/1c-subsystem-manage/scripts/` were refreshed
 - Subsystem `objects` accepts `content` as a synonym (and vice versa).
 - Validators got the universal improvements described in `role-manage.md` → "Recent Additions" (one-liner output by default, `-Detailed`, folder path auto-resolution).
 
-## MCP Integration
+## Related tools
 
-- **get_object_dossier** — Comprehensive structural passport of objects before inclusion (structure, forms, dependencies, subscriptions, roles).
-- **Grep/Read src/ (MCP optional)** — Verify that objects referenced in subsystem content exist in the configuration.
-- **Read object XML (MCP optional)** — Get structure of objects being included in the subsystem.
-- **trace_impact** — Recursive dependency analysis for subsystem composition: find all objects that depend on or are depended upon by the objects being included (preferred over `graph_dependencies` for deep analysis).
-- **graph_dependencies** — Flat dependency overview between objects.
-- **business_search** — Find related objects to include by natural language description.
+Grep/Read `src/`. Subsystem scripts: `subsystem-info`, `subsystem-edit`, `subsystem-compile`, `subsystem-validate`. No MCP.
 
 ## SDD Integration
 

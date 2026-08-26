@@ -1,75 +1,49 @@
 ---
 name: 1c-metadata-manage
 description: >-
-  Create/edit/validate 1C metadata XML, managed forms, DCS/SKD, MXL, roles,
-  subsystems, CFE XML (borrow/patch). Prefer these scripts over hand-editing XML.
-  Not for dump/load IB, EPF pack, or UpdateDBCfg — use 1c-ibcmd-pack /
-  1c-designer-agent / 1c-external-epf / 1c-external-cfe.
+  Create/edit/validate 1C metadata XML, forms, DCS/SKD, MXL, roles, subsystems,
+  CFE borrow/patch. Prefer tools/ scripts over hand-editing. Not dump/load IB
+  or EPF/CFE pack — use 1c-dump / 1c-external-epf / 1c-external-cfe.
 disable-model-invocation: true
 ---
 
-# 1c-metadata-manage — XML метаданных без поломок
+# 1c-metadata-manage — роутер XML
 
-Адаптировано из [comol/ai_rules_1c](https://github.com/comol/ai_rules_1c) / [cc-1c-skills](https://github.com/Nikolay-Shirokov/cc-1c-skills).
+Правка XML метаданных скриптами (`tools/`). Dump/load/pack ИБ — **не** здесь.
 
-**Не заменяет** наши сборщики:
+| Канон шаблона | Skill |
+|---------------|--------|
+| Dump/load конфы | `1c-dump` |
+| EPF scaffold/pack | `1c-external-epf` |
+| CFE scaffold/pack | `1c-external-cfe` |
 
-| Задача | Канон шаблона |
-|--------|----------------|
-| Dump/load XML основной конфы | `1c-ibcmd-pack` / `1c-designer-agent` (**без** update-db-cfg) |
-| EPF pack/dump/scaffold | `1c-external-epf` → `ext/`, `.1c/ib-ext` |
-| CFE pack/dump/scaffold в артефакты | `1c-external-cfe` → `cfe/` |
-| Bootstrap / sync | `1c-project-bootstrap` / `1c-template-sync` |
+## Hard rule
 
-Этот skill — **сборка/правка XML** (UUID, ChildObjects, Form.xml, СКД, роли, borrow CFE) и валидация скриптами.
+Мутации XML — через `tools/` (BOM, UUID, ChildObjects). Исключения: однострочный фикс; skill недоступен → ручной edit + `std-metadata-xml` + `*-validate`; read-only — напрямую. После мутации — `*-validate` / `*-info`.
 
-## Hard rule (смягчённый)
+Запрещено: `/UpdateDBCfg`, `config apply` на боевую, ad-hoc dump/load.
 
-Мутации метаданных XML предпочтительно через скрипты `tools/` ниже (BOM, UUID, порядок ChildObjects).
+## Пути
 
-Исключения:
-
-- однострочный фикс существующего значения (синоним, флаг);
-- skill недоступен — ручной edit + `std-metadata-xml` + `*-validate`;
-- read-only анализ XML — напрямую.
-
-После мутации — соответствующий `*-validate` / `*-info`.
-
-**Запрещено** этим skill: `/UpdateDBCfg`, `ibcmd config apply` на боевую ИБ, ad-hoc dump/load вместо `1c-ibcmd-pack` / `1c-designer-agent`.
-
-## Пути скриптов
-
-`SkillHome` = каталог **этого** SKILL.md (плагин или `.cursor/skills/1c-metadata-manage` в клоне). Tools рядом с skill, не обязательно в репо проекта. `-ProjectRoot` / пути XML — workspace (`src/…`).
-
-`<SkillHome>/tools/<tool>/scripts/...`
-
-Пример:
+`SkillHome` = каталог этого SKILL.md. XML в workspace (`src/`, `cfe/<Name>/`, `ext/`).
 
 ```powershell
-powershell.exe -NoProfile -File "<SkillHome>/tools/1c-meta-validate/scripts/meta-validate.ps1" ...
+powershell.exe -NoProfile -File "<SkillHome>/tools/<tool>/scripts/….ps1" ...
 ```
 
-Расширения: XML-исходники в `cfe/<Name>/` (не корень `src/` как у upstream).  
-Внешние обработки: `ext/` + skill `1c-external-epf` (здесь нет epf-build/dump).
+## Домены (грузи только нужный docs)
 
-## Домены
+| Задача | Docs | Tools |
+|--------|------|-------|
+| Объекты метаданных | [meta-manage.md](docs/meta-manage.md) | `1c-meta-*` |
+| Формы | [form-manage.md](docs/form-manage.md), [form-compile-dsl.md](docs/form-compile-dsl.md); layout — `1c-forms` | `1c-form-*` |
+| СКД | [skd-manage.md](docs/skd-manage.md) | `1c-skd-*` |
+| MXL | [mxl-manage.md](docs/mxl-manage.md) | `1c-mxl-*` |
+| Роли | [role-manage.md](docs/role-manage.md) | `1c-role-*` |
+| CFE XML borrow/diff/patch | [cfe-manage.md](docs/cfe-manage.md); pack — `1c-external-cfe` | `1c-cfe-manage` |
+| Configuration.xml | [cf-manage.md](docs/cf-manage.md) | `1c-cf-manage` |
+| Подсистемы / интерфейс | [subsystem-manage.md](docs/subsystem-manage.md), [interface-manage.md](docs/interface-manage.md) | `1c-subsystem-manage`, `1c-interface-manage` |
+| Макеты / справка | [template-manage.md](docs/template-manage.md), [help-manage.md](docs/help-manage.md) | `1c-template-manage`, `1c-help-manage` |
+| БСП | [bsp-manage.md](docs/bsp-manage.md), [ssl-patterns.md](docs/ssl-patterns.md) | — |
 
-| Задача | Документ | Tools |
-|--------|----------|-------|
-| Объекты метаданных | [docs/meta-manage.md](docs/meta-manage.md) | `1c-meta-*` |
-| Управляемые формы | [docs/form-manage.md](docs/form-manage.md), DSL [docs/form-compile-dsl.md](docs/form-compile-dsl.md) | `1c-form-*` |
-| Паттерны layout | skill `1c-forms` / [docs/form-patterns.md](docs/form-patterns.md) | — |
-| СКД | [docs/skd-manage.md](docs/skd-manage.md) | `1c-skd-*` |
-| MXL | [docs/mxl-manage.md](docs/mxl-manage.md) | `1c-mxl-*` |
-| Роли | [docs/role-manage.md](docs/role-manage.md) | `1c-role-*` |
-| CFE XML (borrow/diff/patch) | [docs/cfe-manage.md](docs/cfe-manage.md) | `1c-cfe-manage` + pack через `1c-external-cfe` |
-| Configuration.xml | [docs/cf-manage.md](docs/cf-manage.md) | `1c-cf-manage` |
-| Подсистемы / интерфейс | [docs/subsystem-manage.md](docs/subsystem-manage.md), [docs/interface-manage.md](docs/interface-manage.md) | `1c-subsystem-manage`, `1c-interface-manage` |
-| Макеты / справка | [docs/template-manage.md](docs/template-manage.md), [docs/help-manage.md](docs/help-manage.md) | `1c-template-manage`, `1c-help-manage` |
-| БСП регистрация | [docs/bsp-manage.md](docs/bsp-manage.md), [docs/ssl-patterns.md](docs/ssl-patterns.md) | — |
-
-Сопровождающие knowledge skills: `std-metadata-xml`, `1c-forms`, `std-extension-patterns`, `std-dcs-design`, `std-registers-design`.
-
-## Не включено из upstream (намеренно)
-
-`1c-db-ops`, `1c-web-ops`, `1c-epf-*`, `1c-erf-*` — конфликт с нашим IB/EPF tooling.
+Knowledge: `std-metadata-xml`, `1c-forms`, `std-extension-patterns`, `std-dcs-design`, `std-registers-design`.

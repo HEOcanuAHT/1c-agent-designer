@@ -1,6 +1,9 @@
 ---
-description: Внешние обработки — ext/, skill 1c-external-epf
-alwaysApply: true
+description: >-
+  Внешние обработки — ext/, .epf, skill 1c-external-epf.
+  Use when user asks внешка, epf, внешняя обработка, вынести обработку.
+globs: "ext/**/*"
+alwaysApply: false
 ---
 
 # Внешние обработки (.epf)

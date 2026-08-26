@@ -1,25 +1,26 @@
 # Agent notes — шаблон конфигурации 1С
 
-- **Пути скриптов:** `SkillHome` = каталог `SKILL.md` (плагин или `.cursor/skills/<name>` в клоне); `-ProjectRoot` = workspace. Rule `1c-plugin-paths`.
-- **`.ps1` skills:** UTF-8 **с BOM**, пунктуация ASCII (`-` / `...`). Windows PowerShell 5.1, не pwsh. Rule `ps1-encoding`.
-- Стандарты кода: skills `coding-standards`, `std-*` (в т.ч. формы/`1c-forms`, антипаттерны, СКД, расширения)
-- **XML метаданных** (создать/править/validate Form/СКД/роли/CFE borrow): skill **`1c-metadata-manage`** — не заменяет dump/load
-- **Dump/load XML** — смотри `tools.preferredDump` в `.1c/project.json`:
-  - `ibcmd` (предпочтительно) → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` 
-    (file `infobase.path` или `infobase.dbms`; **только основная**, без `apply`/КБД)
-  - `agent` → skill **`1c-designer-agent`** (load **без** `update-db-cfg`)
-- Внешние обработки (`.epf`): skill **`1c-external-epf`** → `ext/`; dump/pack через служебную `.1c/ib-ext` (save `.cf` с боевой + load, без apply; XML import — fallback)
-- Расширения (`.cfe`): skill **`1c-external-cfe`** → `cfe/`; dump/pack/scaffold через ту же `.1c/ib-ext`; BSL-паттерны — `std-extension-patterns`
-- Проверка языка запросов: `Invoke-1cValidateQuery.ps1` (COM/`QuerySchema` на `.1c/ib-ext`; без HTTP/расширения). Агентам: `-ReuseOnly` + пачка `.1c/qv-batch/`; `ensure` только при `NEED_ENSURE`
-- Режим «проверяй запросы» — rule `1c-query-validate` (флаг `.1c/query-validate.mode`); по умолчанию выкл.; validate только оркестратор
-- Упаковка `.cf`: skill `1c-ibcmd-pack` → `Invoke-1cIbcmdPack.ps1`
-- **Первая настройка** (пустая папка + плагин / clone / нет `.1c/project.json`): skill **`1c-project-bootstrap`**  
-  (каркас из плагина, затем чеклист: тип ИБ, auth, ibcmd vs agent, доступ к SQL)
-- **Обновление tooling** — плагин: git pull шаблона + Reload Window. Клоны с `.cursor/skills` в репо — skill `1c-template-sync`; после sync см. `docs/TEMPLATE_UPGRADE.md`
-Scaffold, pack/dump, load конфы — **основной агент** (rule `1c-orchestrator` при работе с кодом/артефактами, `docs/WORKFLOW.md`).
+Канон полей ИБ/auth: [`.1c/README.md`](.1c/README.md). Жёсткие правила: rule `1c-invariants`.
 
-Секреты пользователя **1С** (не SQL) — Windows Credential Manager (`auth.credentialTarget`, `Set-1cIbCredential.ps1`);  
-fallback: env `1C_IB_USER`/`1C_IB_PASSWORD` или plaintext в `.1c/project.local.json` (не коммитить).  
-SQL при `infobase.dbms.windowsAuth: true` — доменная учётка процесса; CredMgr 1С туда **не** подставлять (см. rule `1c-ibcmd-auth`).
+| Задача | Куда |
+|--------|------|
+| Пути скриптов (SkillHome ≠ ProjectRoot) | rule `1c-plugin-paths` |
+| Dump/load XML | skill **`1c-dump`** (`tools.preferredDump`) → ibcmd или designer-agent. Только основная, без apply/КБД |
+| Общий runtime (Common-*) | skill **`1c-runtime`** |
+| SQL vs пользователь 1С | rule `1c-ibcmd-auth` |
+| EPF | `1c-external-epf` → `ext/` |
+| CFE | `1c-external-cfe` → `cfe/` |
+| XML метаданных (без ИБ) | `1c-metadata-manage` |
+| Проверка запросов | opt-in, skill `1c-query-validate` (оркестратор; `-ReuseOnly`) |
+| Bootstrap | `1c-project-bootstrap` |
+| Sync клона (legacy) | `1c-template-sync`; после — [`docs/TEMPLATE_UPGRADE.md`](docs/TEMPLATE_UPGRADE.md) |
+| Стандарты BSL | `coding-standards` → `std-*` |
+| Формы | `1c-forms` |
+| Упаковка `.cf` | `1c-ibcmd-pack` / `Invoke-1cIbcmdPack.ps1` |
+| `.ps1` | UTF-8 BOM, ASCII-пунктуация; rule `ps1-encoding` |
 
-Knowledge-слой форм/антипаттернов/XML частично адаптирован из [comol/ai_rules_1c](https://github.com/comol/ai_rules_1c) (без MCP-гейтов и без их dump/load).
+Секреты пользователя **1С** — Windows Credential Manager (`auth.credentialTarget`). SQL при `windowsAuth: true` — доменная учётка процесса, CredMgr туда не подставлять.
+
+Scaffold / pack / dump / load — **основной агент** (rule `1c-orchestrator`). `/implementer` — только файлы.
+
+Knowledge-слой форм/антипаттернов/XML частично из [comol/ai_rules_1c](https://github.com/comol/ai_rules_1c) (без MCP-гейтов и без их dump/load).

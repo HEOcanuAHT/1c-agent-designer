@@ -12,7 +12,8 @@ disable-model-invocation: true
 Раздел: [Работа с запросами](https://its.1c.ru/db/v8std/browse/13/-1/26/27).
 
 Если вопрос про скорость/индексы/ВТ — дополнительно грузи `std-query-optimization`.  
-Шаблоны/сборка сложных запросов — [docs/query-writing.md](docs/query-writing.md) (адапт. ai_rules_1c).
+Шаблоны/сборка сложных запросов — [docs/query-writing.md](docs/query-writing.md) (адапт. ai_rules_1c).  
+Runtime COM-проверка синтаксиса — skill `1c-query-validate` (opt-in, только оркестратор).
 
 ## #std437 — оформление (must)
 
