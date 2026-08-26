@@ -46,7 +46,7 @@ ibcmd через SQL обычно **заметно быстрее** agent; дл�
 - `ibcmd` — только настройки **инструмента**: `dataDir`, `parkDir`, `preservePaths` (не подключение к ИБ). `stagingDir` больше не используется.
 - `tools.preferredDump`: `ibcmd` | `agent`.
 - `ext.dir` — внешние обработки (skill `1c-external-epf`).
-- `ext.serviceIb` — служебная файловая ИБ для pack/dump внешек и расширений (import `src/` без apply; не коммитить).
+- `ext.serviceIb` — служебная файловая ИБ для pack/dump внешек и расширений (save `.cf` с боевой + load, без apply; XML import — fallback; не коммитить).
 - `cfe.dir` / `cfe.artifacts` — расширения `.cfe` (skill `1c-external-cfe`).
 
 ### Два входа (не путать)

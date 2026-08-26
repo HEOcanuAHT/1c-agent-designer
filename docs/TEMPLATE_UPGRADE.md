@@ -100,6 +100,12 @@ Sync tooling **не** двигает папки и **не** правит `ext.di
 Если папок src/_ext* нет и dir уже ext/cfe — напиши «уже мигрировано» и ничего не меняй.
 ```
 
+### Служебная ИБ EPF/CFE (≥ 2026.08.26.1)
+
+Для C/S (`infobase.dbms`) и файловой боевой ИБ pack идёт через `config save` → `config load` в `.1c/ib-ext` **без apply**. XML import из `src/` — fallback. На больших Hierarchical-дампах import может hang — не гонять его «для проверки».
+
+`.cf` с живой ИБ, штамп — `src/Configuration.xml`. Если `src/` разъехался с ИБ — в служебной будет конфа ИБ (для `cfg:*` обычно ок).
+
 ### CFE: CompatibilityMode и имена (≥ 2026.07.31.1)
 
 При ошибке «режим совместимости… не соответствует версии ИБ» на scaffold/pack:  

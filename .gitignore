@@ -45,6 +45,7 @@ ConfigDumpInfo.xml.bak
 .1c/ibcmd-data/
 .1c/ibcmd-dump-staging/
 .1c/ibcmd-dump-park/
+.1c/service-ib.cf
 .1c/bench-*.log
 .1c/bench-*.out.txt
 .1c/bench-*.err.txt

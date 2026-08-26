@@ -8,7 +8,7 @@
   - `ibcmd` (предпочтительно) → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` 
     (file `infobase.path` или `infobase.dbms`; **только основная**, без `apply`/КБД)
   - `agent` → skill **`1c-designer-agent`** (load **без** `update-db-cfg`)
-- Внешние обработки (`.epf`): skill **`1c-external-epf`** → `ext/`; dump/pack через служебную `.1c/ib-ext` (import конфы без apply)
+- Внешние обработки (`.epf`): skill **`1c-external-epf`** → `ext/`; dump/pack через служебную `.1c/ib-ext` (save `.cf` с боевой + load, без apply; XML import — fallback)
 - Расширения (`.cfe`): skill **`1c-external-cfe`** → `cfe/`; dump/pack/scaffold через ту же `.1c/ib-ext`; BSL-паттерны — `std-extension-patterns`
 - Проверка языка запросов: `Invoke-1cValidateQuery.ps1` (COM/`QuerySchema` на `.1c/ib-ext`; без HTTP/расширения). Агентам: `-ReuseOnly` + пачка `.1c/qv-batch/`; `ensure` только при `NEED_ENSURE`
 - Режим «проверяй запросы» — rule `1c-query-validate` (флаг `.1c/query-validate.mode`); по умолчанию выкл.; validate только оркестратор

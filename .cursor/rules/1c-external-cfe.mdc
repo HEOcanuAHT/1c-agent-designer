@@ -11,7 +11,7 @@ alwaysApply: true
 2. Исходники только в `cfe/<Name>/` (`cfe.dir`) — не в корень `src/` как основную конфу.
 3. Сборка → `artifacts/cfe/*.cfe`; бинарники не коммитить.
 4. `load-changed` / dump основной конфигурации не должен включать расширения (они вне `src/`; старый `_extensions` в `src/` фильтр designer-agent всё ещё отсекает).
-5. Dump/pack/scaffold — служебная `.1c/ib-ext` (общая с EPF): import конфы **без apply**; боевую ИБ не трогать.
+5. Dump/pack/scaffold — служебная `.1c/ib-ext` (общая с EPF): save `.cf` с боевой + load **без apply** (XML import — fallback); боевую не apply/не wipe.
 6. Исключения `apply` **только** на `.1c/ib-ext` (никогда на боевую):
    - `-AllowServiceIbApplyOnCompatMismatch` — compat mismatch;
    - `Invoke-1cValidateQuery.ps1 -Action ensure` — COM-проверка (Get-ServiceIbCfg -AllowApply); обычный validate — `-ReuseOnly`.

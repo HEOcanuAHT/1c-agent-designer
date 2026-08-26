@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.25.2",
+  "version": "2026.08.26.1",
   "description": "Skills, rules and implementer for 1C configuration development: ibcmd dump/load, EPF/CFE, ITS standards.",
   "author": {
     "name": "1c-agent-designer"

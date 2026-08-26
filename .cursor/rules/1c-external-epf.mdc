@@ -11,4 +11,4 @@ alwaysApply: true
 2. Исходники только в `ext/` (`ext.dir`) — не в `src/` и не в `DataProcessors/` без явной просьбы.
 3. Сборка → `artifacts/ext/*.epf`; бинарники не коммитить.
 4. `load-changed` конфигурации не должен включать внешки (они вне `src/`; старый `_extDataProcessors` в `src/` фильтр designer-agent всё ещё отсекает).
-5. Dump/pack — служебная файловая ИБ `.1c/ib-ext`: `ibcmd config import` из `src/` **без apply**; боевую ИБ не трогать. Та же ИБ используется для расширений (`.cfe`, skill `1c-external-cfe`).
+5. Dump/pack — служебная `.1c/ib-ext` **без apply**. Источник метаданных: `config save` с боевой ИБ (`infobase.dbms` или файловый `path`) → `config load`; XML import из `src/` — fallback. Боевую не apply/не wipe. Та же ИБ для `.cfe` (`1c-external-cfe`).
