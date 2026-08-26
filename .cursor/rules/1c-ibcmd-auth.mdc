@@ -5,7 +5,7 @@ alwaysApply: true
 
 # ibcmd: SQL и auth.credentialTarget — разные вещи
 
-При dump/load через skill `1c-ibcmd-pack` / `Invoke-1cIbcmdDump.ps1`:
+При dump/load через skill `1c-ibcmd-pack` / `Invoke-1cIbcmdDump.ps1` и при `config save` в служебную ИБ (EPF/CFE, `Common-ServiceIb` → тот же `Get-ConnectionArgs`):
 
 1. **Всегда** вызывай готовый скрипт. Не собирай `ibcmd` вручную и не подставляй пароли из CredMgr в SQL.
 2. **`auth.credentialTarget`** (CredMgr) → только пользователь **1С** (`--user`/`--password`). Это **не** логин SQL.

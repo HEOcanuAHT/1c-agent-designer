@@ -2,8 +2,9 @@
 name: 1c-external-cfe
 description: >-
   Расширения конфигурации (.cfe): scaffold XML, dump из .cfe, pack в .cfe.
-  Служебная файловая ИБ (.1c/ib-ext, та же что у EPF) — import конфы без apply
-  (исключение: -AllowServiceIbApplyOnCompatMismatch). Use when user asks
+  Служебная файловая ИБ (.1c/ib-ext, та же что у EPF): save .cf с боевой
+  + load без apply (XML import — fallback). Исключение apply:
+  -AllowServiceIbApplyOnCompatMismatch. Use when user asks
   расширение, cfe, создай расширение, собрать cfe, разобрать cfe.
 disable-model-invocation: true
 ---
@@ -36,11 +37,20 @@ disable-model-invocation: true
 
 ## Служебная ИБ
 
-По умолчанию: create → **import без apply** → extension create/import/export/save.
+Та же `.1c/ib-ext`, что у `1c-external-epf` (`Common-ServiceIb.ps1`).
+
+По умолчанию: create → **загрузка конфы без apply** → extension create/import/export/save.
+
+Источник метаданных:
+
+- **C/S** (`infobase.dbms`) и **файловая боевая ИБ**: `config save` с боевой → `config load` в служебную. `.cf` с живой ИБ, не из XML `src/`.
+- **XML import** из `src/` — fallback, если боевой ИБ нет. На больших дампах import может hang — не гонять «для проверки».
+
+`config apply` на служебной — **только** `-AllowServiceIbApplyOnCompatMismatch`. На боевую — никогда.
 
 ### CompatibilityMode vs платформа
 
-Если основная конфа со старым `CompatibilityMode` (например `Version8_3_10` на платформе 8.3.23), после import без apply:
+Если основная конфа со старым `CompatibilityMode` (например `Version8_3_10` на платформе 8.3.23), после загрузки конфы без apply:
 
 > Режим совместимости основной конфигурации не соответствует версии ИБ
 
@@ -53,7 +63,7 @@ disable-model-invocation: true
   -AllowServiceIbApplyOnCompatMismatch -RefreshServiceIb
 ```
 
-Флаг делает одноразовый `ibcmd config apply --force` на служебной ИБ после import.  
+Флаг делает одноразовый `ibcmd config apply --force` на служебной ИБ после загрузки конфы.  
 На боевую ИБ / `update-db-cfg` проекта — **никогда**.
 
 ## Имена: латиница предпочтительнее

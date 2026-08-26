@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.25.2",
+  "version": "2026.08.26.1",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -39,6 +39,10 @@
     "artifacts"
   ],
   "upgradeNotes": [
+    {
+      "since": "2026.08.26.1",
+      "summary": "Service IB: C/S и файловая боевая ИБ — config save .cf + load в .1c/ib-ext (без apply). XML import — fallback. SQL vs 1C auth через общий Get-ConnectionArgs."
+    },
     {
       "since": "2026.08.25.2",
       "summary": "dump-objects: точечная выгрузка/откат файлов объекта из ИБ (ibcmd --sync после invalidate ConfigDumpInfo; designer -listFile)."

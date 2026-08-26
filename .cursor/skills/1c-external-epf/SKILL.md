@@ -2,7 +2,8 @@
 name: 1c-external-epf
 description: >-
   Внешние обработки (.epf): scaffold XML, dump из .epf, вынос из DataProcessors,
-  pack в .epf. Служебная файловая ИБ (ibcmd import без apply) для cfg:* типов.
+  pack в .epf. Служебная файловая ИБ (.1c/ib-ext) для cfg:* типов:
+  save .cf с боевой ИБ + load (без apply); XML import — fallback.
   Use when user asks внешняя обработка, epf, создай внешку, вынести обработку,
   разобрать epf, собрать epf.
 disable-model-invocation: true
@@ -55,25 +56,32 @@ ext/
 
 ## Служебная ИБ (dump/pack)
 
-Dump/pack внешек требуют ИБ с **метаданными основной конфы** (`cfg:*` типы). Боевую/рабочую ИБ для этого **не трогаем**.
+Dump/pack внешек требуют ИБ с **метаданными основной конфы** (`cfg:*` типы). Боевую ИБ **не** используем как цель pack: только как источник `.cf` (без `config apply`).
 
 Служебная ИБ **общая** с расширениями `.cfe` (skill `1c-external-cfe`, общий модуль `Common-ServiceIb.ps1`).
 
 Перед `dump` / `pack` скрипт (если `ext.serviceIb.enabled` ≠ false):
 
-1. Файловая ИБ в `.1c/ib-ext` (+ `dataDir` `.1c/ib-ext-data`, настраивается).
+1. Файловая ИБ в `.1c/ib-ext` (+ `dataDir` `.1c/ib-ext-data`).
 2. `ibcmd infobase create` (если нет или устарела / `-RefreshServiceIb`).
-3. `ibcmd infobase config import` из `src/` — **только метаданные, без `config apply`**.
+3. Загрузка метаданных **без `config apply`**:
+   - **C/S** (есть `infobase.dbms` server+name): основной путь — `config save` с боевой ИБ → `.cf` во `%TEMP%\1c-agent-designer\…` (вне workspace) → `config load` в `.1c/ib-ext`.
+   - **Файловая боевая ИБ** (есть `1Cv8.1CD`): тот же save→load. Конфигуратор по этой ИБ должен быть закрыт; иначе явная ошибка блокировки, не hang.
+   - **XML `config import` из `src/`** — fallback, если боевой ИБ нет. На больших Hierarchical-дампах import может встать мёртво (1CD ~30 МБ, CPU=0). Не «лечить» копиями `src`, `.cursorignore` или hide `ConfigDumpInfo.xml`.
 4. Designer batch (`/DumpExternal…`, `/LoadExternal…`) — **только** на эту служебную ИБ.
+
+Штамп пересборки — `src/Configuration.xml`. `.cf` берётся с **живой ИБ**, не из XML `src/`. Для pack `cfg:*` это обычно то, что нужно. Если `src/` сильно разъехался с ИБ — ожидаемо (в служебной будет конфа ИБ).
+
+Временный `.cf` не оставлять в проекте (удаляется в `finally`).
 
 | | Служебная ИБ | Боевая ИБ проекта |
 |--|--------------|-------------------|
-| Назначение | pack/dump внешек | разработка, dump/load конфы |
-| apply / КБД | **никогда** | вручную в Конфигураторе |
-| Обновление | wipe→create→import при смене `src/` (~14 с) | по workflow проекта |
+| Назначение | pack/dump внешек | разработка, dump/load конфы; для служебной — только `config save` |
+| apply / КБД | **никогда** (кроме CFE-флага ниже) | вручную в Конфигураторе |
+| Обновление | wipe→create→load `.cf` (или XML import) | не wipe / не apply этим skill |
 
-**Не делать:** `config apply` на служебной ИБ — повторный import после apply зависает; при сомнениях `-RefreshServiceIb`.  
-**Исключение для CFE:** skill `1c-external-cfe`, флаг `-AllowServiceIbApplyOnCompatMismatch` — одноразовый apply на `.1c/ib-ext` при несовпадении CompatibilityMode и платформы (иначе `extension create` падает). На боевую ИБ не переносить.
+**Не делать:** `config apply` на служебной ИБ по умолчанию — повторный import после apply зависает; при сомнениях `-RefreshServiceIb`.  
+**Исключение для CFE:** skill `1c-external-cfe`, флаг `-AllowServiceIbApplyOnCompatMismatch` — одноразовый apply на `.1c/ib-ext` при несовпадении CompatibilityMode и платформы. На боевую ИБ не переносить.
 
 `scaffold` / `extract-from-config` ИБ не требуют; `pack` / `dump` — готовят служебную ИБ автоматически.
 
@@ -130,6 +138,6 @@ Dump/pack внешек требуют ИБ с **метаданными осно�
 ## Правила
 
 1. Не коммитить `.epf` / содержимое `artifacts/`.
-2. Dump/pack — через **служебную** файловую ИБ с import конфы (не боевая ИБ проекта).
-3. На служебной ИБ **никогда** `config apply` / `update-db-cfg` / `/UpdateDBCfg`.
+2. Dump/pack — через **служебную** `.1c/ib-ext` (save `.cf` с боевой + load, без apply; XML import — fallback). Не боевая ИБ как цель.
+3. На служебной ИБ **никогда** `config apply` / `update-db-cfg` / `/UpdateDBCfg` (кроме CFE `-AllowServiceIbApplyOnCompatMismatch`).
 4. Отчёты (`.erf`) — вне scope v1.
