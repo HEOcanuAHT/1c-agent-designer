@@ -1,10 +1,11 @@
 # Agent notes — шаблон конфигурации 1С
 
-Канон полей ИБ/auth: [`.1c/README.md`](.1c/README.md). Жёсткие правила: rule `1c-invariants`.
+Канон полей ИБ/auth: [`.1c/README.md`](.1c/README.md).
+Перед любой задачей 1С **сразу** прочитай skill **`1c-invariants`** (plugin-rules с alwaysApply часто не в контексте).
 
 | Задача | Куда |
 |--------|------|
-| Пути скриптов (SkillHome ≠ ProjectRoot) | rule `1c-plugin-paths` |
+| Пути скриптов (SkillHome ≠ ProjectRoot) | skill `1c-invariants` |
 | Dump/load XML | skill **`1c-dump`** (`tools.preferredDump`) → ibcmd или designer-agent. Только основная, без apply/КБД |
 | Общий runtime (Common-*) | skill **`1c-runtime`** |
 | SQL vs пользователь 1С | rule `1c-ibcmd-auth` |

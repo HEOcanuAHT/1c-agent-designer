@@ -9,6 +9,8 @@ description: >-
 
 # 1C ibcmd (pack + dump + load)
 
+Сначала skill **`1c-invariants`**, если ещё не в контексте. Load — без apply/КБД.
+
 Если в `.1c/project.json` задано `"tools": { "preferredDump": "ibcmd" }` — это **основной** путь dump/load; designer-agent только по явной просьбе или если ibcmd недоступен.
 
 **Фасад для агента:** skill `1c-dump` / `Invoke-1cDump.ps1` (выбирает ibcmd vs agent). Этот skill — детали CLI ibcmd и pack `.cf`.

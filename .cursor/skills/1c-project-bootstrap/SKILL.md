@@ -9,6 +9,8 @@ description: >-
 
 # Bootstrap проекта конфигурации 1С
 
+Сначала skill **`1c-invariants`**, если ещё не в контексте. Rules в проект **не** копировать.
+
 ## Когда запускать
 
 - Пустая папка / новый репо: пользователь сказал «настрой», bootstrap, «это конфа 1С»
@@ -69,7 +71,7 @@ description: >-
 ```
 
 Копирует `.1c/*.example`, `ext/README.md`, `cfe/README.md`, пустой `src/`, `docs/WORKFLOW|INITIAL_DUMP|TEMPLATE_UPGRADE|ATTRIBUTION.md`, `AGENTS.md`, GitLab MR-шаблон, **project** `.gitignore` (без игнора `src/**`).  
-Не копирует `.cursor/skills|rules|agents`. Существующие файлы не перезаписывает (без `-Force`).
+Не копирует `.cursor/skills|rules|agents` (инварианты — skill `1c-invariants` в плагине, не rules в репо). Существующие файлы не перезаписывает (без `-Force`).
 
 ## Шаг 1 — окружение (`boot-env`)
 

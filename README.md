@@ -56,8 +56,8 @@ cd my-config
 .cursor-plugin/plugin.json   # манифест Cursor Plugin
 .cursor/
   agents/implementer.md
-  rules/                 # 1c-invariants (always); dump/epf/cfe/bootstrap — по задаче
-  skills/                # bootstrap, template-sync, coding-standards, std-*, designer-agent, …
+  rules/                 # 1c-invariants.mdc (копия; plugin Always часто не инжектит)
+  skills/                # 1c-invariants (канон Always), bootstrap, dump, std-*, …
 .1c/                     # project.json.example, template-manifest.json, secrets example
 docs/
 src/                     # XML основной конфы (только дамп платформы)

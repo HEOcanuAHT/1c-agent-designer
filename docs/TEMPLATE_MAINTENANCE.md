@@ -48,8 +48,8 @@ cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "<аб�
 
 1. **Подними `version`** в `.1c/template-manifest.json` (источник), затем то же в `.cursor-plugin/plugin.json` и `project.json.example` → `template.version`.
 2. При **breaking change** для живых проектов — краткая **дельта** в `docs/TEMPLATE_UPGRADE.md` (схема полей — только `.1c/README.md`) и пункт в `upgradeNotes` манифеста.
-3. Если файл нужен **только в шаблоне** (например `template-maintenance.mdc`) — добавь в `projectSkipPaths` **и** не включай в `.cursor-plugin/plugin.json` → `rules`.
-4. **Не** ставь `alwaysApply: true` на узкие правила (dump, auth, query-validate). Инварианты — `1c-invariants.mdc`.
+3. Если файл нужен **только в шаблоне** (например `template-maintenance.mdc`) — добавь в `projectSkipPaths` **и** не включай в `.cursor-plugin/plugin.json` → `rules`. Не ставь `"rules": ".cursor/rules"`: подхватится `template-maintenance.mdc`.
+4. **Не** ставь `alwaysApply: true` на узкие правила (dump, auth, query-validate). Инварианты — skill **`1c-invariants`** (канон для плагина) + копия в `1c-invariants.mdc` (workspace/шаблон). **Не** копируй Always-rules в репо конфы: это снова sync. Plugin-rules с alwaysApply Cursor часто не инжектит — правка манифеста не лечит.
 5. Запушить в шаблон. Для плагина: Reload Window (junction уже смотрит на этот клон).
 6. Живые **клоны** с `.cursor/skills` в git — skill **`1c-template-sync`**. Проекты только с плагином — не копировать skills, только обновить плагин + Reload.
 
@@ -64,7 +64,7 @@ cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "<аб�
 ## Чеклист перед PR в шаблон
 
 - [ ] Нет имён/путей конкретной конфы и личных серверов
-- [ ] Load по-прежнему без `update-db-cfg` (rule `1c-invariants`)
+- [ ] Load по-прежнему без `update-db-cfg` (skill `1c-invariants`)
 - [ ] Примеры в `.1c/*.example`, не `project.local.json`
 - [ ] README/docs обновлены, если менялся процесс
 - [ ] При изменении tooling поднят `version` в `template-manifest.json`, `plugin.json` (+ example)

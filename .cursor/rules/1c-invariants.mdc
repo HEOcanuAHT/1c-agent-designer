@@ -7,6 +7,8 @@ alwaysApply: true
 
 # Инварианты 1С
 
+Канон для плагина: skill **`1c-invariants`** (plugin-rules с alwaysApply часто не в контексте чата). Текст ниже — копия для workspace/шаблона.
+
 Только если есть `.1c/`, `src/Configuration.xml`, или пользователь явно про 1С/bootstrap. На чужих репо не применяй.
 
 ## Пути

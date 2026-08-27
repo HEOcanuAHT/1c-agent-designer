@@ -8,6 +8,8 @@ description: >-
 
 # 1c-dump — фасад dump/load
 
+Сначала skill **`1c-invariants`**, если ещё не в контексте.
+
 Один вход для агента. Детали CLI — в `1c-ibcmd-pack` / `1c-designer-agent`.
 
 ## Выбор инструмента
