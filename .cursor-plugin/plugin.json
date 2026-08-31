@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.27.1",
+  "version": "2026.08.31.1",
   "description": "Skills, rules and implementer for 1C configuration development: ibcmd dump/load, EPF/CFE, ITS standards.",
   "author": {
     "name": "1c-agent-designer"
@@ -17,6 +17,7 @@
     ".cursor/rules/1c-external-epf.mdc",
     ".cursor/rules/1c-ibcmd-auth.mdc",
     ".cursor/rules/1c-invariants.mdc",
+    ".cursor/rules/1c-meta-stubs.mdc",
     ".cursor/rules/1c-no-kill-user-1cv8.mdc",
     ".cursor/rules/1c-orchestrator.mdc",
     ".cursor/rules/1c-plugin-paths.mdc",

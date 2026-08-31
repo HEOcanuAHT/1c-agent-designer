@@ -29,6 +29,8 @@ powershell.exe -NoProfile -File .cursor/skills/1c-metadata-manage/tools/1c-role-
 
 The script accepts the DSL keys `objects` (canonical) or its synonym `rights`. UUIDs and registration in `Configuration.xml` are handled automatically.
 
+On a live dumped config do not `role-compile` a **new** role: create an empty role in Designer, dump, then fill Rights.xml. Canon: skill `1c-invariants`.
+
 ## File Structure and Registration
 
 ```

@@ -14,6 +14,8 @@ powershell.exe -NoProfile -File .cursor/skills/1c-metadata-manage/tools/1c-cf-ma
 
 Creates minimal configuration structure: `Configuration.xml`, `Languages/Русский.xml`, and basic directory structure.
 
+Only for an **empty** project with no dump. On a live dumped config do not run `cf-init` or `add-childObject` — stub in Designer, then dump (skill `1c-invariants`).
+
 ---
 
 ## 2. Edit — Modify Configuration Properties

@@ -19,9 +19,13 @@ disable-model-invocation: true
 
 ## Hard rule
 
-Мутации XML — через `tools/` (BOM, UUID, ChildObjects). Исключения: однострочный фикс; skill недоступен → ручной edit + `std-metadata-xml` + `*-validate`; read-only — напрямую. После мутации — `*-validate` / `*-info`.
+Мутации XML — через `tools/` (BOM, UUID). Исключения: однострочный фикс; skill недоступен → ручной edit + `std-metadata-xml` + `*-validate`; read-only — напрямую. После мутации — `*-validate` / `*-info`.
 
 Запрещено: `/UpdateDBCfg`, `config apply` на боевую, ad-hoc dump/load.
+
+**Новый объект на живой конфе** — не `meta-compile` / `role-compile` / `subsystem-compile` / `cf-init` / `cf-edit add-childObject`.
+Пустышку создаёт пользователь в Конфигураторе → dump (`1c-dump`) → агент только заполняет (`meta-edit`, form-*, модули). `Configuration.xml` не переписывать.
+Канон: skill `1c-invariants`. Исключение: пустой проект без дампа; явный «собери meta-compile».
 
 ## Пути
 

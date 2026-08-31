@@ -1,7 +1,8 @@
 ---
 description: >-
   Жёсткие инварианты разработки 1С: SkillHome, без kill 1cv8, load без КБД,
-  query-validate opt-in. На любых задачах 1С-проекта.
+  query-validate opt-in, новые объекты — пустышка в Конфигураторе.
+  На любых задачах 1С-проекта.
 alwaysApply: true
 ---
 
@@ -25,6 +26,13 @@ alwaysApply: true
 
 Только **основная** конфигурация. Не `update-db-cfg` / `/UpdateDBCfg` / `config apply` на боевую. КБД — вручную.
 Инструмент: skill **`1c-dump`** (`tools.preferredDump`: ibcmd | agent). SQL ≠ пользователь 1С — rule `1c-ibcmd-auth`.
+
+## Новые объекты метаданных
+
+На живой конфе **не** `meta-compile` / `role-compile` / `subsystem-compile` / `cf-init` / `cf-edit add-childObject`.
+Пустышку создаёт пользователь в Конфигураторе → dump → агент только заполняет (`meta-edit`, формы, модули).
+`Configuration.xml` не переписывать. Исключение: пустой проект без дампа; явный «собери meta-compile».
+Детали: skill `1c-metadata-manage`.
 
 ## Запросы
 

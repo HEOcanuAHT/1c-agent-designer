@@ -4,10 +4,12 @@
 
 Operations for creating, modifying, analyzing, removing, and validating 1C metadata objects from configuration XML export.
 
+**Live configuration:** do not `meta-compile` a new object. User creates an empty stub in Designer, dump, then `meta-edit` / forms / modules. `meta-compile` rewrites all of `Configuration.xml`. Canon: skill `1c-invariants`. Exception: empty project (no dump) or explicit «собери meta-compile».
+
 ---
 ## 1. Compile — Create from JSON
 
-Takes a JSON definition of a metadata object and generates XML + modules in the configuration export structure, then registers it in Configuration.xml.
+Takes a JSON definition of a metadata object and generates XML + modules in the configuration export structure, then registers it in Configuration.xml. Default path on a dumped config is **not** this — see stub workflow above.
 
 ## Parameters and Command
 

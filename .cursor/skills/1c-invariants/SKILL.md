@@ -2,8 +2,9 @@
 name: 1c-invariants
 description: >-
   Жёсткие инварианты любой задачи 1С: SkillHome vs ProjectRoot, не убивать 1cv8,
-  load без КБД, query-validate opt-in. Читай сразу, если есть `.1c/`,
-  `src/Configuration.xml`, или речь про 1С / dump / ibcmd / bootstrap / implementer.
+  load без КБД, query-validate opt-in, новые объекты — пустышка в Конфигураторе.
+  Читай сразу, если есть `.1c/`, `src/Configuration.xml`, или речь про 1С /
+  dump / ibcmd / bootstrap / implementer / meta-compile / новый справочник.
 ---
 
 # Инварианты 1С
@@ -34,6 +35,19 @@ Fallback SkillHome: `<workspace>/.cursor/skills/<name>/` (клон) или `%USE
 
 Только **основная** конфигурация. Не `update-db-cfg` / `/UpdateDBCfg` / `config apply` на боевую. КБД — вручную.
 Инструмент: skill **`1c-dump`** (`tools.preferredDump`: ibcmd | agent). SQL ≠ пользователь 1С — rule `1c-ibcmd-auth`.
+
+## Новые объекты метаданных
+
+На живой конфе (`src/Configuration.xml` из дампа) **не** собирать объект с нуля:
+`meta-compile`, `role-compile`, `subsystem-compile`, `cf-init`, `cf-edit add-childObject`.
+Они переписывают весь `Configuration.xml` (мобильные флаги, xmlns) → ложные диффы и лишняя реструктуризация.
+
+1. Список пустышек (тип + имя) → пользователь создаёт **пустые** объекты в Конфигураторе.
+2. `dump-objects` / `dump-update` (skill `1c-dump`).
+3. Агент **только заполняет**: `meta-edit`, формы, модули, СКД. `Configuration.xml` не трогать.
+
+Исключения: пустой проект без дампа (`cf-init` / bootstrap); пользователь явно настоял на `meta-compile` (один раз предупредить про перепись корня).
+Детали: skill `1c-metadata-manage`.
 
 ## Запросы
 

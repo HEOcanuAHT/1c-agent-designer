@@ -79,7 +79,7 @@ All UIDs and UUIDs of new metadata objects, attributes, tabular sections must be
 - Never use placeholder / sequential UUIDs (`a1b2c3d4...`, `b2c3d4e5...`).
 - After bulk metadata generation, run a duplicate-UUID check across the source tree.
 
-When adding metadata objects — also update `Configuration.xml` (`<childObjects>` ordering matters).
+Do not add objects by rewriting `Configuration.xml` / `ChildObjects`. Stub comes from Designer dump (skill `1c-invariants`). Fill via `meta-edit`.
 
 ---
 
