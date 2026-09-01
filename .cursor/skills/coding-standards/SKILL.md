@@ -21,11 +21,11 @@ disable-model-invocation: true
 
 | Если в задаче есть… | Skill |
 |---------------------|--------|
-| BSL-модули, именование, области, общие модули | `std-code-style` (+ `docs/practices.md` при глубоком стиле) |
+| BSL-модули, именование, области, общие модули | `std-code-style` (+ `docs/practices.md` при глубоком стиле) + skill **`1c-syntax`** (платформенный API) |
 | Регионы модулей (каркас) | `std-module-structure` |
 | Клиент/сервер, вызовы сервера, трафик | `std-client-server` |
 | Управляемые формы / `Form.xml` / async | `1c-forms` (+ `1c-metadata-manage` form-*) |
-| Текст запроса, `Запрос`, СКД-запросы (оформление) | `std-queries` (+ `docs/query-writing.md`) |
+| Текст запроса, `Запрос`, СКД-запросы (оформление) | `std-queries` (+ `docs/query-writing.md`) + **`1c-syntax`** (вирт. таблицы / язык запросов) |
 | Runtime-проверка языка запросов (opt-in) | `1c-query-validate` (оркестратор, не implementer) |
 | Производительность запросов, индексы, ВТ | `std-query-optimization` (+ `docs/practices.md`) |
 | Запись данных, транзакции, блокировки | `std-transactions-locks` (+ `docs/practices.md`) |
@@ -44,7 +44,7 @@ disable-model-invocation: true
 | HTTP/REST/очереди | `std-integrations` |
 
 Типичные комбинации:
-- правка общего модуля без запросов → `std-code-style` (+ `std-client-server`, если есть клиентский API)
+- правка общего модуля без запросов → `std-code-style` (+ `std-client-server`, если есть клиентский API) + `1c-syntax` на платформенные типы
 - новая/правка формы → `1c-forms` + `1c-metadata-manage` (form-*)
 - новый объект метаданных → `std-metadata` + `1c-metadata-manage` (meta-*) + `std-metadata-xml`
 - код в расширении → `std-extension-patterns` (+ `1c-external-cfe` для pack)

@@ -1,15 +1,17 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.31.1",
-  "description": "Skills, rules and implementer for 1C configuration development: ibcmd dump/load, EPF/CFE, ITS standards.",
+  "version": "2026.09.01.1",
+  "description": "Skills, rules and implementer for 1C configuration development: ibcmd dump/load, EPF/CFE, ITS standards, platform syntax MCP.",
   "author": {
     "name": "1c-agent-designer"
   },
   "homepage": "https://github.com/HEOcanuAHT/1c-agent-designer",
   "repository": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
-  "keywords": ["1c", "bsl", "ibcmd"],
+  "keywords": ["1c", "bsl", "ibcmd", "syntax", "bsl-ctx"],
   "skills": ".cursor/skills",
   "agents": ".cursor/agents",
+  "commands": ".cursor/commands",
+  "mcpServers": "mcp.json",
   "rules": [
     ".cursor/rules/1c-config-repo.mdc",
     ".cursor/rules/1c-designer-agent.mdc",

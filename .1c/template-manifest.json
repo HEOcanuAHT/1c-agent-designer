@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.08.31.1",
+  "version": "2026.09.01.1",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -39,6 +39,7 @@
     "artifacts"
   ],
   "upgradeNotes": [
-    "Новые объекты метаданных: пустышку в Конфигураторе создаёт пользователь, dump, агент только заполняет. Не meta-compile / cf-edit add-childObject на живой конфе (skill 1c-invariants). Plugin-rules Always часто не в контексте — канон в skill."
+    "Новые объекты метаданных: пустышку в Конфигураторе создаёт пользователь, dump, агент только заполняет. Не meta-compile / cf-edit add-childObject на живой конфе (skill 1c-invariants). Plugin-rules Always часто не в контексте — канон в skill.",
+    "Справка платформы: skill 1c-syntax + MCP bsl-syntax (bsl-ctx из shcntx_ru.hbk). Нужны uv и /1c-syntax-index. Не HTML-дамп. Не гейт."
   ]
 }

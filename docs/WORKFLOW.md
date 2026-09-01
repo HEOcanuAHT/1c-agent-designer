@@ -37,6 +37,6 @@
 ## Код
 
 **Оркестратор** (основной агент): декомпозиция, scaffold/pack/dump, dump/load конфы — rule `1c-orchestrator`.  
-**Субагент `/implementer`**: только правки файлов (BSL, формы, XML) по `coding-standards` → нужные `std-*`, `tech-decisions` (`docs/TECH_DECISIONS.md`). Без Конфигуратора и скриптов ИБ.
+**Субагент `/implementer`**: только правки файлов (BSL, формы, XML) по `coding-standards` → нужные `std-*`, `tech-decisions` (`docs/TECH_DECISIONS.md`), skill `1c-syntax` для платформенного API. Без Конфигуратора и скриптов ИБ.
 
 См. `.cursor/agents/implementer.md`.

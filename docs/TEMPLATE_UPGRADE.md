@@ -10,6 +10,10 @@
 
 Инварианты 1С живут в skill **`1c-invariants`** плагина (не копировать `.mdc` в проект). В `AGENTS.md` проекта должна быть строка «сразу прочитай skill `1c-invariants`»; если ещё «rule `1c-invariants`» — замени (bootstrap/sync подтянет новый `AGENTS.md`).
 
+### 2026.09.01.1 — справка платформы
+
+Skill `1c-syntax`, команды `/1c-syntax-index` и `/1c-syntax-status`, MCP `bsl-syntax`. Нужен `uv`. База в `%LOCALAPPDATA%\bsl-ctx\`, не в git. Reload Window после установки плагина.
+
 ### 2026.08.31.1 — новые объекты
 
 Живая конфа: не `meta-compile` / `cf-edit add-childObject`. Пустышка в Конфигураторе → dump → заполнение. Канон в skill `1c-invariants` (plugin-rule `1c-meta-stubs` может не попасть в чат).

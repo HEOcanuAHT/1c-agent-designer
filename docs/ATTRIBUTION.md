@@ -8,3 +8,5 @@
 В шаблон **не** переносились: их dump/load с `UpdateDBCfg`, `.dev.env` как SoT, MCP-гейты, epf-build/dump, db-ops/web-ops.
 
 Dump/load, EPF/CFE pack, bootstrap и sync — собственные skills этого шаблона.
+
+Справка платформы в рантайме агента: пакет [bsl-ctx](https://pypi.org/project/bsl-ctx/) (MIT) читает `.hbk` установки 1С и отдаёт MCP. Плагин только обвязывает `platformVersion` / команды / skill. Контент справки 1С в репозиторий не кладётся.

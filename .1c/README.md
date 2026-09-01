@@ -51,6 +51,7 @@ ibcmd через SQL обычно **заметно быстрее** agent; дл�
 - `ext.serviceIb` — служебная файловая ИБ для pack/dump внешек и расширений (save `.cf` с боевой + load, без apply; XML import — fallback; не коммитить).
 - `cfe.dir` / `cfe.artifacts` — расширения `.cfe` (skill `1c-external-cfe`).
 - Проверка языка запросов — skill `1c-query-validate` (COM на `.1c/ib-ext`; opt-in).
+- Справка платформы — skill `1c-syntax` (MCP из `shcntx_ru.hbk` через bsl-ctx). Поле в JSON не нужно: берётся `platformVersion`. sqlite в `%LOCALAPPDATA%\bsl-ctx\`.
 
 ### Два входа (не путать)
 

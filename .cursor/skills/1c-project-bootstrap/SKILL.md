@@ -49,9 +49,10 @@ description: >-
 | `boot-tool` | Выбор dump-инструмента (ibcmd / agent) |
 | `boot-dbms` | СУБД для ibcmd (если client-server) |
 | `boot-write` | Запись project.json + project.local.json |
+| `boot-syntax` | Опционально: индекс справки платформы (`1c-syntax`) |
 | `boot-ping` | Проверка связи (по согласию) |
 
-Пункты `boot-dbms` / `boot-ping` можно `cancelled`, если не нужны по ответам.
+Пункты `boot-dbms` / `boot-ping` / `boot-syntax` можно `cancelled`, если не нужны по ответам.
 
 ---
 
@@ -210,6 +211,24 @@ Fallback: env `1C_IB_*` или legacy `auth.user`/`password` в local.
 "tools": { "preferredDump": "agent" },
 "designerAgent": { "transport": "agent", "baseDir": "C:/Users/.../repo" }
 ```
+
+---
+
+## Шаг 3.5 — справка платформы (`boot-syntax`)
+
+Опционально, с согласия. Нужны `uv`/`uvx` и `bin\shcntx_ru.hbk` у `platformVersion`.
+
+```powershell
+…\1c-syntax\scripts\Get-1cSyntaxStatus.ps1 -ProjectRoot "<workspace>"
+```
+
+Если `dbOk=false` — предложи индекс (долго, сеть на первый раз):
+
+```powershell
+…\1c-syntax\scripts\Build-1cSyntaxDb.ps1 -ProjectRoot "<workspace>"
+```
+
+Отказ → `boot-syntax` cancelled. Без индекса агент не угадывает редкий платформенный API (skill `1c-syntax`).
 
 ---
 

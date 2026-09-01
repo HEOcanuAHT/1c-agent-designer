@@ -53,6 +53,10 @@ Fallback SkillHome: `<workspace>/.cursor/skills/<name>/` (клон) или `%USE
 
 `Invoke-1cValidateQuery.ps1` по умолчанию **не** гонять. Вкл. по фразе «проверяй запросы» — skill `1c-query-validate`.
 
+## Справка платформы
+
+Платформенный API — skill **`1c-syntax`** (MCP `bsl-syntax` / bsl-ctx из `shcntx_ru.hbk`). Не HTML-дамп. Нет sqlite → `/1c-syntax-index`, сигнатуры не выдумывать. Не гейт на написание кода.
+
 ## Git
 
 Фичи в `feature/…` / `fix/…`, не напрямую в `main`. Процесс: `docs/WORKFLOW.md`.

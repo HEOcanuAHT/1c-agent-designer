@@ -8,6 +8,7 @@
 - внешние обработки через `1c-external-epf` (`ext`)
 - расширения через `1c-external-cfe` (`cfe` → `.cfe`)
 - проверка языка запросов: skill `1c-query-validate` (opt-in)
+- справка платформы: skill **`1c-syntax`** (MCP `bsl-syntax`, sqlite из `shcntx_ru.hbk` через bsl-ctx; `/1c-syntax-index`)
 - общий runtime: `1c-runtime`; упаковка `.cf` — `1c-ibcmd-pack`
 - субагент `/implementer` (только файлы; сборка и ИБ — основной агент)
 
@@ -56,8 +57,10 @@ cd my-config
 .cursor-plugin/plugin.json   # манифест Cursor Plugin
 .cursor/
   agents/implementer.md
-  rules/                 # 1c-invariants.mdc (копия; plugin Always часто не инжектит)
-  skills/                # 1c-invariants (канон Always), bootstrap, dump, std-*, …
+  commands/              # /1c-syntax-index, /1c-syntax-status
+  rules/
+  skills/                # 1c-invariants (канон Always), bootstrap, dump, 1c-syntax, std-*, …
+mcp.json                 # MCP bsl-syntax (обёртка bsl-ctx)
 .1c/                     # project.json.example, template-manifest.json, secrets example
 docs/
 src/                     # XML основной конфы (только дамп платформы)

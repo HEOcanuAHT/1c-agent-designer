@@ -17,11 +17,12 @@ description: >-
 - skill `1c-invariants` — инварианты 1С (плагин-rules сюда не инжектятся)
 - skill `coding-standards` — роутер: какие доменные skills подгрузить под текущие изменения
 - skill `tech-decisions` — ТР из `docs/TECH_DECISIONS.md`
+- skill `1c-syntax` — платформенный API (MCP `bsl-syntax`). `DB_MISSING` → не выдумывать сигнатуры, верни родителю «нужен /1c-syntax-index». Index/setup не запускай.
 
 Затем по таблице из `coding-standards` подгружай **только нужные** skills. Не грузи всё подряд.
 
 Типичные домены (полный список — в `coding-standards`):
-- BSL / стиль → `std-code-style` (+ `docs/practices.md` при необходимости), `std-module-structure`
+- BSL / стиль → `std-code-style` (+ `docs/practices.md` при необходимости), `std-module-structure`, **`1c-syntax`**
 - формы → `1c-forms` (+ `1c-metadata-manage` form-* для мутаций `Form.xml`)
 - запросы → `std-queries` / `std-query-optimization` (+ их `docs/`)
 - метаданные XML → `std-metadata`, `std-metadata-xml`, при создании/правке структуры — `1c-metadata-manage` (meta-*/skd-*/…)

@@ -169,6 +169,35 @@ if (-not $report.hasProjectLocal) {
   $report.hints += "Copy .1c/project.local.json.example -> .1c/project.local.json (auth only; do not commit)."
 }
 
+function Find-UvxCheck {
+  $cmd = Get-Command uvx -EA SilentlyContinue
+  if ($cmd -and $cmd.Source -and ($cmd.Source -notmatch 'WindowsApps\\')) { return $cmd.Source }
+  foreach ($c in @(
+      (Join-Path $env:USERPROFILE ".local\bin\uvx.exe"),
+      (Join-Path $env:USERPROFILE ".cargo\bin\uvx.exe"),
+      (Join-Path $env:LOCALAPPDATA "Programs\uv\uvx.exe")
+    )) {
+    if (Test-Path -LiteralPath $c) { return $c }
+  }
+  return $null
+}
+
+$uvx = Find-UvxCheck
+$syntaxDir = Join-Path $env:LOCALAPPDATA "bsl-ctx"
+$syntaxDb = $null
+if (Test-Path -LiteralPath $syntaxDir) {
+  $syntaxDb = Get-ChildItem -LiteralPath $syntaxDir -Filter "bsl-context-*.sqlite" -File -EA SilentlyContinue |
+    Sort-Object Name -Descending |
+    Select-Object -First 1 -ExpandProperty FullName
+}
+$report.uvx = $uvx
+$report.syntaxDb = $syntaxDb
+if (-not $uvx) {
+  $report.hints += "Optional syntax helper: install uv (https://docs.astral.sh/uv/) then /1c-syntax-index."
+} elseif (-not $syntaxDb) {
+  $report.hints += "Optional: index platform syntax (skill 1c-syntax / Build-1cSyntaxDb.ps1). Needs shcntx_ru.hbk."
+}
+
 if ($Json) {
   $report | ConvertTo-Json -Depth 5
   exit 0
@@ -182,6 +211,8 @@ Write-Host ("python:   " + $(if ($report.python) { $report.python } else { "MISS
 Write-Host ("paramiko: " + $(if ($report.paramiko) { "OK" } else { "MISSING" }))
 Write-Host ("plink:    " + $(if ($report.plink) { $report.plink } else { "(optional)" }))
 Write-Host ("git:      " + $(if ($report.git) { "OK" } else { "MISSING" }))
+Write-Host ("uvx:      " + $(if ($report.uvx) { $report.uvx } else { "(optional, syntax MCP)" }))
+Write-Host ("syntax db:" + $(if ($report.syntaxDb) { $report.syntaxDb } else { "(not indexed)" }))
 Write-Host ("project.json:      " + $(if ($report.hasProjectJson) { "OK" } else { "MISSING" }))
 Write-Host ("project.local.json:" + $(if ($report.hasProjectLocal) { "OK" } else { "MISSING" }))
 Write-Host ("agent SSH ready:   " + $(if ($report.readyForAgentSsh) { "YES" } else { "NO" }))

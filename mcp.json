@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "bsl-syntax": {
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-File",
+        "${PLUGIN_ROOT}/.cursor/skills/1c-syntax/scripts/Start-1cSyntaxMcp.ps1"
+      ]
+    }
+  }
+}

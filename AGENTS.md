@@ -16,6 +16,7 @@
 | Bootstrap | `1c-project-bootstrap` |
 | Sync клона (legacy) | `1c-template-sync`; после — [`docs/TEMPLATE_UPGRADE.md`](docs/TEMPLATE_UPGRADE.md) |
 | Стандарты BSL | `coding-standards` → `std-*` |
+| Справка платформы (типы/методы/запросы) | skill **`1c-syntax`** (MCP `bsl-syntax`). Нет базы → `/1c-syntax-index`. Не угадывать API |
 | Формы | `1c-forms` |
 | Упаковка `.cf` | `1c-ibcmd-pack` / `Invoke-1cIbcmdPack.ps1` |
 | `.ps1` | UTF-8 BOM, ASCII-пунктуация; rule `ps1-encoding` |
