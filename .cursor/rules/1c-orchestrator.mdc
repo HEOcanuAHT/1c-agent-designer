@@ -52,4 +52,4 @@ alwaysApply: false
 
 ## Не отдавать implementer
 
-bootstrap, template-sync, настройка `project.json`, любые операции с ИБ и служебной `.1c/ib-ext`, **индексация справки** (`Build-1cSyntaxDb.ps1` / `/1c-syntax-index`).
+bootstrap, template-sync, настройка `project.json`, любые операции с ИБ и служебной `.1c/ib-ext` (`Invoke-1cServiceIb.ps1`, не `Ensure-ServiceIb` через `-Command`), **индексация справки** (`Build-1cSyntaxDb.ps1` / `/1c-syntax-index`).

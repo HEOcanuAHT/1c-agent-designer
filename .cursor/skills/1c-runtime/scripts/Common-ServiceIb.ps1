@@ -1,6 +1,7 @@
 ﻿# Service IB (.1c/ib-ext) for EPF/CFE pack and query-validate.
 # Home: 1c-runtime/scripts (with Common-Project / Common-IbcmdConnection).
-# Dot-source from Invoke-1cExternalEpf / Invoke-1cExternalCfe / Invoke-1cValidateQuery.
+# Agent CLI: Invoke-1cServiceIb.ps1 -File (do not call Ensure-ServiceIb via -Command).
+# Dot-source from Invoke-1cServiceIb / Invoke-1cExternalEpf / Invoke-1cExternalCfe / Invoke-1cValidateQuery.
 
 $IbcmdConnPath = Join-Path $PSScriptRoot "Common-IbcmdConnection.ps1"
 if (-not (Test-Path -LiteralPath $IbcmdConnPath)) {

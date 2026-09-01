@@ -37,7 +37,7 @@ disable-model-invocation: true
 
 ## Служебная ИБ
 
-Та же `.1c/ib-ext`, что у `1c-external-epf` (`1c-runtime/scripts/Common-ServiceIb.ps1`).
+Та же `.1c/ib-ext`, что у `1c-external-epf` (`1c-runtime/scripts/Common-ServiceIb.ps1`). Отдельно собрать (без pack): `Invoke-1cServiceIb.ps1 -Action ensure` (без apply). Только `-File`.
 
 По умолчанию: create → **загрузка конфы без apply** → extension create/import/export/save.
 

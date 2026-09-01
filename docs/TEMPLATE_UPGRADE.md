@@ -10,6 +10,10 @@
 
 Инварианты 1С живут в skill **`1c-invariants`** плагина (не копировать `.mdc` в проект). В `AGENTS.md` проекта должна быть строка «сразу прочитай skill `1c-invariants`»; если ещё «rule `1c-invariants`» — замени (bootstrap/sync подтянет новый `AGENTS.md`).
 
+### 2026.09.01.7 — CLI служебной ИБ
+
+`1c-runtime/scripts/Invoke-1cServiceIb.ps1 -Action ensure` (без apply). Не dotsource `Ensure-ServiceIb` через `-Command`. `Invoke-1cValidateQuery -Action ensure` — только для query-validate (apply).
+
 ### 2026.09.01.6 — MCP quotes
 
 `cmd /c` вызывает `mcp-serve.cmd` без вложенных кавычек вокруг `-File`.

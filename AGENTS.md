@@ -7,6 +7,7 @@
 |--------|------|
 | Пути скриптов (SkillHome ≠ ProjectRoot) | skill `1c-invariants` |
 | Dump/load XML | skill **`1c-dump`** (`tools.preferredDump`) → ibcmd или designer-agent. Только основная, без apply/КБД |
+| Служебная `.1c/ib-ext` | `1c-runtime` → `Invoke-1cServiceIb.ps1 -Action ensure` (без apply). Не `Ensure-ServiceIb` через `-Command` |
 | Общий runtime (Common-*) | skill **`1c-runtime`** |
 | SQL vs пользователь 1С | rule `1c-ibcmd-auth` |
 | EPF | `1c-external-epf` → `ext/` |

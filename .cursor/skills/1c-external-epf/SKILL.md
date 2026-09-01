@@ -85,6 +85,15 @@ Dump/pack внешек требуют ИБ с **метаданными осно�
 
 `scaffold` / `extract-from-config` ИБ не требуют; `pack` / `dump` — готовят служебную ИБ автоматически.
 
+Отдельно «собери служебную ИБ» (без pack) — тот же путь, что после `dump-full`:
+
+```powershell
+powershell -NoProfile -File "<SkillHome>/../1c-runtime/scripts/Invoke-1cServiceIb.ps1" `
+  -Action ensure -ProjectRoot "<workspace>"
+```
+
+Только `-File`. Не scratch `.ps1` и не `Ensure-ServiceIb` через `-Command` (Cursor раскрывает `$`). Не `Invoke-1cValidateQuery.ps1 -Action ensure` (штамп `apply=True`).
+
 ## Команды
 
 `SkillHome` = каталог этого SKILL.md. `-ProjectRoot` = workspace.

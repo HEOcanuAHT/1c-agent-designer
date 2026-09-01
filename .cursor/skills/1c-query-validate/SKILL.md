@@ -11,7 +11,9 @@ disable-model-invocation: true
 
 Не путать с оформлением запросов (`std-queries`) и оптимизацией (`std-query-optimization`): здесь только **синтаксис/схема** через платформу.
 
-Служебная ИБ та же, что у EPF/CFE (`.1c/ib-ext`, `1c-runtime/scripts/Common-ServiceIb.ps1`). Apply на служебной — только `-Action ensure` (`Get-ServiceIbCfg -AllowApply`). На боевую — никогда.
+Служебная ИБ та же, что у EPF/CFE (`.1c/ib-ext`, `1c-runtime/scripts/Common-ServiceIb.ps1`). Apply на служебной — только этот skill, `-Action ensure` (`Get-ServiceIbCfg -AllowApply`). На боевую — никогда.
+
+«Собери служебную ИБ» **без** apply (EPF/CFE) — `1c-runtime/scripts/Invoke-1cServiceIb.ps1 -Action ensure`, не этот скрипт. Штампы разные: `apply=False` vs `apply=True`.
 
 ## Среда
 

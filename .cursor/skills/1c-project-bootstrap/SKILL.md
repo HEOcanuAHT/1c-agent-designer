@@ -27,7 +27,7 @@ description: >-
 2. Интерактивный мини-опрос (один короткий вопрос за раз) + Todo-чеклист.
 3. Записать `.1c/project.json` / `project.local.json`.
 4. **Предпочтительный dump/load = ibcmd**; designer-agent — запасной путь.
-5. Опционально ping / первый dump ([docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md)).
+5. Опционально ping / первый dump ([docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md)); по запросу — служебная `.1c/ib-ext` (`Invoke-1cServiceIb.ps1 -Action ensure`).
 
 ## Поведение агента (обязательно)
 
@@ -242,6 +242,15 @@ Fallback: env `1C_IB_*` или legacy `auth.user`/`password` в local.
 Перед ping на **файловой** ИБ: обычный Конфигуратор закрыт.
 
 Успех → предложи `dump-full` ([docs/INITIAL_DUMP.md](../../../docs/INITIAL_DUMP.md)).
+
+После успешного `dump-full`, если пользователь просил ещё служебную ИБ (или EPF/CFE дальше) — опционально:
+
+```powershell
+powershell -NoProfile -File "<SkillHome>/../1c-runtime/scripts/Invoke-1cServiceIb.ps1" `
+  -Action ensure -ProjectRoot "<workspace>"
+```
+
+Без apply. Не `Ensure-ServiceIb` через `-Command`. Не `Invoke-1cValidateQuery -Action ensure`. `block_until_ms` для первого ensure — **180000**.
 
 ---
 

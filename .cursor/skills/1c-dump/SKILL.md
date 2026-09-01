@@ -3,7 +3,8 @@ name: 1c-dump
 description: >-
   Фасад dump/load XML основной конфигурации: читает tools.preferredDump
   (ibcmd|agent) и вызывает Invoke-1cIbcmdDump или Invoke-1cDesignerAgent.
-  Use when dump, dump-full, dump-update, load-changed, выгрузка XML, загрузка XML.
+  Use when dump, dump-full, dump-update, load-changed, выгрузка XML, загрузка XML,
+  собери служебную ИБ, ensure service IB, .1c/ib-ext.
 ---
 
 # 1c-dump — фасад dump/load
@@ -42,6 +43,15 @@ powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cDump.ps1" `
 Общие: `-ListFile`, `-Objects`, `-BaseRef`/`-HeadRef` (agent load).  
 Только ibcmd: `-WipeOutDir`, `-OutDir`, `-NoStaging`.
 
+Служебная `.1c/ib-ext` — **не** dump. После `dump-full` / по фразе «собери служебную ИБ»:
+
+```powershell
+powershell -NoProfile -File "<SkillHome>/../1c-runtime/scripts/Invoke-1cServiceIb.ps1" `
+  -Action ensure -ProjectRoot "<workspace>"
+```
+
+Дефолт без apply (как EPF: save `.cf` с боевой → load). `-Force` / `-RefreshServiceIb` — пересобрать. `-AllowApply` не ставить (это штамп query-validate). Только `-File`, не `-Command` / не scratch `.ps1`.
+
 ## Ожидание Shell (агент)
 
 Ждёт не ibcmd, а обвязка Shell. Скрипт сам пишет `OK action=…`, `ELAPSED_SEC=…` и строку `RESULT={…}` — этого достаточно.
@@ -50,6 +60,8 @@ powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cDump.ps1" `
 |-----------------------------|----------|------------------|
 | `dump-update` / `dump-objects` / `load-files` / `ping` | 5–15 с | **30000** (до 45000) |
 | `dump-full` | 20–40 с (файл ~10–20 с) | **60000** |
+| служебная ИБ `ensure` (первый раз / `-Force`) | 60–120 с (крупная конфа ~100 с) | **180000** |
+| служебная ИБ `status` | <2 с | **15000** |
 
 **Как вызывать**
 

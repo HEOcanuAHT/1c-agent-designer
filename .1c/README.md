@@ -48,7 +48,7 @@ ibcmd через SQL обычно **заметно быстрее** agent; дл�
 - `ibcmd` — только настройки **инструмента**: `dataDir`, `parkDir`, `preservePaths` (не подключение к ИБ). `stagingDir` больше не используется.
 - `tools.preferredDump`: `ibcmd` | `agent`.
 - `ext.dir` — внешние обработки (skill `1c-external-epf`).
-- `ext.serviceIb` — служебная файловая ИБ для pack/dump внешек и расширений (save `.cf` с боевой + load, без apply; XML import — fallback; не коммитить).
+- `ext.serviceIb` — служебная файловая ИБ для pack/dump внешек и расширений (save `.cf` с боевой + load, без apply; XML import — fallback; не коммитить). CLI: `1c-runtime/scripts/Invoke-1cServiceIb.ps1 -Action ensure`.
 - `cfe.dir` / `cfe.artifacts` — расширения `.cfe` (skill `1c-external-cfe`).
 - Проверка языка запросов — skill `1c-query-validate` (COM на `.1c/ib-ext`; opt-in).
 - Справка платформы — skill `1c-syntax` (MCP из `shcntx_ru.hbk` через bsl-ctx). Поле в JSON не нужно: берётся `platformVersion`. sqlite в `%LOCALAPPDATA%\bsl-ctx\`.

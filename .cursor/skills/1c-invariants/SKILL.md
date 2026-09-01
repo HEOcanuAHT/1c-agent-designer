@@ -35,6 +35,7 @@ Fallback SkillHome: `<workspace>/.cursor/skills/<name>/` (клон) или `%USE
 
 Только **основная** конфигурация. Не `update-db-cfg` / `/UpdateDBCfg` / `config apply` на боевую. КБД — вручную.
 Инструмент: skill **`1c-dump`** (`tools.preferredDump`: ibcmd | agent). SQL ≠ пользователь 1С — rule `1c-ibcmd-auth`.
+Служебная `.1c/ib-ext`: `-File …/1c-runtime/scripts/Invoke-1cServiceIb.ps1 -Action ensure` (без apply). Не `Ensure-ServiceIb` через `-Command`. Не `Invoke-1cValidateQuery -Action ensure` для EPF (там всегда apply).
 
 ## Новые объекты метаданных
 

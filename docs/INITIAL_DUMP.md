@@ -21,4 +21,12 @@
 На файловой ИБ перед dump закрой Конфигуратор. Для ibcmd на client-server в `infobase` нужен блок `dbms`.
 
 6. Убедитесь, что есть `src/Configuration.xml` и `src/ConfigDumpInfo.xml`.
-7. Коммит в `main` или ветку `sync/…` → Merge Request.
+7. Опционально служебная ИБ `.1c/ib-ext` (EPF/CFE, не dump). Skill **`1c-dump`** указывает CLI; путь — `1c-runtime`:
+
+```powershell
+powershell -NoProfile -File "…\1c-runtime\scripts\Invoke-1cServiceIb.ps1" `
+  -Action ensure -ProjectRoot "<этот-репо>"
+```
+
+Save `.cf` с боевой → load, **без apply**. Не `Ensure-ServiceIb` через `-Command` (Cursor раскрывает `$`). Не `Invoke-1cValidateQuery.ps1 -Action ensure` (там apply). Пересборка: `-Force` или `-RefreshServiceIb`.
+8. Коммит в `main` или ветку `sync/…` → Merge Request.
