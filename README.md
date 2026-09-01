@@ -73,3 +73,10 @@ ext/                     # XML внешних обработок
 cfe/                     # XML расширений (.cfe)
 .gitlab/merge_request_templates/
 ```
+
+## Лицензия
+
+MIT, см. [LICENSE](LICENSE). Copyright (c) 2026 HEOcanuAHT.
+
+Плагин и шаблон предоставляются **как есть**, без гарантий. Dump/load и другие операции могут изменить конфигурацию и ИБ; бэкап и проверка — на вашей стороне. Сторонние заимствования: [docs/ATTRIBUTION.md](docs/ATTRIBUTION.md). Не связан с фирмой «1С».
+
