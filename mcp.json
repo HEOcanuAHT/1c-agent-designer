@@ -1,7 +1,12 @@
 {
   "mcpServers": {
     "bsl-syntax": {
-      "command": "./.cursor/skills/1c-syntax/scripts/Start-1cSyntaxMcp.cmd"
+      "command": "cmd.exe",
+      "args": [
+        "/d",
+        "/c",
+        "%PLUGIN_ROOT%\\.cursor\\skills\\1c-syntax\\scripts\\Start-1cSyntaxMcp.cmd"
+      ]
     }
   }
 }
