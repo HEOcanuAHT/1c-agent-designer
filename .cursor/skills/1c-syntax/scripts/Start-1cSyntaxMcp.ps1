@@ -13,9 +13,16 @@ $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "Common-Syntax.ps1")
 Set-BslCtxUtf8Env
 
-if (-not $ProjectRoot) {
-  if ($env:CURSOR_PROJECT_DIR) { $ProjectRoot = [string]$env:CURSOR_PROJECT_DIR }
-  else { $ProjectRoot = (Get-Location).Path }
+function Test-UsablePath([string]$P) {
+  if (-not $P) { return $false }
+  if ($P -match '\$\{') { return $false }
+  return (Test-Path -LiteralPath $P)
+}
+
+if (-not (Test-UsablePath $ProjectRoot)) {
+  foreach ($c in @($env:CURSOR_PROJECT_DIR, $env:WORKSPACE_FOLDER, (Get-Location).Path)) {
+    if (Test-UsablePath $c) { $ProjectRoot = [string]$c; break }
+  }
 }
 try {
   $ProjectRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path

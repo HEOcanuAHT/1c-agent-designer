@@ -1,0 +1,17 @@
+{
+  "name": "1c-agent-designer",
+  "owner": {
+    "name": "1c-agent-designer"
+  },
+  "metadata": {
+    "description": "Cursor plugin for 1C configuration development",
+    "version": "2026.09.01.2"
+  },
+  "plugins": [
+    {
+      "name": "1c-agent-designer",
+      "source": ".",
+      "description": "Skills, rules and implementer for 1C: dump/load, EPF/CFE, ITS standards, platform syntax MCP."
+    }
+  ]
+}

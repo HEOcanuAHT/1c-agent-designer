@@ -22,7 +22,7 @@ description: >-
 
 ## MCP (имена тулз как у bsl-ctx)
 
-Сервер `bsl-syntax` (плагин `mcp.json`).
+Сервер `bsl-syntax` (плагин `mcp.json`). Точка входа: `./.cursor/skills/1c-syntax/scripts/Start-1cSyntaxMcp.cmd` (Cursor Plugin не раскрывает `${PLUGIN_ROOT}` в args). После правки `mcp.json` нужен git commit + обновление плагина: Cursor ставит снимок коммита, не рабочее дерево.
 
 | Тулза | Зачем |
 |-------|--------|

@@ -10,6 +10,10 @@
 
 Инварианты 1С живут в skill **`1c-invariants`** плагина (не копировать `.mdc` в проект). В `AGENTS.md` проекта должна быть строка «сразу прочитай skill `1c-invariants`»; если ещё «rule `1c-invariants`» — замени (bootstrap/sync подтянет новый `AGENTS.md`).
 
+### 2026.09.01.2 — marketplace.json
+
+UI «подключить локально» требует `.cursor-plugin/marketplace.json`. Junction в `plugins/local` Cursor отвергает.
+
 ### 2026.09.01.1 — справка платформы
 
 Skill `1c-syntax`, команды `/1c-syntax-index` и `/1c-syntax-status`, MCP `bsl-syntax`. Нужен `uv`. База в `%LOCALAPPDATA%\bsl-ctx\`, не в git. Reload Window после установки плагина.

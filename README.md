@@ -28,13 +28,18 @@
 
 ## Локальная установка плагина
 
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
-cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "D:\path\to\1c-agent-designer"
-```
+Junction / symlink в `~/.cursor/plugins/local` Cursor **отвергает** (target вне этой папки). MCP из плагина из-за этого не появляется.
 
-Подставь путь к клону шаблона. Затем в Cursor: **Developer: Reload Window**.  
-Customize → skills/rules `1c-agent-designer`. Rule `template-maintenance` в плагин не входит.
+**Вариант A (предпочтительно):** Customize → Plugins → добавить marketplace с диска или GitHub.
+
+- локально: папка этого репозитория (нужен `.cursor-plugin/marketplace.json`);
+- удалённо: `https://github.com/HEOcanuAHT/1c-agent-designer.git`.
+
+Потом **Install** плагина `1c-agent-designer`. MCP `bsl-syntax` живёт у плагина, не в user `mcp.json`.
+
+**Вариант B:** реальный clone (не junction) внутрь `%USERPROFILE%\.cursor\plugins\local\1c-agent-designer`, затем Reload Window.
+
+Rule `template-maintenance` в плагин не входит.
 
 ## Быстрый старт новой конфигурации
 

@@ -14,14 +14,17 @@
 
 ### Локальный плагин (dogfood)
 
-Junction (не требует Developer Mode):
+Cursor **не** грузит junction/symlink из `~/.cursor/plugins/local`, если цель снаружи этой папки (в логе: `loadUserLocalPlugin … rejected: symlink target … outside …\plugins\local`). Карточки плагина и MCP `bsl-syntax` из-за этого нет.
 
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
-cmd /c mklink /J "%USERPROFILE%\.cursor\plugins\local\1c-agent-designer" "<абсолютный путь к этому репо>"
-```
+Нужен `.cursor-plugin/marketplace.json`. Дальше:
 
-**Developer: Reload Window.** Customize: skills/rules плагина на месте; `template-maintenance` — только из `.cursor/rules` этого репо, не из манифеста плагина.
+1. Customize → Plugins → добавить marketplace: эта папка **или** GitHub `https://github.com/HEOcanuAHT/1c-agent-designer.git`
+2. Install `1c-agent-designer`
+3. **Developer: Reload Window**
+
+Альтернатива: `git clone` репозитория **внутрь** `%USERPROFILE%\.cursor\plugins\local\1c-agent-designer` (реальные файлы, не junction).
+
+`template-maintenance` — только из `.cursor/rules` этого репо, не из манифеста плагина.
 
 Пустой проект 1С: открыть папку → «настрой окружение» → bootstrap копирует каркас, skills в репо не кладёт.
 
