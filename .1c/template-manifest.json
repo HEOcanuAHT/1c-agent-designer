@@ -1,6 +1,6 @@
 {
   "name": "1c-agent-designer",
-  "version": "2026.09.01.5",
+  "version": "2026.09.01.6",
   "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
   "ref": "main",
   "paths": [
@@ -43,6 +43,6 @@
     "Справка платформы: skill 1c-syntax + MCP bsl-syntax (bsl-ctx из shcntx_ru.hbk). Нужны uv и /1c-syntax-index. Не HTML-дамп. Не гейт.",
     "Локальный плагин: junction/symlink в ~/.cursor/plugins/local Cursor отвергает. Нужен .cursor-plugin/marketplace.json и установка из папки/GitHub, либо реальный clone внутрь plugins/local.",
     "MCP bsl-syntax: общий процесс без BSL_CTX_TARGET_VERSION; агент фильтрует since vs CompatibilityMode проекта.",
-    "MCP spawn: не ./ и не PLUGIN_ROOT. cmd.exe + %LOCALAPPDATA%\\1c-agent-designer\\mcp-serve.ps1 (шим с index/status)."
+    "MCP spawn: cmd.exe /c %LOCALAPPDATA%\\1c-agent-designer\\mcp-serve.cmd (без кавычек вокруг -File)."
   ]
 }

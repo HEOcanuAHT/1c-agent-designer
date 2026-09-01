@@ -22,7 +22,7 @@ description: >-
 
 ## MCP (имена тулз как у bsl-ctx)
 
-Сервер `bsl-syntax` (плагин `mcp.json`). Точка входа: `cmd.exe` + `%LOCALAPPDATA%\1c-agent-designer\mcp-serve.ps1`. Не `./` и не `%PLUGIN_ROOT%`. Шим кладётся туда при `/1c-syntax-index` / `/1c-syntax-status`.
+Сервер `bsl-syntax` (плагин `mcp.json`). Точка входа: `cmd.exe /c %LOCALAPPDATA%\1c-agent-designer\mcp-serve.cmd` (без кавычек вокруг -File).
 
 | Тулза | Зачем |
 |-------|--------|

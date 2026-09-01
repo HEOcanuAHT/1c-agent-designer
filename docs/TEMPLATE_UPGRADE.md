@@ -10,6 +10,10 @@
 
 Инварианты 1С живут в skill **`1c-invariants`** плагина (не копировать `.mdc` в проект). В `AGENTS.md` проекта должна быть строка «сразу прочитай skill `1c-invariants`»; если ещё «rule `1c-invariants`» — замени (bootstrap/sync подтянет новый `AGENTS.md`).
 
+### 2026.09.01.6 — MCP quotes
+
+`cmd /c` вызывает `mcp-serve.cmd` без вложенных кавычек вокруг `-File`.
+
 ### 2026.09.01.5 — MCP shim
 
 Запуск через `%LOCALAPPDATA%\\1c-agent-designer\\mcp-serve.ps1`. `%PLUGIN_ROOT%` Cursor в env не ставит.

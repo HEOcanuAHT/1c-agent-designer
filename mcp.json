@@ -5,7 +5,7 @@
       "args": [
         "/d",
         "/c",
-        "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%LOCALAPPDATA%\\1c-agent-designer\\mcp-serve.ps1\""
+        "%LOCALAPPDATA%\\1c-agent-designer\\mcp-serve.cmd"
       ]
     }
   }

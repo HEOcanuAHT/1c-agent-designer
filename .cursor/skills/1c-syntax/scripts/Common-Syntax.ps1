@@ -187,9 +187,13 @@ function Get-PseudoTypesWorkDir {
 function Install-SyntaxMcpShim {
   $destDir = Get-PseudoTypesWorkDir
   $srcServe = Join-Path $script:CommonSyntaxHome "mcp-serve.ps1"
+  $srcCmd = Join-Path $script:CommonSyntaxHome "mcp-serve.cmd"
   $srcStub = Join-Path $script:CommonSyntaxHome "..\mcp\stub_server.py"
   if (Test-Path -LiteralPath $srcServe) {
     Copy-Item -Force -LiteralPath $srcServe -Destination (Join-Path $destDir "mcp-serve.ps1")
+  }
+  if (Test-Path -LiteralPath $srcCmd) {
+    Copy-Item -Force -LiteralPath $srcCmd -Destination (Join-Path $destDir "mcp-serve.cmd")
   }
   if (Test-Path -LiteralPath $srcStub) {
     Copy-Item -Force -LiteralPath $srcStub -Destination (Join-Path $destDir "stub_server.py")
