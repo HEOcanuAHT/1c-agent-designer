@@ -22,7 +22,7 @@ description: >-
 
 ## MCP (имена тулз как у bsl-ctx)
 
-Сервер `bsl-syntax` (плагин `mcp.json`). Точка входа: `cmd.exe` + `%PLUGIN_ROOT%\\...\\Start-1cSyntaxMcp.cmd`. Не `./`: Cursor раскрывает `.` относительно workspace (пустое окно → «не удаётся найти путь»), не корня плагина.
+Сервер `bsl-syntax` (плагин `mcp.json`). Точка входа: `cmd.exe` + `%LOCALAPPDATA%\1c-agent-designer\mcp-serve.ps1`. Не `./` и не `%PLUGIN_ROOT%`. Шим кладётся туда при `/1c-syntax-index` / `/1c-syntax-status`.
 
 | Тулза | Зачем |
 |-------|--------|

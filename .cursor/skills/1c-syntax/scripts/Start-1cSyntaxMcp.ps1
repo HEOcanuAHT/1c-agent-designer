@@ -14,6 +14,7 @@ param(
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "Common-Syntax.ps1")
 Set-BslCtxUtf8Env
+Install-SyntaxMcpShim
 
 $cfg = $null
 $ver = $null

@@ -5,7 +5,7 @@
       "args": [
         "/d",
         "/c",
-        "%PLUGIN_ROOT%\\.cursor\\skills\\1c-syntax\\scripts\\Start-1cSyntaxMcp.cmd"
+        "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%LOCALAPPDATA%\\1c-agent-designer\\mcp-serve.ps1\""
       ]
     }
   }

@@ -9,6 +9,7 @@ param(
 
 $ErrorActionPreference = "Continue"
 . (Join-Path $PSScriptRoot "Common-Syntax.ps1")
+Install-SyntaxMcpShim
 
 $ProjectRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path
 $cfg = Read-SyntaxProjectCfg $ProjectRoot

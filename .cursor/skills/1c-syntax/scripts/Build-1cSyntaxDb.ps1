@@ -16,6 +16,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "Common-Syntax.ps1")
+Install-SyntaxMcpShim
 
 function Invoke-UvxCapture {
   param(

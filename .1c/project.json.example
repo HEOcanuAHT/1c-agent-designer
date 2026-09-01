@@ -5,7 +5,7 @@
   "src": "src",
   "template": {
     "name": "1c-agent-designer",
-    "version": "2026.09.01.4",
+    "version": "2026.09.01.5",
     "url": "https://github.com/HEOcanuAHT/1c-agent-designer.git",
     "ref": "main"
   },

@@ -184,6 +184,18 @@ function Get-PseudoTypesWorkDir {
   return $d
 }
 
+function Install-SyntaxMcpShim {
+  $destDir = Get-PseudoTypesWorkDir
+  $srcServe = Join-Path $script:CommonSyntaxHome "mcp-serve.ps1"
+  $srcStub = Join-Path $script:CommonSyntaxHome "..\mcp\stub_server.py"
+  if (Test-Path -LiteralPath $srcServe) {
+    Copy-Item -Force -LiteralPath $srcServe -Destination (Join-Path $destDir "mcp-serve.ps1")
+  }
+  if (Test-Path -LiteralPath $srcStub) {
+    Copy-Item -Force -LiteralPath $srcStub -Destination (Join-Path $destDir "stub_server.py")
+  }
+}
+
 function Get-PseudoTypesWorkPath {
   return (Join-Path (Get-PseudoTypesWorkDir) "bsl-ctx-pseudo_types.yaml")
 }
