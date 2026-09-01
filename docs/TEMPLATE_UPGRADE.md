@@ -10,6 +10,10 @@
 
 Инварианты 1С живут в skill **`1c-invariants`** плагина (не копировать `.mdc` в проект). В `AGENTS.md` проекта должна быть строка «сразу прочитай skill `1c-invariants`»; если ещё «rule `1c-invariants`» — замени (bootstrap/sync подтянет новый `AGENTS.md`).
 
+### 2026.09.01.3 — MCP target version
+
+Общий MCP без `BSL_CTX_TARGET_VERSION` на старте. Совместимость: агент, `since` vs `CompatibilityMode` проекта. `${workspaceFolder}` на процесс не вешать.
+
 ### 2026.09.01.2 — marketplace.json
 
 UI «подключить локально» требует `.cursor-plugin/marketplace.json`. Junction в `plugins/local` Cursor отвергает.

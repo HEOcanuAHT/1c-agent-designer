@@ -17,7 +17,7 @@ description: >-
 - skill `1c-invariants` — инварианты 1С (плагин-rules сюда не инжектятся)
 - skill `coding-standards` — роутер: какие доменные skills подгрузить под текущие изменения
 - skill `tech-decisions` — ТР из `docs/TECH_DECISIONS.md`
-- skill `1c-syntax` — платформенный API (MCP `bsl-syntax`). `DB_MISSING` → не выдумывать сигнатуры, верни родителю «нужен /1c-syntax-index». Index/setup не запускай.
+- skill `1c-syntax` — платформенный API (MCP `bsl-syntax`). Совместимость: `CompatibilityMode` этой конфы vs `since` в ответе; не `available_in_target` (сервер без target). `DB_MISSING` → не выдумывать сигнатуры, верни родителю «нужен /1c-syntax-index». Index/setup не запускай.
 
 Затем по таблице из `coding-standards` подгружай **только нужные** skills. Не грузи всё подряд.
 

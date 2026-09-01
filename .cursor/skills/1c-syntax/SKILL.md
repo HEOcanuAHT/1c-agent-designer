@@ -35,9 +35,15 @@ description: >-
 
 Поток: `search` -> `ref` -> `describe` / `members` / `signature`.
 
+Один MCP на все проекты (процесс плагина общий). `BSL_CTX_TARGET_VERSION` **не** задаём на старте: иначе фильтр одной конфы сядет на всех агентов. Тулам bsl-ctx 1.4.0 версию на вызов передать нельзя (это ключ запуска).
+
+Агент в **этом** workspace читает `CompatibilityMode` из `src/Configuration.xml` (не номер exe). В ответах смотри `since` / `since_version_str`. Если `since` новее режима совместимости — не предлагать в код. Поле `available_in_target` без target на сервере всегда true, на него не опираться.
+
+CLI (`Build`/`Get-Status`/`bsl-ctx search --target-version`) может ставить target на один вызов — это не MCP.
+
 Ответ `code: DB_MISSING` (или MCP не подключён): **не сочинять** редкие сигнатуры. Предложи `/1c-syntax-index`. Очевидное (`Массив.Добавить`) можно из знаний модели, с пометкой что справка не проиндексирована.
 
-Фильтр совместимости: MCP выставляет `BSL_CTX_TARGET_VERSION` из `CompatibilityMode` в `src/Configuration.xml` (не из номера exe).
+Фильтр совместимости: не env MCP. Агент сравнивает `since` карточки с `CompatibilityMode` этой конфы.
 
 ## Команды на диске
 
