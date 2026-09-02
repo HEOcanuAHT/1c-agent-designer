@@ -11,7 +11,7 @@
 | Общий runtime (Common-*) | skill **`1c-runtime`** |
 | SQL vs пользователь 1С | rule `1c-ibcmd-auth` |
 | EPF | `1c-external-epf` → `ext/` |
-| CFE | `1c-external-cfe` → `cfe/` |
+| CFE | `1c-external-cfe` → `cfe/`. «Проверь применимость» → `pack` на `.1c/ib-ext`, не `cfe-validate` |
 | XML метаданных (без ИБ) | `1c-metadata-manage`. **Новый объект:** пустышка в Конфигураторе → dump → заполнение; не `meta-compile` (skill `1c-invariants`) |
 | Проверка запросов | opt-in, skill `1c-query-validate` (оркестратор; `-ReuseOnly`) |
 | Bootstrap | `1c-project-bootstrap` |

@@ -113,6 +113,8 @@ powershell.exe -NoProfile -File .cursor/skills/1c-metadata-manage/tools/1c-cfe-m
 
 ## 5. Validate — Check Extension Correctness
 
+Static XML only. «Проверь применимость / подключение к базе» — skill `1c-external-cfe` (`-Action pack` на `.1c/ib-ext`), не этот скрипт.
+
 ```powershell
 powershell.exe -NoProfile -File .cursor/skills/1c-metadata-manage/tools/1c-cfe-manage/scripts/cfe-validate.ps1 -ExtensionPath src
 ```
@@ -175,7 +177,7 @@ The PowerShell scripts under `tools/1c-cfe-manage/scripts/` were refreshed from 
 
 ## Related tools
 
-Grep/Read `src/` and `cfe/`. CFE XML: `cfe-borrow`, `cfe-diff`, `cfe-patch-method`, `cfe-validate`. Pack/scaffold — skill `1c-external-cfe`. No MCP.
+Grep/Read `src/` and `cfe/`. CFE XML: `cfe-borrow`, `cfe-diff`, `cfe-patch-method`, `cfe-validate`. Pack/scaffold / применимость на служебной ИБ — skill `1c-external-cfe`. No MCP.
 
 ## SDD Integration
 

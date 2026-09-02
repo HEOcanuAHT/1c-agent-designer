@@ -1,7 +1,8 @@
 ---
 description: >-
   Расширения конфигурации — cfe/, .cfe, skill 1c-external-cfe.
-  Use when user asks расширение, cfe, собрать cfe, разобрать cfe.
+  Use when user asks расширение, cfe, собрать cfe, разобрать cfe,
+  проверь расширение, применимость, подключение к базе.
 globs: "cfe/**/*"
 alwaysApply: false
 ---
@@ -19,3 +20,4 @@ alwaysApply: false
 7. Имена расширения для ibcmd — предпочтительно ASCII (`FixDbmsType` / `Fix_`).
 8. Adopted XML / protected `.bin` — `reference-adopted.md`; код пишет `/implementer`.
 9. Установку `.cfe` в боевую ИБ не автоматизировать этим skill.
+10. «Проверь расширение / применимость / подключение» → `pack` на `.1c/ib-ext` (`Invoke-1cExternalCfe.ps1 -Action pack`). Не `cfe-validate`. Не боевая ИБ.

@@ -10,6 +10,10 @@
 
 Инварианты 1С живут в skill **`1c-invariants`** плагина (не копировать `.mdc` в проект). В `AGENTS.md` проекта должна быть строка «сразу прочитай skill `1c-invariants`»; если ещё «rule `1c-invariants`» — замени (bootstrap/sync подтянет новый `AGENTS.md`).
 
+### 2026.09.02.1 — CFE pack как проверка на служебной ИБ
+
+«Проверь расширение / применимость / подключение» → `1c-external-cfe` `-Action pack` на `.1c/ib-ext`. Не `cfe-validate`, не боевая ИБ.
+
 ### 2026.09.01.7 — CLI служебной ИБ
 
 `1c-runtime/scripts/Invoke-1cServiceIb.ps1 -Action ensure` (без apply). Не dotsource `Ensure-ServiceIb` через `-Command`. `Invoke-1cValidateQuery -Action ensure` — только для query-validate (apply).
