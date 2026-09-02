@@ -3,7 +3,8 @@ name: 1c-metadata-manage
 description: >-
   Create/edit/validate 1C metadata XML, forms, DCS/SKD, MXL, roles, subsystems,
   CFE borrow/patch. Prefer tools/ scripts over hand-editing. Not dump/load IB
-  or EPF/CFE pack — use 1c-dump / 1c-external-epf / 1c-external-cfe.
+  or EPF/CFE pack or CFE applicability/connect check (pack on .1c/ib-ext) —
+  use 1c-dump / 1c-external-epf / 1c-external-cfe.
 disable-model-invocation: true
 ---
 
@@ -44,7 +45,7 @@ powershell.exe -NoProfile -File "<SkillHome>/tools/<tool>/scripts/….ps1" ...
 | СКД | [skd-manage.md](docs/skd-manage.md) | `1c-skd-*` |
 | MXL | [mxl-manage.md](docs/mxl-manage.md) | `1c-mxl-*` |
 | Роли | [role-manage.md](docs/role-manage.md) | `1c-role-*` |
-| CFE XML borrow/diff/patch | [cfe-manage.md](docs/cfe-manage.md); pack — `1c-external-cfe` | `1c-cfe-manage` |
+| CFE XML borrow/diff/patch | [cfe-manage.md](docs/cfe-manage.md); pack / применимость на `.1c/ib-ext` — `1c-external-cfe` | `1c-cfe-manage` |
 | Configuration.xml | [cf-manage.md](docs/cf-manage.md) | `1c-cf-manage` |
 | Подсистемы / интерфейс | [subsystem-manage.md](docs/subsystem-manage.md), [interface-manage.md](docs/interface-manage.md) | `1c-subsystem-manage`, `1c-interface-manage` |
 | Макеты / справка | [template-manage.md](docs/template-manage.md), [help-manage.md](docs/help-manage.md) | `1c-template-manage`, `1c-help-manage` |

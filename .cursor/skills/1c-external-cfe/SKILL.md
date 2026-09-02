@@ -2,10 +2,10 @@
 name: 1c-external-cfe
 description: >-
   Расширения конфигурации (.cfe): scaffold XML, dump из .cfe, pack в .cfe.
-  Служебная файловая ИБ (.1c/ib-ext, та же что у EPF): save .cf с боевой
-  + load без apply (XML import — fallback). Исключение apply:
-  -AllowServiceIbApplyOnCompatMismatch. Use when user asks
-  расширение, cfe, создай расширение, собрать cfe, разобрать cfe.
+  Pack на служебной ИБ (.1c/ib-ext) проверяет, что платформа приняла расширение
+  (ibcmd config import --extension); боевую ИБ не трогает. Use when user asks
+  расширение, cfe, создай/собери/разбери cfe, проверь расширение, применимость,
+  подключение к базе, check cfe.
 disable-model-invocation: true
 ---
 
@@ -16,7 +16,7 @@ disable-model-invocation: true
 1. `scaffold` — пустое расширение в `cfe/<Name>/`
 2. `dump` — `.cfe` → XML
 3. правки BSL/XML — `/implementer` (Adopted XML: `reference-adopted.md`)
-4. `pack` → `artifacts/cfe/<Name>.cfe`
+4. `pack` → `artifacts/cfe/<Name>.cfe` (тот же action — проверка, что платформа приняла XML на `.1c/ib-ext`)
 
 Служебная ИБ **та же**, что у `1c-external-epf` (`.1c/ib-ext`).
 
@@ -100,14 +100,23 @@ disable-model-invocation: true
 |--------|-----------|-----------|
 | `scaffold` | `-Name` [`-Prefix`] [`-Synonym`] [`-Purpose`] | `cfe/<Name>/` + явный `NamePrefix` |
 | `dump` | `-CfePath` `-Name` | XML в `cfe.dir/<Name>/` |
-| `pack` | `-Name` или `-XmlDir` | `.cfe` в `cfe.artifacts` |
+| `pack` | `-Name` или `-XmlDir` | `.cfe` в `cfe.artifacts`; import на `.1c/ib-ext` |
 
 После scaffold пустой `<NamePrefix/>` скрипт заполняет из `-Prefix`.
 
 ## Сценарии
 
 **Код/формы/заимствования** — `/implementer` + `reference-adopted.md`.  
-**scaffold / pack / dump** — оркестратор.
+**scaffold / pack / dump / проверка применимости** — оркестратор (не `/implementer`).
+
+### Проверка «подключится ли» (служебная ИБ)
+
+«Проверь расширение / применимость / можно ли подключить к базе» → **этот** skill, `-Action pack`. Не `cfe-validate` (это только статический XML, skill `1c-metadata-manage`).
+
+- ИБ: только `.1c/ib-ext` (копия основной конфы). Боевую не трогать, `.cfe` туда не ставить.
+- Смысл: `ibcmd infobase config import --extension=…`. Успех = платформа XML приняла. Побочный файл: `artifacts/cfe/<Name>.cfe`. Ошибки: `.1c/cfe-pack.log`.
+- Это не команда Конфигуратора «Проверить возможность применения» и не `config apply` расширения (КБД).
+- Compat mismatch на `extension create`: `-AllowServiceIbApplyOnCompatMismatch -RefreshServiceIb` (apply только на служебной).
 
 ### Новое расширение
 
