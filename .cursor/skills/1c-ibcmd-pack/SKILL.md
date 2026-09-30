@@ -135,8 +135,30 @@ powershell -NoProfile -File "<SkillHome>/scripts/Invoke-1cIbcmdDump.ps1" `
   -Action load-files -ProjectRoot "<workspace>" -ListFile ".1c/load-list.txt"
 ```
 
-`-ListFile` — пути **относительно** каталога XML (`src` / `-OutDir`), по одному на строку.  
-Скрипт: `infobase config import files --base-dir=…` и **никогда** не делает `apply`.
+`-ListFile` / `-Objects` — **якоря** выгрузки, не список изменённых файлов. Тот же контракт, что у `dump-objects`: путь относительно `src`/`-OutDir` **или** имя метаданных. Модуль / `Ext/Form.xml` скрипт сводит к объекту; в ibcmd уходит **корневой xml**.
+
+Запрещено класть в ListFile (скрипт срежет, но агент так не пишет):
+
+- `**/Ext/Form.xml`, `**/Ext/Form/Module.bsl`
+- `**/Ext/ObjectModule.bsl`, `ManagerModule.bsl` и прочие `**/Ext/*.bsl`
+
+Примеры:
+
+```text
+# форма (правили Module.bsl и Form.xml) — одна строка:
+Catalogs/АкцииПоМаркетингу/Forms/ФормаЭлементаПредзаказ.xml
+# или: Catalog.АкцииПоМаркетингу.Form.ФормаЭлементаПредзаказ
+# модуль объекта:
+Catalogs/Имя.xml
+# или: Catalog.Имя
+```
+
+Успех: `OK action=load-files` и `Импорт файлов конфигурации из XML успешно завершен`.  
+Ошибка `Form.<Имя>.Ext` = в argv попал `Ext/` — баг списка или редьюса, не «форма отсутствует».
+
+На **client-server** открытый Конфигуратор ibcmd `import` не блокирует (в отличие от файловой ИБ).
+
+Скрипт: `infobase config import files --base-dir=…` и **никогда** не делает `apply`. Три файла одной формы → один xml; модуль объекта и форма — **два** xml (`Catalogs/X.xml` + `Catalogs/X/Forms/Y.xml`), родитель форму не подхватывает.
 
 Вручную:
 

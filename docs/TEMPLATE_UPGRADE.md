@@ -10,6 +10,10 @@
 
 Инварианты 1С живут в skill **`1c-invariants`** плагина (не копировать `.mdc` в проект). В `AGENTS.md` проекта должна быть строка «сразу прочитай skill `1c-invariants`»; если ещё «rule `1c-invariants`» — замени (bootstrap/sync подтянет новый `AGENTS.md`).
 
+### 2026.09.15.1 — ibcmd load-files: якоря, не Ext/
+
+`load-files` / `load-changed` при `preferredDump=ibcmd`: в ListFile — корневой xml объекта или формы (`Catalogs/X.xml`, `Catalogs/X/Forms/Y.xml`), не `Ext/Form.xml` / `Module.bsl`. Скрипт сам сводит. designer-agent не менялся: там `Ext/` в listFile часто нужен.
+
 ### 2026.09.02.1 — CFE pack как проверка на служебной ИБ
 
 «Проверь расширение / применимость / подключение» → `1c-external-cfe` `-Action pack` на `.1c/ib-ext`. Не `cfe-validate`, не боевая ИБ.

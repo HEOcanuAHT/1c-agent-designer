@@ -78,5 +78,6 @@ powershell -NoProfile -File "<SkillHome>/../1c-runtime/scripts/Invoke-1cServiceI
 3. Не собирать `ibcmd` / Designer CLI вручную — этот фасад или skills ниже.
 4. SQL ≠ CredMgr 1С — rule `1c-ibcmd-auth`.
 5. Не `AwaitShell` 90 с на 5–15-секундный `dump-update` — см. «Ожидание Shell».
+6. `load-changed` / `load-files` (**ibcmd**): ListFile только якоря (`Catalogs/X.xml`, `Catalogs/X/Forms/Y.xml`). Не перечислять `Ext/*`. Скрипт ibcmd сам сводит модуль/`Form.xml` к якорю; агент не выдумывает полный список файлов формы. У designer-agent контракт другой: `Ext/` в listFile часто нужен.
 
 Pack `.cf` — не здесь: `1c-ibcmd-pack` / `Invoke-1cIbcmdPack.ps1`.

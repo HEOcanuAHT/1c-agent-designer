@@ -40,5 +40,110 @@ if ($after -notmatch 'name="Catalog.FooBar"[^>]*configVersion="c') { throw "FAIL
 Remove-Item -LiteralPath $tmp -Force
 Write-Host "OK invalidate"
 
+Assert-Eq (Convert-1cDumpAnchorToSrcRel "Catalog.Foo") "Catalogs/Foo.xml" "anchor-catalog"
+Assert-Eq (Convert-1cDumpAnchorToSrcRel "Catalog.Foo.Form.Bar") "Catalogs/Foo/Forms/Bar.xml" "anchor-form"
+Assert-Eq (Convert-1cDumpAnchorToSrcRel "Catalog.Foo.Template.T") "Catalogs/Foo/Templates/T.xml" "anchor-template"
+Assert-Eq (Convert-1cDumpAnchorToSrcRel "Catalog.Foo.Command.C") "Catalogs/Foo/Commands/C.xml" "anchor-command"
+Assert-Eq (Convert-1cDumpAnchorToSrcRel "CommonModule.M") "CommonModules/M.xml" "anchor-common-module"
+Assert-Eq (Convert-1cDumpAnchorToSrcRel "CommonForm.F") "CommonForms/F.xml" "anchor-common-form"
+Assert-Eq (Convert-1cDumpAnchorToSrcRel "Subsystem.A.Subsystem.B") "Subsystems/A/Subsystems/B.xml" "anchor-subsystem"
+Assert-Eq (Convert-1cDumpAnchorToSrcRel "AccountingRegister.X.Form.F") "AccountingRegisters/X/Forms/F.xml" "anchor-acc-form"
+
+if (Test-1cDumpRelIsExtPayload "Catalogs/Foo/Ext/ObjectModule.bsl") { Write-Host "OK ext-payload-module" } else { throw "FAIL ext-payload-module" }
+if (Test-1cDumpRelIsExtPayload "Catalogs/Foo/Forms/Bar/Ext/Form.xml") { Write-Host "OK ext-payload-form" } else { throw "FAIL ext-payload-form" }
+if (Test-1cDumpRelIsExtPayload "Catalogs/Foo/Forms/Bar.xml") { throw "FAIL form-xml must not be Ext payload" } else { Write-Host "OK form-xml-not-ext" }
+if (Test-1cDumpRelIsExtPayload "Catalogs/Ext/Forms/Bar.xml") { throw "FAIL catalog named Ext is not Ext payload" } else { Write-Host "OK catalog-named-ext" }
+
+$threw = $false
+try { [void](Convert-1cDumpAnchorToSrcRel "Configuration") } catch {
+  if ($_.Exception.Message -match 'too broad') { $threw = $true }
+}
+if (-not $threw) { throw "FAIL configuration-anchor-throw" }
+Write-Host "OK configuration-anchor-throw"
+
+function Get-DumpRel([string]$Abs, [string]$DumpAbs) {
+  $a = [IO.Path]::GetFullPath($Abs)
+  $d = [IO.Path]::GetFullPath($DumpAbs)
+  if (-not $a.StartsWith($d, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "path outside dump: $Abs"
+  }
+  return ($a.Substring($d.Length).TrimStart('\', '/') -replace '\\', '/')
+}
+
+$dump = Join-Path $env:TEMP "ibcmd-load-reduce-test"
+if (Test-Path -LiteralPath $dump) { Remove-Item -LiteralPath $dump -Recurse -Force }
+New-Item -ItemType Directory -Force -Path $dump | Out-Null
+function Touch-DumpRel([string]$Rel) {
+  $p = Join-Path $dump ($Rel -replace '/', '\')
+  $dir = Split-Path -Parent $p
+  if ($dir -and -not (Test-Path -LiteralPath $dir)) {
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+  }
+  [IO.File]::WriteAllText($p, "<xml/>", (New-Object System.Text.UTF8Encoding $false))
+}
+Touch-DumpRel "Catalogs/Foo.xml"
+Touch-DumpRel "Catalogs/Foo/Forms/Bar.xml"
+Touch-DumpRel "Catalogs/Foo/Templates/T.xml"
+Touch-DumpRel "Catalogs/Foo/Commands/C.xml"
+Touch-DumpRel "Catalogs/Ext.xml"
+Touch-DumpRel "Catalogs/Ext/Forms/Bar.xml"
+Touch-DumpRel "CommonForms/F.xml"
+Touch-DumpRel "CommonModules/M.xml"
+Touch-DumpRel "Subsystems/A/Subsystems/B.xml"
+
+function Invoke-LoadRels {
+  param([string[]]$Lines, [string]$Objects = "")
+  $list = Join-Path $dump "list.txt"
+  [IO.File]::WriteAllLines($list, @($Lines), (New-Object System.Text.UTF8Encoding $true))
+  $files = @(Convert-1cLoadFileList -ListFile $list -Objects $Objects -SrcRel "src" -DumpAbs $dump -ProjectRoot $dump)
+  foreach ($f in $files) {
+    $r = Get-DumpRel $f $dump
+    if (Test-1cDumpRelIsExtPayload $r) { throw "FAIL argv Ext payload: $r" }
+  }
+  return @($files | ForEach-Object { Get-DumpRel $_ $dump })
+}
+
+$rels = @(Invoke-LoadRels @(
+    "Catalogs/Foo/Forms/Bar.xml",
+    "Catalogs/Foo/Forms/Bar/Ext/Form.xml",
+    "Catalogs/Foo/Forms/Bar/Ext/Form/Module.bsl"
+  ))
+Assert-Eq ($rels -join '|') "Catalogs/Foo/Forms/Bar.xml" "load-form-three"
+
+$rels = @(Invoke-LoadRels @("Catalogs/Foo/Forms/Bar/Ext/Form/Module.bsl"))
+Assert-Eq ($rels -join '|') "Catalogs/Foo/Forms/Bar.xml" "load-form-module-only"
+
+$rels = @(Invoke-LoadRels @("# comment") -Objects "Catalog.Foo.Form.Bar")
+Assert-Eq ($rels -join '|') "Catalogs/Foo/Forms/Bar.xml" "load-form-anchor-name"
+
+$rels = @(Invoke-LoadRels @("Catalogs/Foo/Ext/ObjectModule.bsl"))
+Assert-Eq ($rels -join '|') "Catalogs/Foo.xml" "load-object-module"
+
+$rels = @(Invoke-LoadRels @(
+    "Catalogs/Foo/Ext/ObjectModule.bsl",
+    "Catalogs/Foo/Forms/Bar/Ext/Form/Module.bsl"
+  ))
+Assert-Eq ($rels -join '|') "Catalogs/Foo.xml|Catalogs/Foo/Forms/Bar.xml" "load-object-and-form-not-collapsed"
+
+$rels = @(Invoke-LoadRels @("CommonForms/F/Ext/Form.xml"))
+Assert-Eq ($rels -join '|') "CommonForms/F.xml" "load-common-form"
+
+$rels = @(Invoke-LoadRels @("Catalog.Ext.Form.Bar"))
+Assert-Eq ($rels -join '|') "Catalogs/Ext/Forms/Bar.xml" "load-catalog-named-ext"
+
+$threw = $false
+try { [void](Invoke-LoadRels @("Configuration.xml")) } catch {
+  if ($_.Exception.Message -match 'too broad') { $threw = $true }
+}
+if (-not $threw) { throw "FAIL load-configuration-throw" }
+Write-Host "OK load-configuration-throw"
+
+$hintLib = Join-Path $repo ".cursor\skills\1c-runtime\scripts\Common-IbcmdConnection.ps1"
+. $hintLib
+$hint = Get-IbcmdFailureHint "Unknown metadata object Catalog.Foo.Form.Bar.Ext" 1
+if ($hint -notmatch 'Forms/Name.xml') { throw "FAIL hint-ext: $hint" }
+Write-Host "OK hint-ext"
+
+Remove-Item -LiteralPath $dump -Recurse -Force
 Write-Host "SUMMARY fail=0"
 exit 0

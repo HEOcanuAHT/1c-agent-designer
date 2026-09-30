@@ -53,6 +53,13 @@ function Get-1cDumpPluralToType {
   }
 }
 
+function Get-1cDumpTypeToPlural {
+  $inv = @{}
+  $map = Get-1cDumpPluralToType
+  foreach ($k in $map.Keys) { $inv[$map[$k]] = $k }
+  return $inv
+}
+
 function Get-1cDumpTypeSet {
   $set = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
   $map = Get-1cDumpPluralToType
@@ -211,13 +218,12 @@ function Convert-1cDumpListLine {
   return (Reduce-1cDumpAnchor $obj)
 }
 
-function Read-1cDumpObjectList {
+function Read-1cDumpListRawLines {
   param(
     [string]$ListFile,
     [string]$Objects,
-    [string]$SrcRel,
-    [string]$DumpAbs,
-    [string]$ProjectRoot
+    [string]$ProjectRoot,
+    [string]$NeedMsg
   )
   $lines = New-Object System.Collections.Generic.List[string]
   if ($ListFile) {
@@ -236,8 +242,20 @@ function Read-1cDumpObjectList {
     }
   }
   if ($lines.Count -eq 0) {
-    throw "dump-objects needs -ListFile and/or -Objects"
+    throw $NeedMsg
   }
+  return @($lines)
+}
+
+function Read-1cDumpObjectList {
+  param(
+    [string]$ListFile,
+    [string]$Objects,
+    [string]$SrcRel,
+    [string]$DumpAbs,
+    [string]$ProjectRoot
+  )
+  $lines = @(Read-1cDumpListRawLines -ListFile $ListFile -Objects $Objects -ProjectRoot $ProjectRoot -NeedMsg "dump-objects needs -ListFile and/or -Objects")
 
   $anchors = New-Object System.Collections.Generic.List[string]
   $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
@@ -264,6 +282,115 @@ function Get-MinimalDumpAnchors([string[]]$Anchors) {
     if (-not $covered) { [void]$keep.Add($a) }
   }
   return @($keep)
+}
+
+function Convert-1cDumpAnchorToSrcRel([string]$Anchor) {
+  $n = ($Anchor -replace '\\', '/').Trim().Trim('.')
+  if (-not $n) { throw "empty dump anchor" }
+
+  $parts = @($n.Split('.'))
+  if ($parts[0].Equals("Configuration", [StringComparison]::OrdinalIgnoreCase)) {
+    throw "load-files: Configuration is too broad; pass an object/form xml (Catalogs/Name.xml, Catalogs/Name/Forms/Form.xml)"
+  }
+
+  if ($parts[0].Equals("Subsystem", [StringComparison]::OrdinalIgnoreCase)) {
+    if ($parts.Count -lt 2 -or ($parts.Count % 2) -ne 0) {
+      throw "cannot map dump anchor to xml: $n"
+    }
+    $segs = New-Object System.Collections.Generic.List[string]
+    for ($i = 0; $i -lt $parts.Count; $i += 2) {
+      if (-not $parts[$i].Equals("Subsystem", [StringComparison]::OrdinalIgnoreCase)) {
+        throw "cannot map dump anchor to xml: $n"
+      }
+      $name = $parts[$i + 1]
+      if (-not $name) { throw "cannot map dump anchor to xml: $n" }
+      [void]$segs.Add("Subsystems")
+      if ($i -eq ($parts.Count - 2)) {
+        [void]$segs.Add("$name.xml")
+      } else {
+        [void]$segs.Add($name)
+      }
+    }
+    return ($segs -join '/')
+  }
+
+  $inv = Get-1cDumpTypeToPlural
+  $type = $parts[0]
+  if (-not $inv.ContainsKey($type)) {
+    throw "unknown metadata type '$type' in '$n'"
+  }
+  $plural = $inv[$type]
+  if ($parts.Count -lt 2 -or -not $parts[1]) {
+    throw "incomplete dump anchor: $n"
+  }
+  $objName = $parts[1]
+  if ($parts.Count -eq 2) {
+    return "$plural/$objName.xml"
+  }
+  if ($parts.Count -eq 4) {
+    $kind = $parts[2]
+    $child = $parts[3]
+    if (-not $child) { throw "cannot map dump anchor to xml: $n" }
+    if ($kind.Equals("Form", [StringComparison]::OrdinalIgnoreCase)) {
+      return "$plural/$objName/Forms/$child.xml"
+    }
+    if ($kind.Equals("Template", [StringComparison]::OrdinalIgnoreCase)) {
+      return "$plural/$objName/Templates/$child.xml"
+    }
+    if ($kind.Equals("Command", [StringComparison]::OrdinalIgnoreCase)) {
+      return "$plural/$objName/Commands/$child.xml"
+    }
+  }
+  throw "cannot map dump anchor to xml: $n"
+}
+
+function Test-1cDumpRelIsExtPayload([string]$Rel) {
+  $n = ($Rel -replace '\\', '/').Trim().Trim('/')
+  if (-not $n) { return $false }
+  $segs = @($n.Split('/'))
+  $childKinds = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+  foreach ($k in @("Forms", "Templates", "Commands", "Subsystems")) { [void]$childKinds.Add($k) }
+  for ($i = 0; $i -lt $segs.Count; $i++) {
+    if (-not $segs[$i].Equals("Ext", [StringComparison]::OrdinalIgnoreCase)) { continue }
+    if ($i -eq ($segs.Count - 1)) { return $true }
+    $next = $segs[$i + 1]
+    $nextName = [IO.Path]::GetFileNameWithoutExtension($next)
+    if ($childKinds.Contains($next) -or $childKinds.Contains($nextName)) { continue }
+    return $true
+  }
+  return $false
+}
+
+function Convert-1cLoadFileList {
+  param(
+    [string]$ListFile,
+    [string]$Objects,
+    [string]$SrcRel,
+    [string]$DumpAbs,
+    [string]$ProjectRoot
+  )
+  $lines = @(Read-1cDumpListRawLines -ListFile $ListFile -Objects $Objects -ProjectRoot $ProjectRoot -NeedMsg "load-files needs -ListFile and/or -Objects")
+
+  $absFiles = New-Object System.Collections.Generic.List[string]
+  $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+  foreach ($ln in $lines) {
+    $raw = ([string]$ln).Trim()
+    $anchor = Convert-1cDumpListLine -Line $ln -SrcRel $SrcRel -DumpAbs $DumpAbs -ProjectRoot $ProjectRoot
+    if (-not $anchor) { continue }
+    $rel = Convert-1cDumpAnchorToSrcRel $anchor
+    if (Test-1cDumpRelIsExtPayload $rel) {
+      throw "load-files: do not pass Ext/Form.xml or Module.bsl; need Forms/<Name>.xml (got $rel from $raw)"
+    }
+    $norm = ($rel -replace '/', '\')
+    $abs = [IO.Path]::GetFullPath((Join-Path $DumpAbs $norm))
+    Write-Host "REDUCE $raw -> $anchor -> $rel"
+    if (-not (Test-Path -LiteralPath $abs)) { throw "missing file for load: $abs" }
+    if ($seen.Add($abs)) { [void]$absFiles.Add($abs) }
+  }
+  if ($absFiles.Count -eq 0) {
+    throw "load-files: no metadata objects resolved from the list"
+  }
+  return @($absFiles)
 }
 
 function Get-FlippedConfigVersion([string]$Ver) {

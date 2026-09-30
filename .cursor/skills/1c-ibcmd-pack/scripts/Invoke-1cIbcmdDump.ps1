@@ -20,10 +20,10 @@ param(
   # XML dir for dump out / load base-dir (default: project src)
   [string]$OutDir = "",
 
-  # load-files: paths relative to OutDir/src. dump-objects: those paths and/or metadata names.
+  # load-files / dump-objects: dump paths and/or metadata names (anchors, not Ext/* files).
   [string]$ListFile = "",
 
-  # dump-objects: comma-separated metadata names (Catalog.Name, Catalog.Name.Form.FormName)
+  # Same contract as ListFile: Catalog.Name, Catalog.Name.Form.FormName (comma/semicolon).
   [string]$Objects = "",
 
   # dump-full into a non-empty OutDir: delete XML there, then export in-place (no staging copy).
@@ -357,22 +357,12 @@ switch ($Action) {
     }
   }
   "load-files" {
-    if (-not $ListFile) { throw "load-files requires -ListFile (paths relative to xml dir)" }
-    $listPath = if ([System.IO.Path]::IsPathRooted($ListFile)) { $ListFile } else { Join-Path $ProjectRoot $ListFile }
-    if (-not (Test-Path -LiteralPath $listPath)) { throw "ListFile not found: $listPath" }
-    $rels = Get-Content -LiteralPath $listPath -Encoding UTF8 |
-      ForEach-Object { $_.Trim() } |
-      Where-Object { $_ -and ($_ -notmatch '^\s*#') }
-    if ($rels.Count -eq 0) { throw "ListFile is empty: $listPath" }
-    $absFiles = @()
-    foreach ($rel in $rels) {
-      $norm = $rel -replace "/", "\"
-      $abs = Join-Path $dumpAbs $norm
-      if (-not (Test-Path -LiteralPath $abs)) { throw "missing file for load: $abs" }
-      $absFiles += $abs
-      Write-Host "LOAD $rel"
+    if (-not $ListFile -and -not $Objects) { throw "load-files requires -ListFile and/or -Objects" }
+    $absFiles = @(Convert-1cLoadFileList -ListFile $ListFile -Objects $Objects -SrcRel $outRel -DumpAbs $dumpAbs -ProjectRoot $ProjectRoot)
+    foreach ($abs in $absFiles) {
+      Write-Host "LOAD $abs"
     }
-    Write-Host "import files → MAIN config only (no apply)"
+    Write-Host "import files -> MAIN config only (no apply)"
     Invoke-IbcmdNoHang $ibcmdPath ($common + @("import", "files", "--base-dir=$dumpAbs") + $absFiles) $log
   }
 }

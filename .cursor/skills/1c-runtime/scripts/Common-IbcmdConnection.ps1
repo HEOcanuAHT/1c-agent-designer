@@ -145,5 +145,9 @@ function Get-IbcmdFailureHint([string]$Combined, [int]$ExitCode) {
   if ([regex]::IsMatch($Combined, $reAuth)) {
     return "ibcmd: IB auth failed (wrong/missing user or password). Fix auth in project.local.json; if IB has no users set auth.required=false. exit=$ExitCode"
   }
+  $reUnknown = '\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0439 \u043e\u0431\u044a\u0435\u043a\u0442 \u043c\u0435\u0442\u0430\u0434\u0430\u043d\u043d\u044b\u0445|Unknown metadata object'
+  if ([regex]::IsMatch($Combined, $reUnknown) -and $Combined -match '\.Ext') {
+    return "ibcmd: ListFile has Ext/; script should have reduced to Forms/Name.xml (not Ext/Form.xml or Module.bsl). exit=$ExitCode"
+  }
   return $null
 }

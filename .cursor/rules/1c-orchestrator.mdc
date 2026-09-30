@@ -46,6 +46,8 @@ alwaysApply: false
 ## После implementer
 
 - По запросу: `pack` → `artifacts/ext` или `artifacts/cfe`; при необходимости `load-changed` / ibcmd import **основной** конфы (без apply/КБД).
+- **ibcmd `load-files`:** ListFile собрать из **объектов**, не из каждого изменённого файла. Форма = `…/Forms/Имя.xml`. Не класть `Ext/Form.xml` и `Module.bsl` (скрипт срежет до якоря; агент полный список файлов формы не собирает). Модуль объекта и форма — две строки (`Catalogs/X.xml` и `Catalogs/X/Forms/Y.xml`).
+- **designer-agent `load-changed`:** не применять ibcmd-редьюс; `Ext/` в listFile часто нужен.
 - «Проверь расширение / применимость / подключение к базе» → сам `1c-external-cfe` `-Action pack` (служебная `.1c/ib-ext`). Не `cfe-validate`. Не боевая ИБ.
 - Откат правок на диске **без load** (нет git или не коммитили): `dump-update` не поможет. `dump-objects` через **`1c-dump`** (или ibcmd/agent) со списком файлов/объектов, которые менял агент. **Спроси** пользователя: файлы перезапишутся из основной конфы ИБ. Не `dump-full` ради одного объекта.
 - Если `.1c/query-validate.mode` = `on` (или разовая просьба) и в правках есть тексты запросов — **сам**, skill **`1c-query-validate`**: `.1c/qv-batch/` + `-ReuseOnly -BatchDir`; ensure только при `NEED_ENSURE`. Не отдавать validate implementer’у.
