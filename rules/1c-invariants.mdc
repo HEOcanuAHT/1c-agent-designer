@@ -1,0 +1,50 @@
+---
+description: >-
+  Жёсткие инварианты разработки 1С: SkillHome, без kill 1cv8, load без КБД,
+  query-validate opt-in, новые объекты — пустышка в Конфигураторе.
+  На любых задачах 1С-проекта.
+alwaysApply: true
+---
+
+# Инварианты 1С
+
+Канон для плагина: skill **`1c-invariants`** (plugin-rules с alwaysApply часто не в контексте чата). Текст ниже — копия для репозитория плагина.
+
+Только если есть `.1c/`, `src/Configuration.xml`, или пользователь явно про 1С/bootstrap. На чужих репо не применяй.
+
+## Пути
+
+**ProjectRoot** = workspace. **SkillHome** = каталог `SKILL.md` (плагин или `skills/<name>`).
+Скрипты: `-ProjectRoot "<workspace>"`. Skills в проект не копировать. Детали: rule `1c-plugin-paths`.
+
+## Процессы
+
+Не убивать пользовательские `1cv8` / Конфигуратор / Предприятие (даже «на всякий случай»).
+При lock — путь ИБ и pid, решение за пользователем. Детали: rule `1c-no-kill-user-1cv8`.
+
+## Dump / load
+
+Только **основная** конфигурация. Не `update-db-cfg` / `/UpdateDBCfg` / `config apply` на боевую. КБД — вручную.
+Инструмент: skill **`1c-dump`** (`tools.preferredDump`: ibcmd | agent). SQL ≠ пользователь 1С — rule `1c-ibcmd-auth`.
+Служебная `.1c/ib-ext`: `-File …/1c-runtime/scripts/Invoke-1cServiceIb.ps1 -Action ensure` (без apply). Не `Ensure-ServiceIb` через `-Command`. Не `Invoke-1cValidateQuery -Action ensure` для EPF (там всегда apply).
+
+## Новые объекты метаданных
+
+На живой конфе **не** `meta-compile` / `role-compile` / `subsystem-compile` / `cf-init` / `cf-edit add-childObject`.
+Пустышку создаёт пользователь в Конфигураторе → dump → агент только заполняет (`meta-edit`, формы, модули).
+`Configuration.xml` не переписывать. Исключение: пустой проект без дампа; явный «собери meta-compile».
+Детали: skill `1c-metadata-manage`.
+
+## Запросы
+
+`Invoke-1cValidateQuery.ps1` по умолчанию **не** гонять. Вкл. по фразе «проверяй запросы» — rule/skill `1c-query-validate`.
+
+## Справка платформы
+
+Платформенный API — skill **`1c-syntax`** (MCP `bsl-syntax`). Нет базы → `/1c-syntax-index`. Не гейт.
+
+## Git
+
+Фичи в `feature/…` / `fix/…`, не напрямую в `main`. Процесс: `docs/WORKFLOW.md` (rule `1c-config-repo`).
+
+Канон полей `project.json`: `.1c/README.md`.

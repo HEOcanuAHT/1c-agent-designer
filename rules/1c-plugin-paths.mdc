@@ -1,0 +1,34 @@
+---
+description: >-
+  Два корня 1С: workspace (проект) vs SkillHome (плагин или skills).
+  Use when calling skill scripts, SkillHome, -ProjectRoot, or plugin paths.
+alwaysApply: false
+---
+
+# Пути: плагин vs проект
+
+Только для задач 1С (есть `.1c/`, `src/Configuration.xml`, или пользователь явно про 1С/bootstrap). На чужих репо не применяй.
+
+## Два корня
+
+| Корень | Что это |
+|--------|---------|
+| **ProjectRoot** | workspace (каталог с `.1c/project.json` / `src/`) |
+| **SkillHome** | каталог `SKILL.md` в установленном плагине |
+
+Скрипты skills **не обязаны** лежать в репозитории проекта.
+
+## Как вызывать
+
+```powershell
+powershell -NoProfile -File "<SkillHome>/scripts/<Script>.ps1" -ProjectRoot "<workspace>"
+```
+
+Для `1c-metadata-manage`: `<SkillHome>/tools/<tool>/scripts/…` (рядом с этим SKILL.md).
+
+## Fallback, если SkillHome неясен
+
+1. Установленный плагин: `%USERPROFILE%\.cursor\plugins\**\1c-agent-designer\skills\<name>\…`
+2. Этот репозиторий, если в нём есть `.cursor-plugin/plugin.json`: `<workspace>/skills/<name>/…`
+
+Не копируй `skills` в проект. `-ProjectRoot` всегда = workspace.

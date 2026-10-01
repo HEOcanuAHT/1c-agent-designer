@@ -1,4 +1,4 @@
-# Agent notes — шаблон конфигурации 1С
+# Agent notes — конфигурация 1С
 
 Канон полей ИБ/auth: [`.1c/README.md`](.1c/README.md).
 Перед любой задачей 1С **сразу** прочитай skill **`1c-invariants`** (plugin-rules с alwaysApply часто не в контексте).
@@ -15,7 +15,6 @@
 | XML метаданных (без ИБ) | `1c-metadata-manage`. **Новый объект:** пустышка в Конфигураторе → dump → заполнение; не `meta-compile` (skill `1c-invariants`) |
 | Проверка запросов | opt-in, skill `1c-query-validate` (оркестратор; `-ReuseOnly`) |
 | Bootstrap | `1c-project-bootstrap` |
-| Sync клона (legacy) | `1c-template-sync`; после — [`docs/TEMPLATE_UPGRADE.md`](docs/TEMPLATE_UPGRADE.md) |
 | Стандарты BSL | `coding-standards` → `std-*` |
 | Справка платформы (типы/методы/запросы) | skill **`1c-syntax`** (MCP `bsl-syntax`). Нет базы → `/1c-syntax-index`. Не угадывать API |
 | Формы | `1c-forms` |

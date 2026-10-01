@@ -3,7 +3,7 @@
 **Канон полей** для агента и живых проектов. Таблицы отсюда не копировать в `AGENTS.md` / `WORKFLOW.md`.
 
 Рабочий файл: `project.json.example` → `project.json`. Секреты: `project.local.json` (не в git).  
-Bootstrap: skill `1c-project-bootstrap`. Sync tooling: skill `1c-template-sync`.
+Bootstrap: skill `1c-project-bootstrap`. Skills живут в плагине, в репозиторий конфы не копируются.
 
 ## `infobase` — одна база, разные инструменты
 

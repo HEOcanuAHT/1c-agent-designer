@@ -3,7 +3,7 @@
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repo = (Resolve-Path -LiteralPath (Join-Path $here "..\..")).Path
-$lib = Join-Path $repo ".cursor\skills\1c-ibcmd-pack\scripts\Convert-1cDumpObjectList.ps1"
+$lib = Join-Path $repo "skills\1c-ibcmd-pack\scripts\Convert-1cDumpObjectList.ps1"
 . $lib
 
 function Assert-Eq([string]$Actual, [string]$Expected, [string]$Label) {
@@ -138,7 +138,7 @@ try { [void](Invoke-LoadRels @("Configuration.xml")) } catch {
 if (-not $threw) { throw "FAIL load-configuration-throw" }
 Write-Host "OK load-configuration-throw"
 
-$hintLib = Join-Path $repo ".cursor\skills\1c-runtime\scripts\Common-IbcmdConnection.ps1"
+$hintLib = Join-Path $repo "skills\1c-runtime\scripts\Common-IbcmdConnection.ps1"
 . $hintLib
 $hint = Get-IbcmdFailureHint "Unknown metadata object Catalog.Foo.Form.Bar.Ext" 1
 if ($hint -notmatch 'Forms/Name.xml') { throw "FAIL hint-ext: $hint" }

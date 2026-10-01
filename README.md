@@ -1,6 +1,6 @@
-# Шаблон проекта конфигурации 1С
+# Плагин разработки конфигурации 1С
 
-Переиспользуемый каркас и **Cursor Plugin** для разработки конфигурации 1С:
+Cursor Plugin `1c-agent-designer` и каркас репозитория конфигурации:
 
 - иерархическая выгрузка в `src/`
 - skills стандартов ИТС (`coding-standards`, `std-*`)
@@ -12,14 +12,13 @@
 - общий runtime: `1c-runtime`; упаковка `.cf` — `1c-ibcmd-pack`
 - субагент `/implementer` (только файлы; сборка и ИБ — основной агент)
 
-Предпочтительно: skills/rules живут в **плагине**, репозиторий конфы — `src/` + `.1c/`.  
-Клоны шаблона с `.cursor/skills` в git по-прежнему работают (`1c-template-sync`).
+Skills и rules живут в **плагине**. Репозиторий конфы — `src/` + `.1c/`. Skills в проект не копируются.
 
-## Правки самого шаблона / плагина
+## Правки плагина
 
-Отдельное окно Cursor с клоном `1c-agent-designer`. Процесс: [docs/TEMPLATE_MAINTENANCE.md](docs/TEMPLATE_MAINTENANCE.md).
+Отдельное окно Cursor с этим репозиторием. Процесс: [docs/TEMPLATE_MAINTENANCE.md](docs/TEMPLATE_MAINTENANCE.md).
 
-Репозиторий конкретной конфигурации — **отдельный** workspace, не смешивать с правками шаблона.
+Репозиторий конкретной конфигурации — **отдельный** workspace, не смешивать с правками плагина.
 
 ## Репозиторий
 
@@ -43,16 +42,8 @@ Rule `template-maintenance` в плагин не входит.
 
 ## Быстрый старт новой конфигурации
 
-**Плагин (предпочтительно):** пустая папка в Cursor → Reload после установки плагина → «настрой окружение».  
+Пустая папка в Cursor → Reload после установки плагина → «настрой окружение».  
 Агент копирует каркас из плагина и спрашивает ИБ (`1c-project-bootstrap`).
-
-**Клон шаблона (legacy):**
-
-```powershell
-git clone https://github.com/HEOcanuAHT/1c-agent-designer.git my-config
-cd my-config
-# открыть папку в Cursor и попросить агента: «настрой окружение» / bootstrap
-```
 
 Дальше: [docs/INITIAL_DUMP.md](docs/INITIAL_DUMP.md), [docs/WORKFLOW.md](docs/WORKFLOW.md), [AGENTS.md](AGENTS.md).
 
@@ -60,13 +51,13 @@ cd my-config
 
 ```text
 .cursor-plugin/plugin.json   # манифест Cursor Plugin
-.cursor/
-  agents/implementer.md
-  commands/              # /1c-syntax-index, /1c-syntax-status
-  rules/
-  skills/                # 1c-invariants (канон Always), bootstrap, dump, 1c-syntax, std-*, …
-mcp.json                 # MCP bsl-syntax (обёртка bsl-ctx)
-.1c/                     # project.json.example, template-manifest.json, secrets example
+rules/                       # правила плагина
+skills/                      # 1c-invariants, bootstrap, dump, 1c-syntax, std-*, …
+agents/implementer.md
+commands/                    # /1c-syntax-index, /1c-syntax-status
+mcp.json                     # MCP bsl-syntax (обёртка bsl-ctx)
+.cursor/rules/               # только template-maintenance (этот репозиторий)
+.1c/                     # project.json.example, secrets example
 docs/
 src/                     # XML основной конфы (только дамп платформы)
 ext/                     # XML внешних обработок
@@ -78,5 +69,5 @@ cfe/                     # XML расширений (.cfe)
 
 MIT, см. [LICENSE](LICENSE). Copyright (c) 2026 HEOcanuAHT.
 
-Плагин и шаблон предоставляются **как есть**, без гарантий. Dump/load и другие операции могут изменить конфигурацию и ИБ; бэкап и проверка — на вашей стороне. Сторонние заимствования: [docs/ATTRIBUTION.md](docs/ATTRIBUTION.md). Не связан с фирмой «1С».
+Плагин предоставляется **как есть**, без гарантий. Dump/load и другие операции могут изменить конфигурацию и ИБ; бэкап и проверка — на вашей стороне. Сторонние заимствования: [docs/ATTRIBUTION.md](docs/ATTRIBUTION.md). Не связан с фирмой «1С».
 
