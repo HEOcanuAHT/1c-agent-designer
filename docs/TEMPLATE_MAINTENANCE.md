@@ -52,7 +52,8 @@ Cursor **не** грузит junction/symlink из `~/.cursor/plugins/local`, е
 1. **Подними `version`** в `.cursor-plugin/plugin.json` (и то же в `.cursor-plugin/marketplace.json` → `metadata.version`).
 2. Правило только этого репозитория — `.cursor/rules/template-maintenance.mdc`. В `rules/` его не клади: манифест `"rules": "rules"` отдаёт каталог в плагин целиком.
 3. **Не** ставь `alwaysApply: true` на узкие правила (dump, auth, query-validate). Инварианты — skill **`1c-invariants`** + копия в `1c-invariants.mdc`. Skills и rules в репозиторий конфы не копировать. Plugin-rules с alwaysApply Cursor часто не инжектит.
-4. Запушить. У пользователей конфигураций — обновление плагина и **Developer: Reload Window**.
+4. `disable-model-invocation` — только листовые `std-*`, плюс `1c-runtime`, `1c-designer-agent`, `tech-decisions`. Без флага: `coding-standards`, `1c-forms`, `1c-metadata-manage`, `1c-external-epf`, `1c-external-cfe`, `1c-query-validate`, `1c-dump`, `1c-syntax`, `1c-invariants`, `1c-project-bootstrap`. У `1c-ibcmd-pack` в description только pack `.cf`; dump/load — триггеры `1c-dump`.
+5. Запушить. У пользователей конфигураций — обновление плагина и **Developer: Reload Window**.
 
 Канон полей `project.json`: `.1c/README.md`.
 

@@ -3,7 +3,6 @@ name: coding-standards
 description: >-
   Роутер стандартов разработки 1С (ITS v8std). Use at the start of implementer
   or reviewer work to decide which domain std-* skills to load for the current change.
-disable-model-invocation: true
 ---
 
 # Стандарты 1С — роутер

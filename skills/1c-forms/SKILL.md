@@ -3,7 +3,6 @@ name: 1c-forms
 description: >-
   Managed forms router: Form.xml layout, form module, events, async, reserved names.
   Use when creating or editing managed forms, form modules, or async client handlers.
-disable-model-invocation: true
 ---
 
 # 1c-forms — управляемые формы

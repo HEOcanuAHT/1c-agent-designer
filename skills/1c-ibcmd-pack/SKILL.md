@@ -1,10 +1,9 @@
 ---
 name: 1c-ibcmd-pack
 description: >-
-  ibcmd: pack XML→.cf; быстрый dump/export и partial import XML в основную
-  конфигурацию (без apply/КБД). Preferred when tools.preferredDump=ibcmd.
-  Use when user asks ibcmd, pack cf, dump/export, load-changed via ibcmd,
-  сравнить с designer-agent, or project prefers ibcmd.
+  Упаковка XML основной конфигурации в .cf через ibcmd (служебная файловая ИБ,
+  без apply/КБД). Use when user asks pack cf, собери cf, XML в cf.
+  Dump/load XML — skill 1c-dump.
 ---
 
 # 1C ibcmd (pack + dump + load)

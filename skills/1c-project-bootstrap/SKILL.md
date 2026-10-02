@@ -255,9 +255,4 @@ powershell -NoProfile -File "<SkillHome>/../1c-runtime/scripts/Invoke-1cServiceI
 
 ## Как агент выбирает инструмент после bootstrap
 
-При любых dump/load в этом репо:
-
-1. Смотри `tools.preferredDump` в `project.json`.
-2. `ibcmd` → skill **`1c-ibcmd-pack`** / `Invoke-1cIbcmdDump.ps1` (`infobase.path` или `infobase.dbms`).
-3. `agent` или ibcmd недоступен → skill **`1c-designer-agent`**.
-4. Пользователь явно сказал «через агент» / «через ibcmd» — слушай запрос, не только конфиг.
+При любых dump/load в этом репо — skill **`1c-dump`** (`Invoke-1cDump.ps1`). Он читает `tools.preferredDump` и зовёт ibcmd или designer-agent. Pack `.cf` — `1c-ibcmd-pack`. Пользователь явно сказал «через агент» / «через ibcmd» — слушай запрос, не только конфиг.

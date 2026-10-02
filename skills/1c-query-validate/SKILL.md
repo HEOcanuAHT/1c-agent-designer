@@ -4,7 +4,6 @@ description: >-
   COM-проверка языка запросов 1С (QuerySchema / FindParameters) на служебной
   .1c/ib-ext. Без ENTERPRISE / HTTP / расширения. Use when user asks
   проверяй запросы, validate query, валидируй запросы, or query-validate.mode is on.
-disable-model-invocation: true
 ---
 
 # Проверка языка запросов (COM)

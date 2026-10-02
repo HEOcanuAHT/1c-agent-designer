@@ -5,7 +5,6 @@ description: >-
   CFE borrow/patch. Prefer tools/ scripts over hand-editing. Not dump/load IB
   or EPF/CFE pack or CFE applicability/connect check (pack on .1c/ib-ext) —
   use 1c-dump / 1c-external-epf / 1c-external-cfe.
-disable-model-invocation: true
 ---
 
 # 1c-metadata-manage — роутер XML

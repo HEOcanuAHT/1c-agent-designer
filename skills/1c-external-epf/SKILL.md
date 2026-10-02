@@ -6,7 +6,6 @@ description: >-
   save .cf с боевой ИБ + load (без apply); XML import — fallback.
   Use when user asks внешняя обработка, epf, создай внешку, вынести обработку,
   разобрать epf, собрать epf.
-disable-model-invocation: true
 ---
 
 # Внешние обработки (XML ↔ .epf)

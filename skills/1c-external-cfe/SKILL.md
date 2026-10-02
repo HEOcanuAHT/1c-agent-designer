@@ -6,7 +6,6 @@ description: >-
   (ibcmd config import --extension); боевую ИБ не трогает. Use when user asks
   расширение, cfe, создай/собери/разбери cfe, проверь расширение, применимость,
   подключение к базе, check cfe.
-disable-model-invocation: true
 ---
 
 # Расширения конфигурации (XML ↔ .cfe)
